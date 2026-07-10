@@ -1,0 +1,52 @@
+package conversationapi
+
+import (
+	"go.proteos.ai/model/common"
+	conversationmodel "go.proteos.ai/model/conversation"
+)
+
+// UpdateConversationRequest covers the user-editable surface of a conversation;
+// everything else (external key, channel, timestamps) is owned by ingest.
+type UpdateConversationRequest struct {
+	Subject  *string                               `json:"subject,omitempty"`
+	Status   *conversationmodel.ConversationStatus `json:"status,omitempty"`
+	Metadata *map[string]any                       `json:"metadata,omitempty"`
+}
+
+type GetManyConversationsQuery struct {
+	Channel      *string `json:"channel" form:"channel" db:"channel"`
+	Status       *string `json:"status" form:"status" db:"status"`
+	ConnectionId *string `json:"connection_id" form:"connection_id" db:"connection_id"`
+	RoomId       *string `json:"room_id" form:"room_id" db:"room_id"`
+	// ParentConversationId filters a conversation's thread children (Slack
+	// threads forked from one main conversation).
+	ParentConversationId *string `json:"parent_conversation_id" form:"parent_conversation_id" db:"parent_conversation_id"`
+	// ParticipantExternalId filters threads whose roster contains the given
+	// external party (Slack user id, email address) — the person stream. No db
+	// tag: a jsonb-array containment match the generic mapper can't express, so
+	// the repository applies it manually (participants @> …::jsonb).
+	ParticipantExternalId *string `json:"participant_external_id" form:"participant_external_id"`
+	// Include opts into expensive read projections; the only value today is
+	// "messages_summary" (root/latest message, totals, repliers). No db tag —
+	// handled by the repository, not the generic filter mapper.
+	Include *string `json:"include" form:"include"`
+	common.Pagination
+	common.Sorting
+}
+
+// IncludeMessagesSummary is the only recognized ?include= value: opt into the
+// root/latest message projection on conversation lists (hub stream rows).
+const IncludeMessagesSummary = "messages_summary"
+
+type GetManyConversationsResponse struct {
+	Meta common.ResponseMeta              `json:"meta"`
+	Data []conversationmodel.Conversation `json:"data"`
+}
+
+// UnreadCounts aggregates the requesting user's unread conversations (unit:
+// conversations, not messages) — the topbar envelope total and the per-channel
+// switcher badges.
+type UnreadCounts struct {
+	Total    int                               `json:"total"`
+	Channels map[conversationmodel.Channel]int `json:"channels"`
+}
