@@ -27,6 +27,12 @@ type MaterializeTranscriptionRequest struct {
 
 type GetManyTranscriptionsQuery struct {
 	Status *string `json:"status" form:"status" db:"status"`
+	// ConversationId lists a conversation's transcription artifacts (the
+	// Conversation doc's "fetch them with GET /transcriptions?conversation_id=").
+	ConversationId *string `json:"conversation_id" form:"conversation_id" db:"conversation_id"`
+	// ProviderRequestId narrows to the provider-side transcript identity — the
+	// import-idempotency lookup (a webhook redelivery finds its prior import).
+	ProviderRequestId *string `json:"provider_request_id" form:"provider_request_id" db:"provider_request_id"`
 	common.Pagination
 	common.Sorting
 }

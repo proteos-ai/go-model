@@ -9,17 +9,30 @@ package conversationmodel
 type Channel string
 
 const (
-	ChannelSlack     Channel = "slack"
-	ChannelEmail     Channel = "email"
-	ChannelLinkedin  Channel = "linkedin"
-	ChannelSms       Channel = "sms"
-	ChannelTeams     Channel = "teams"
+	ChannelSlack    Channel = "slack"
+	ChannelEmail    Channel = "email"
+	ChannelLinkedin Channel = "linkedin"
+	ChannelSms      Channel = "sms"
+	// ChannelTeamsChat is Microsoft Teams CHAT (messaging). Where a provider
+	// brand spans both a chat product and a meeting platform, the channel is
+	// suffixed -chat / -meeting so the two media never collide (renamed from
+	// "teams" 2026-07-12, before any Teams connector shipped).
+	ChannelTeamsChat Channel = "teams-chat"
 	ChannelTelegram  Channel = "telegram"
 	ChannelWhatsapp  Channel = "whatsapp"
-	ChannelMeeting   Channel = "meeting"
-	ChannelAdhoc     Channel = "adhoc"
-	ChannelInstagram Channel = "instagram"
-	ChannelMessenger Channel = "messenger"
+	// ChannelMeeting is the generic meeting fallback (connector-less recordings,
+	// platforms classifyPlatform doesn't recognize). The *-meeting channels below
+	// are the connector-backed meeting platforms the Ava meeting-bot family
+	// serves; each meeting conversation is tagged with its platform, derived
+	// from the meeting URL.
+	ChannelMeeting       Channel = "meeting"
+	ChannelZoomMeeting   Channel = "zoom-meeting"
+	ChannelGoogleMeet    Channel = "google-meet"
+	ChannelTeamsMeeting  Channel = "teams-meeting"
+	ChannelWebexMeeting  Channel = "webex-meeting"
+	ChannelAdhoc         Channel = "adhoc"
+	ChannelInstagram     Channel = "instagram"
+	ChannelMessenger     Channel = "messenger"
 	// ChannelX is the platform formerly known as Twitter. One name across
 	// Go/SDK/UI/DB per the ubiquitous-naming rule; Unipile's provider constant
 	// TWITTER stays adapter-internal (documented deviation).
@@ -50,18 +63,29 @@ const (
 	ConnectorKeyUnipileInstagram ConnectorKey = "unipile-instagram"
 	ConnectorKeyUnipileMessenger ConnectorKey = "unipile-messenger"
 	ConnectorKeyUnipileX         ConnectorKey = "unipile-x"
+	// The Ava meeting-bot family (Recall.ai-backed; the vendor name stays
+	// adapter-internal). adhoc-meeting is the org-level connection bots are
+	// dispatched from by meeting URL (user, agent or workflow); the calendar
+	// keys are per-user OAuth grants Ava auto-joins scheduled meetings through.
+	// Keys are brand-neutral (no "ava"/"recall") so the product brand and the
+	// vendor can each change without touching identifiers.
+	ConnectorKeyAdhocMeeting             ConnectorKey = "adhoc-meeting"
+	ConnectorKeyGoogleCalendarMeeting    ConnectorKey = "google-calendar-meeting"
+	ConnectorKeyMicrosoftCalendarMeeting ConnectorKey = "microsoft-calendar-meeting"
 )
 
 // ConnectorProvider says who operates the integration mechanics behind a
 // connector: Proteos' own hand-coded integration against the provider's API
-// (native) or an account aggregated through Unipile's platform tenancy
-// (unipile). Computed on Connection reads from the connector, never stored;
-// the UI groups the connector catalog by it.
+// (native), an account aggregated through Unipile's platform tenancy
+// (unipile), or the Ava meeting-bot family (ava — Recall.ai-backed; the
+// vendor stays adapter-internal). Computed on Connection reads from the
+// connector, never stored; the UI groups the connector catalog by it.
 type ConnectorProvider string
 
 const (
 	ConnectorProviderNative  ConnectorProvider = "native"
 	ConnectorProviderUnipile ConnectorProvider = "unipile"
+	ConnectorProviderAva     ConnectorProvider = "ava"
 )
 
 // MessageDirection distinguishes what a participant sent to us (inbound) from

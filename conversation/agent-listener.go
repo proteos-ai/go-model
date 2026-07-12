@@ -27,6 +27,15 @@ type AgentListener struct {
 	// keyword → KeywordConfig, always/mention carry none. Serializes to the bare
 	// variant ({external_channel_id} / {phrases} / {}); TriggerType discriminates.
 	TriggerConfig AgentListenerTriggerConfig `json:"trigger_config,omitempty"`
+	// WakePhrase, when non-empty, turns the listener into a dormant agent: its
+	// configured trigger is suppressed until a session is connected to the
+	// conversation, and the ONLY thing that starts that session is an inbound
+	// message whose text contains the wake phrase (case-insensitive substring).
+	// Once awake, the trigger drives the existing session normally. Empty ⇒ no
+	// gate (the trigger fires as always). Orthogonal to TriggerType — it composes
+	// on top of whichever trigger matched (a meeting "Hey Ava" companion is
+	// trigger=always + wake_phrase="hey ava").
+	WakePhrase string `json:"wake_phrase,omitempty"`
 	// ActingUser is the platform user the dispatcher acts as when driving the
 	// agent — a common.UserRef ({type,id}) so a non-person actor (agent/api) can
 	// own a listener later; it needs agent-sessions:write + messages:write grants.

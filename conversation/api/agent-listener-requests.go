@@ -21,8 +21,12 @@ type CreateAgentListenerRequest struct {
 	TriggerType    conversationmodel.AgentListenerTriggerType `json:"trigger_type" validate:"required"`
 	TriggerConfig  map[string]any                             `json:"trigger_config"`
 	ActingUserId   string                                     `json:"acting_user_id" validate:"required"`
-	IsEnabled      *bool                                      `json:"is_enabled,omitempty"`
-	Priority       int                                        `json:"priority"`
+	// WakePhrase gates the listener behind a wake word: when set, the listener
+	// stays dormant (trigger suppressed) until a message containing the phrase
+	// wakes it by starting a session. Empty ⇒ no gate.
+	WakePhrase string `json:"wake_phrase"`
+	IsEnabled  *bool  `json:"is_enabled,omitempty"`
+	Priority   int    `json:"priority"`
 }
 
 type UpdateAgentListenerRequest struct {
@@ -31,8 +35,11 @@ type UpdateAgentListenerRequest struct {
 	TriggerType   *conversationmodel.AgentListenerTriggerType `json:"trigger_type,omitempty"`
 	TriggerConfig *map[string]any                             `json:"trigger_config,omitempty"`
 	ActingUserId  *string                                     `json:"acting_user_id,omitempty"`
-	IsEnabled     *bool                                       `json:"is_enabled,omitempty"`
-	Priority      *int                                        `json:"priority,omitempty"`
+	// WakePhrase is a tri-state pointer: nil leaves the stored value untouched,
+	// "" clears the gate, a value sets it.
+	WakePhrase *string `json:"wake_phrase,omitempty"`
+	IsEnabled  *bool   `json:"is_enabled,omitempty"`
+	Priority   *int    `json:"priority,omitempty"`
 }
 
 type GetManyAgentListenersQuery struct {
