@@ -26,7 +26,12 @@ type CreateAgentListenerRequest struct {
 	// wakes it by starting a session. Empty ⇒ no gate.
 	WakePhrase string `json:"wake_phrase"`
 	IsEnabled  *bool  `json:"is_enabled,omitempty"`
-	Priority   int    `json:"priority"`
+	// IsAutoForwardAgentRepliesEnabled is a tri-state pointer — omitted defaults to
+	// TRUE (an omitted create must keep the historic auto-forward behavior). TRUE ⇒
+	// the platform posts the agent's reply automatically; FALSE ⇒ the agent replies
+	// itself via the send_message/reply tool.
+	IsAutoForwardAgentRepliesEnabled *bool `json:"is_auto_forward_agent_replies_enabled,omitempty"`
+	Priority                         int   `json:"priority"`
 }
 
 type UpdateAgentListenerRequest struct {
@@ -39,7 +44,10 @@ type UpdateAgentListenerRequest struct {
 	// "" clears the gate, a value sets it.
 	WakePhrase *string `json:"wake_phrase,omitempty"`
 	IsEnabled  *bool   `json:"is_enabled,omitempty"`
-	Priority   *int    `json:"priority,omitempty"`
+	// IsAutoForwardAgentRepliesEnabled is a tri-state pointer: nil leaves the stored
+	// value untouched, true/false sets it.
+	IsAutoForwardAgentRepliesEnabled *bool `json:"is_auto_forward_agent_replies_enabled,omitempty"`
+	Priority                         *int  `json:"priority,omitempty"`
 }
 
 type GetManyAgentListenersQuery struct {

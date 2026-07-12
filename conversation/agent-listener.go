@@ -41,6 +41,13 @@ type AgentListener struct {
 	// own a listener later; it needs agent-sessions:write + messages:write grants.
 	ActingUser common.UserRef `json:"acting_user"`
 	IsEnabled  bool           `json:"is_enabled" sortable:""`
+	// IsAutoForwardAgentRepliesEnabled controls how the agent's reply reaches the
+	// conversation. TRUE (the default) ⇒ the dispatcher folds the agent's
+	// agent.message text and posts it back automatically. FALSE ⇒ the platform
+	// forwards nothing; the agent is told (in the session preamble) to reply
+	// itself via the conversations send_message/reply tool. Distinct from
+	// IsEnabled, which turns the whole listener on/off.
+	IsAutoForwardAgentRepliesEnabled bool `json:"is_auto_forward_agent_replies_enabled" sortable:""`
 	// Priority breaks ties when several listeners match one message: highest wins,
 	// exactly one listener dispatches.
 	Priority  int            `json:"priority" sortable:""`
