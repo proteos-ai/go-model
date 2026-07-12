@@ -67,6 +67,7 @@ var platformEntities = []PlatformEntity{
 	{Slug: "messages", Name: "Messages"},
 	{Slug: "agent-listeners", Name: "Agent Listeners"},
 	{Slug: "transcriptions", Name: "Transcriptions"},
+	{Slug: "glossary-terms", Name: "Glossary Terms"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},
