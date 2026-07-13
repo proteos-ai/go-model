@@ -9,8 +9,8 @@ type CreatePageRequest struct {
 	Slug string `json:"slug" validate:"required"`
 	Name string `json:"name" validate:"required"`
 	// Type defaults to "record" when empty. The type↔entity_slug invariant
-	// (record requires entity_slug, platform forbids it) is enforced in the
-	// service's domain logic, not via struct tags.
+	// (record requires entity_slug, standalone types forbid it) is enforced in
+	// the service's domain logic, not via struct tags.
 	ModuleSlug string                 `json:"module_slug"`
 	Type       metamodel.PageType     `json:"type"`
 	EntitySlug string                 `json:"entity_slug"`
@@ -41,4 +41,22 @@ type GetManyPagesQuery struct {
 type GetManyPagesResponse struct {
 	Meta common.ResponseMeta `json:"meta"`
 	Data []metamodel.Page    `json:"data"`
+}
+
+// PublicPageComponent is the slice of component metadata a public page's
+// renderer needs — just the slug and props schema. Deliberately NOT the full
+// Component (no file ids, no audit fields): this rides on an unauthenticated
+// response.
+type PublicPageComponent struct {
+	Slug        string         `json:"slug"`
+	PropsSchema map[string]any `json:"props_schema,omitempty"`
+}
+
+// PublicPageResponse is the payload of the unauthenticated
+// GET /meta/v1/public/orgs/{orgId}/pages/{slug}: the page plus the
+// props_schema of every component its layout references, so the renderer
+// needs no follow-up authenticated calls.
+type PublicPageResponse struct {
+	Page       metamodel.Page        `json:"page"`
+	Components []PublicPageComponent `json:"components"`
 }

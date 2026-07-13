@@ -21,8 +21,17 @@ type Component struct {
 	// PropsSchema is the component's JSON Schema (jsonb). Drives the
 	// page-designer's props editor and runtime prop validation.
 	PropsSchema map[string]any `json:"props_schema"`
-	CreatedAt   time.Time      `json:"created_at" sortable:""`
-	CreatedBy   common.UserRef `json:"created_by" sortable:""`
-	UpdatedAt   time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy   common.UserRef `json:"updated_by" sortable:""`
+	// IsPublic opts the component into UNAUTHENTICATED serving: its compiled
+	// bundle becomes world-downloadable via
+	// `GET /meta/v1/public/orgs/{orgId}/components/{slug}/bundle`, and public
+	// (type='public') pages may only reference public components — enforced at
+	// page save. It is also the author's declaration that the component is
+	// written for the restricted public sdk (only
+	// `functions.actions.invokePublic` reaches the platform on a public page).
+	// Defaults to false.
+	IsPublic  bool           `json:"is_public"`
+	CreatedAt time.Time      `json:"created_at" sortable:""`
+	CreatedBy common.UserRef `json:"created_by" sortable:""`
+	UpdatedAt time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy common.UserRef `json:"updated_by" sortable:""`
 }

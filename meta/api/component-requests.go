@@ -13,6 +13,10 @@ type CreateComponentRequest struct {
 	BundleFileId string         `json:"bundle_file_id"`
 	SourceFileId string         `json:"source_file_id"`
 	PropsSchema  map[string]any `json:"props_schema"`
+	// IsPublic opts the compiled bundle into unauthenticated serving (see
+	// metamodel.Component.IsPublic). Manifest-driven: a deploy without the
+	// field sets false.
+	IsPublic bool `json:"is_public"`
 }
 
 type UpdateComponentRequest struct {
@@ -21,6 +25,7 @@ type UpdateComponentRequest struct {
 	BundleFileId *string        `json:"bundle_file_id,omitempty"`
 	SourceFileId *string        `json:"source_file_id,omitempty"`
 	PropsSchema  map[string]any `json:"props_schema,omitempty"`
+	IsPublic     *bool          `json:"is_public,omitempty"`
 }
 
 type GetManyComponentsQuery struct {
