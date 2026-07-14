@@ -33,6 +33,7 @@ var platformEntities = []PlatformEntity{
 	{Slug: "components", Name: "Components"},
 	{Slug: "lists", Name: "Lists"},
 	{Slug: "list-views", Name: "List Views"},
+	{Slug: "design-references", Name: "Design References"},
 	// System (metadata-service)
 	{Slug: "modules", Name: "Modules"},
 	{Slug: "variables", Name: "Variables"},
@@ -42,6 +43,9 @@ var platformEntities = []PlatformEntity{
 	// Automation (function-service)
 	{Slug: "hooks", Name: "Hooks"},
 	{Slug: "actions", Name: "Actions"},
+	// Workflows (workflow-service)
+	{Slug: "workflows", Name: "Workflows"},
+	{Slug: "workflow-executions", Name: "Workflow Executions"},
 	// Knowledge (knowledge-service)
 	{Slug: "knowledge-nodes", Name: "Knowledge Nodes"},
 	{Slug: "knowledge-links", Name: "Knowledge Links"},

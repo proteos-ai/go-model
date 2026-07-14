@@ -6,22 +6,28 @@ import (
 )
 
 type CreateEntityRequest struct {
-	Slug          string                `json:"slug" validate:"required"`
-	Name          string                `json:"name"`
-	IsRemote      bool                  `json:"is_remote"`
-	ModuleSlug    string                `json:"module_slug"`
-	Description   string                `json:"description"`
-	TitleTemplate string                `json:"title_template"`
-	Attributes    []metamodel.Attribute `json:"attributes"`
+	Slug     string `json:"slug" validate:"required"`
+	Name     string `json:"name"`
+	IsRemote bool   `json:"is_remote"`
+	// PublicRecordAccess opts all records of the entity into unauthenticated
+	// access (see metamodel.Entity.PublicRecordAccess; only ["read"] honored
+	// today). Manifest-driven full-replacement on upsert: an upsert without
+	// the field resets it to private.
+	PublicRecordAccess common.PublicAccess   `json:"public_record_access"`
+	ModuleSlug         string                `json:"module_slug"`
+	Description        string                `json:"description"`
+	TitleTemplate      string                `json:"title_template"`
+	Attributes         []metamodel.Attribute `json:"attributes"`
 }
 
 type UpdateEntityRequest struct {
-	Name          *string                `json:"name,omitempty"`
-	IsRemote      *bool                  `json:"is_remote,omitempty"`
-	ModuleSlug    *string                `json:"module_slug,omitempty"`
-	Description   *string                `json:"description,omitempty"`
-	TitleTemplate *string                `json:"title_template,omitempty"`
-	Attributes    *[]metamodel.Attribute `json:"attributes,omitempty"`
+	Name               *string                `json:"name,omitempty"`
+	IsRemote           *bool                  `json:"is_remote,omitempty"`
+	PublicRecordAccess *common.PublicAccess   `json:"public_record_access,omitempty"`
+	ModuleSlug         *string                `json:"module_slug,omitempty"`
+	Description        *string                `json:"description,omitempty"`
+	TitleTemplate      *string                `json:"title_template,omitempty"`
+	Attributes         *[]metamodel.Attribute `json:"attributes,omitempty"`
 }
 
 // GetOneEntityQuery contains query parameters for GetOne endpoint

@@ -8,6 +8,10 @@ import (
 type CreateFileRequest struct {
 	Name        string `json:"name" form:"name" validate:"required"`
 	ContentType string `json:"content_type" form:"content_type"`
+	// PublicAccess opts the file into unauthenticated access (see
+	// storagemodel.File.PublicAccess; only ["read"] honored). On the multipart
+	// create it rides the JSON `metadata` part.
+	PublicAccess common.PublicAccess `json:"public_access" form:"public_access"`
 }
 
 // MintDownloadUrlRequest is the optional body of POST
@@ -22,6 +26,7 @@ type UpdateFileRequest struct {
 	Name           *string               `json:"name,omitempty" form:"name"`
 	IsPersisted    *bool                 `json:"-,omitempty" form:"is_persisted"`
 	IsLocked       *bool                 `json:"is_locked,omitempty" form:"is_locked"`
+	PublicAccess   *common.PublicAccess  `json:"public_access,omitempty" form:"public_access"`
 	ContentType    *string               `json:"-,omitempty"`
 	CurrentVersion *storagemodel.Version `json:"-"`
 }
