@@ -42,11 +42,19 @@ func (access PublicAccess) Contains(op PublicAccessOperation) bool {
 
 // Value implements driver.Valuer — marshals to a JSON array. A nil set stores
 // as `[]` (not `null`) so the column can stay NOT NULL DEFAULT '[]'.
+//
+// Returns a string, not []byte: the pg driver binds a []byte driver.Value as
+// bytea, and Postgres then rejects it for a jsonb column with "invalid input
+// syntax for type json" (22P02). A string binds as text, which jsonb accepts.
 func (access PublicAccess) Value() (driver.Value, error) {
 	if access == nil {
-		return []byte("[]"), nil
+		return "[]", nil
 	}
-	return json.Marshal(access)
+	bytes, err := json.Marshal(access)
+	if err != nil {
+		return nil, err
+	}
+	return string(bytes), nil
 }
 
 // Scan implements sql.Scanner — reads the JSONB array back.

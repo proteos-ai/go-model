@@ -468,11 +468,33 @@ func (s *PageLayoutSidePanel) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// PageStyle carries per-page presentation of the standalone page shell:
+// background color and the content container's max-width / side & top padding.
+// Every field is optional; an omitted field falls back to the renderer default
+// (the historical bg-bg / 1200px / 24px-32px look). Setting max_width to "fill"
+// (or "auto") together with zero padding lets a component fill the page
+// edge-to-edge.
+//
+// Currently honored only on `public` and `kiosk` pages (see the metadata-service
+// layout validator's type gate).
+type PageStyle struct {
+	// Background is a design-token key ("bg", "bg-2", "accent", …) resolved to
+	// var(--color-<key>) by the renderer, or a raw CSS color for branded pages.
+	Background *string `json:"background,omitempty"`
+	// MaxWidth caps the content container. "fill"/"auto" removes the cap.
+	MaxWidth *SizeValue `json:"max_width,omitempty"`
+	// PaddingX / PaddingY are the horizontal / vertical padding of the content
+	// container (mirrors the Tailwind px/py idiom). "0px" makes it flush.
+	PaddingX *SizeValue `json:"padding_x,omitempty"`
+	PaddingY *SizeValue `json:"padding_y,omitempty"`
+}
+
 // PageLayout is the typed layout document persisted on Page.
 type PageLayout struct {
 	Version   int                  `json:"version"`
 	Main      LayoutElement        `json:"main"`
 	SidePanel *PageLayoutSidePanel `json:"side_panel,omitempty"`
+	Style     *PageStyle           `json:"style,omitempty"`
 }
 
 func (l *PageLayout) UnmarshalJSON(data []byte) error {
@@ -480,6 +502,7 @@ func (l *PageLayout) UnmarshalJSON(data []byte) error {
 		Version   int                  `json:"version"`
 		Main      json.RawMessage      `json:"main"`
 		SidePanel *PageLayoutSidePanel `json:"side_panel,omitempty"`
+		Style     *PageStyle           `json:"style,omitempty"`
 	}
 	if err := json.Unmarshal(data, &wire); err != nil {
 		return err
@@ -493,6 +516,7 @@ func (l *PageLayout) UnmarshalJSON(data []byte) error {
 		l.Main = main
 	}
 	l.SidePanel = wire.SidePanel
+	l.Style = wire.Style
 	return nil
 }
 
