@@ -24,9 +24,13 @@ type Conversation struct {
 	// (channel id / To address) is a transient send input (SendOptions.Recipient),
 	// NOT stored here — a conversation's durable identity is this thread id (where)
 	// plus Participants (who) plus Subject.
-	ExternalConversationId string             `json:"external_conversation_id"`
-	Subject                string             `json:"subject" sortable:""`
-	Status                 ConversationStatus `json:"status" sortable:""`
+	ExternalConversationId string `json:"external_conversation_id"`
+	Subject                string `json:"subject" sortable:""`
+	// Summary is the conversation's markdown summary — auto-generated at
+	// transcript attach for meeting conversations, editable via PATCH. Empty
+	// means no summary.
+	Summary string             `json:"summary,omitempty"`
+	Status  ConversationStatus `json:"status" sortable:""`
 	// RoomId links a room-borne thread (a Slack channel conversation) to its
 	// room directory row; empty for DMs, email, meeting, adhoc. Stamped at
 	// ingest; no FK — a pruned room leaves the id dangling by design.

@@ -8,7 +8,10 @@ import (
 // UpdateConversationRequest covers the user-editable surface of a conversation;
 // everything else (external key, channel, timestamps) is owned by ingest.
 type UpdateConversationRequest struct {
-	Subject  *string                               `json:"subject,omitempty"`
+	Subject *string `json:"subject,omitempty"`
+	// Summary is the conversation's markdown summary (auto-generated for
+	// meetings, freely editable).
+	Summary  *string                               `json:"summary,omitempty"`
 	Status   *conversationmodel.ConversationStatus `json:"status,omitempty"`
 	Metadata *map[string]any                       `json:"metadata,omitempty"`
 }
