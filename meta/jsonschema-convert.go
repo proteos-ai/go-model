@@ -363,12 +363,14 @@ func applyKnowledgeTextMeta(schema *JSONSchema) {
 }
 
 // applyFileMeta shapes the JSON Schema for a `file` value — the composite
-// { id, name } (common.FileRef): id is the storage-service file id and name is
-// the denormalised filename. Both are required.
+// { id, name, content_type? } (common.FileRef): id is the storage-service file
+// id, name the denormalised filename, content_type an optional denormalised
+// MIME hint. Only id and name are required.
 func applyFileMeta(schema *JSONSchema) {
 	schema.Properties = map[string]*JSONSchema{
-		"id":   {Type: "string"},
-		"name": {Type: "string"},
+		"id":           {Type: "string"},
+		"name":         {Type: "string"},
+		"content_type": {Type: "string"},
 	}
 	schema.Required = []string{"id", "name"}
 }
