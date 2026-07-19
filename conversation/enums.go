@@ -25,14 +25,14 @@ const (
 	// are the connector-backed meeting platforms the Ava meeting-bot family
 	// serves; each meeting conversation is tagged with its platform, derived
 	// from the meeting URL.
-	ChannelMeeting       Channel = "meeting"
-	ChannelZoomMeeting   Channel = "zoom-meeting"
-	ChannelGoogleMeet    Channel = "google-meet"
-	ChannelTeamsMeeting  Channel = "teams-meeting"
-	ChannelWebexMeeting  Channel = "webex-meeting"
-	ChannelAdhoc         Channel = "adhoc"
-	ChannelInstagram     Channel = "instagram"
-	ChannelMessenger     Channel = "messenger"
+	ChannelMeeting      Channel = "meeting"
+	ChannelZoomMeeting  Channel = "zoom-meeting"
+	ChannelGoogleMeet   Channel = "google-meet"
+	ChannelTeamsMeeting Channel = "teams-meeting"
+	ChannelWebexMeeting Channel = "webex-meeting"
+	ChannelAdhoc        Channel = "adhoc"
+	ChannelInstagram    Channel = "instagram"
+	ChannelMessenger    Channel = "messenger"
 	// ChannelX is the platform formerly known as Twitter. One name across
 	// Go/SDK/UI/DB per the ubiquitous-naming rule; Unipile's provider constant
 	// TWITTER stays adapter-internal (documented deviation).
@@ -169,12 +169,12 @@ const (
 )
 
 // RecipientKind discriminates the send-time Recipient VO: the target is a
-// person (participant) or a venue (room).
+// person's contact address or a venue (room).
 type RecipientKind string
 
 const (
-	RecipientKindParticipant RecipientKind = "participant"
-	RecipientKindRoom        RecipientKind = "room"
+	RecipientKindContactAddress RecipientKind = "contact-address"
+	RecipientKindRoom           RecipientKind = "room"
 )
 
 // RecipientRole is how a MessageRecipient was addressed on a message: a primary
@@ -189,23 +189,146 @@ const (
 	RecipientRoleBcc RecipientRole = "bcc"
 )
 
-// ParticipantSource records how a participant directory row was populated: a
-// full provider directory sweep (sync — prunable when the provider stops
-// returning it) or derived passively from ingested messages (ingest — a
-// "recent correspondent").
-type ParticipantSource string
+// ContactAddressKind is the identifier NAMESPACE of a contact address — not a
+// channel: email and phone span channels (an email address is reachable from
+// any email connection; a phone number serves sms AND whatsapp), while
+// slack/messenger are provider namespaces whose ids only mean something inside
+// a provider tenant (see ContactAddress.Scope). whatsapp exists only for
+// non-phone JIDs (e.g. @lid) — standard WhatsApp JIDs canonicalize to phone.
+type ContactAddressKind string
 
 const (
-	ParticipantSourceSync   ParticipantSource = "sync"
-	ParticipantSourceIngest ParticipantSource = "ingest"
+	ContactAddressKindEmail     ContactAddressKind = "email"
+	ContactAddressKindPhone     ContactAddressKind = "phone"
+	ContactAddressKindSlack     ContactAddressKind = "slack"
+	ContactAddressKindLinkedin  ContactAddressKind = "linkedin"
+	ContactAddressKindTelegram  ContactAddressKind = "telegram"
+	ContactAddressKindInstagram ContactAddressKind = "instagram"
+	ContactAddressKindMessenger ContactAddressKind = "messenger"
+	ContactAddressKindX         ContactAddressKind = "x"
+	ContactAddressKindWhatsapp  ContactAddressKind = "whatsapp"
 )
 
-// RoomSource records how a room directory row was populated — the deliberate
-// mirror of ParticipantSource for the venue half of the directory (separate
-// entity-scoped types, same values, same prune semantics): a provider
-// directory sweep (sync — prunable when the provider stops returning it) or
-// minted at ingest for a channel the sweep hasn't seen yet (ingest — survives
-// pruning until the sweep confirms it, then flips to sync).
+// ContactAddressSource records how a contact address row was established:
+// provider directory sweep (sync), derived from ingested messages (ingest),
+// attached by a user via the API (manual), or repointed during a contact merge
+// (merge). Provenance only — it drives no prune or lifecycle (addresses are
+// permanent identity).
+type ContactAddressSource string
+
+const (
+	ContactAddressSourceSync   ContactAddressSource = "sync"
+	ContactAddressSourceIngest ContactAddressSource = "ingest"
+	ContactAddressSourceManual ContactAddressSource = "manual"
+	ContactAddressSourceMerge  ContactAddressSource = "merge"
+)
+
+// ContactSource records how a contact row was minted — the same provenance
+// axis (and value set) as ContactAddressSource, so the mint path stays
+// visible: a provider directory sweep (sync), derived from corresponded
+// messages (ingest — we actually talked), created by a user via the API
+// (manual), or as the surviving side of a merge (merge). Provenance only;
+// sync/ingest + no manual edits = the "thin" contact that deterministic
+// auto-merge may fold away.
+type ContactSource string
+
+const (
+	ContactSourceSync   ContactSource = "sync"
+	ContactSourceIngest ContactSource = "ingest"
+	ContactSourceManual ContactSource = "manual"
+	ContactSourceMerge  ContactSource = "merge"
+)
+
+// ContactStatus is the lifecycle of a contact. merged rows are tombstones
+// redirecting to the winner via merged_into_contact_id; erased rows are GDPR
+// tombstones (PII blanked, id retained). Blocking is NOT a status — it is the
+// orthogonal IsBlocked flag (a blocked contact stays active in the directory).
+type ContactStatus string
+
+const (
+	ContactStatusActive   ContactStatus = "active"
+	ContactStatusMerged   ContactStatus = "merged"
+	ContactStatusArchived ContactStatus = "archived"
+	ContactStatusErased   ContactStatus = "erased"
+)
+
+// ConsentStatus is the denormalized subject-consent state derived from the
+// opt_in/opt_out permission events (the subject's axis only — our own blocks
+// live on the orthogonal IsBlocked flag). unknown = never captured; consent is
+// an opt-out gate, so unknown addresses stay contactable.
+type ConsentStatus string
+
+const (
+	ConsentStatusUnknown  ConsentStatus = "unknown"
+	ConsentStatusOptedIn  ConsentStatus = "opted_in"
+	ConsentStatusOptedOut ConsentStatus = "opted_out"
+)
+
+// PermissionEventType is what a permission-ledger event did: the subject's
+// consent axis (opt_in/opt_out — projects onto ConsentStatus) or our own
+// suppression axis (block/unblock — projects onto IsBlocked). The axes are
+// deliberately orthogonal: an opt_in never clears a block.
+type PermissionEventType string
+
+const (
+	PermissionEventOptIn   PermissionEventType = "opt_in"
+	PermissionEventOptOut  PermissionEventType = "opt_out"
+	PermissionEventBlock   PermissionEventType = "block"
+	PermissionEventUnblock PermissionEventType = "unblock"
+)
+
+// PermissionEventSource records where a permission event came from. import is
+// special-cased in derivation: an imported opt_in never overrides an existing
+// opt_out (imports cannot prove recency).
+type PermissionEventSource string
+
+const (
+	PermissionEventSourceManual    PermissionEventSource = "manual"
+	PermissionEventSourceImport    PermissionEventSource = "import"
+	PermissionEventSourceLinkClick PermissionEventSource = "link_click"
+	PermissionEventSourceReply     PermissionEventSource = "reply"
+	PermissionEventSourceApi       PermissionEventSource = "api"
+	PermissionEventSourceSystem    PermissionEventSource = "system"
+)
+
+// MergeProposalStatus is the review-queue lifecycle of a duplicate-contact
+// proposal. All non-proposed states are terminal; superseded means one side
+// was merged or erased through another path before review.
+type MergeProposalStatus string
+
+const (
+	MergeProposalStatusProposed   MergeProposalStatus = "proposed"
+	MergeProposalStatusApproved   MergeProposalStatus = "approved"
+	MergeProposalStatusRejected   MergeProposalStatus = "rejected"
+	MergeProposalStatusSuperseded MergeProposalStatus = "superseded"
+)
+
+// MergeInitiator says HOW a merge fired — deterministic business logic
+// (system), an LLM adjudication (agent), or a human decision (user). WHO wrote
+// the row is the standard created_by audit field, a separate axis.
+type MergeInitiator string
+
+const (
+	MergeInitiatorSystem MergeInitiator = "system"
+	MergeInitiatorAgent  MergeInitiator = "agent"
+	MergeInitiatorUser   MergeInitiator = "user"
+)
+
+// ErasureRequestStatus is the GDPR erasure-request lifecycle: captured and
+// awaiting the scrub runner (requested) or fully scrubbed (completed).
+type ErasureRequestStatus string
+
+const (
+	ErasureRequestStatusRequested ErasureRequestStatus = "requested"
+	ErasureRequestStatusCompleted ErasureRequestStatus = "completed"
+)
+
+// RoomSource records how a room directory row was populated — the venue half
+// of the directory (separate entity-scoped type, same prune semantics as the
+// old participant sweep): a provider directory sweep (sync — prunable when the
+// provider stops returning it) or minted at ingest for a channel the sweep
+// hasn't seen yet (ingest — survives pruning until the sweep confirms it, then
+// flips to sync).
 type RoomSource string
 
 const (

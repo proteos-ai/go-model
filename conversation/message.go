@@ -22,8 +22,8 @@ type Message struct {
 	// ExternalMessageId is the integration-side message identity (Slack event ts,
 	// Gmail message id). UNIQUE per org+connection where non-empty AND inbound —
 	// the webhook-replay dedupe. Empty for outbound until the connector returns one.
-	ExternalMessageId string         `json:"external_message_id"`
-	Sender            ParticipantRef `json:"sender"`
+	ExternalMessageId string     `json:"external_message_id"`
+	Sender            ContactRef `json:"sender"`
 	// Recipients is who the message was addressed to, each tagged with its role
 	// (to/cc/bcc). Email carries the full To/Cc list (and Bcc on messages WE
 	// sent); other channels list the direct target(s) as `to`. Stored as one
@@ -88,12 +88,12 @@ const (
 // so connectors and domain share it without the connectors importing domain
 // packages. ConnectionId is set when the ingestor already resolved the
 // connection (e.g. from an OAuth-bound route); otherwise the domain resolves it
-// via (ConnectorKey, ExternalWorkspaceId).
+// via (ConnectorKey, ExternalAccountId).
 type NormalizedInboundMessage struct {
 	ConnectorKey           ConnectorKey `json:"connector_key"`
 	Channel                Channel      `json:"channel"`
 	ConnectionId           string       `json:"connection_id,omitempty"`
-	ExternalWorkspaceId    string       `json:"external_workspace_id"`
+	ExternalAccountId      string       `json:"external_account_id"`
 	ExternalConversationId string       `json:"external_conversation_id"`
 	ExternalMessageId      string       `json:"external_message_id"`
 	// ExternalParentConversationId is the external key of the MAIN conversation
@@ -134,7 +134,7 @@ type NormalizedInboundMessage struct {
 	// participant directory and folds them into the conversation roster. Inbound
 	// Bcc is not present (SMTP strips it).
 	Recipients []MessageRecipient `json:"recipients,omitempty"`
-	Sender     ParticipantRef     `json:"sender"`
+	Sender     ContactRef         `json:"sender"`
 	Content    []ContentBlock     `json:"content"`
 	Subject    string             `json:"subject,omitempty"`
 	// OccurredAt is when the message was said/sent on the external side; nil means

@@ -394,12 +394,17 @@ func (FieldElement) LayoutType() LayoutElementType { return LayoutElementTypeFie
 // (e.g. "customerId" on Order). `ListSlug` optionally pins which list
 // definition drives the column / sort / filter model; when omitted, the
 // renderer falls back to the first list configured for the related entity.
+// `FollowsParentEditMode` controls whether the list enters row-edit mode
+// together with the host page's edit mode: nil/true = follows the page
+// (default), false = independent — rows are only editable through the
+// list's own toggle.
 type RelatedListElement struct {
 	Type LayoutElementType `json:"type"`
 	CommonProps
-	RelatedEntitySlug string `json:"related_entity_slug"`
-	ViaAttribute      string `json:"via_attribute"`
-	ListSlug          string `json:"list_slug,omitempty"`
+	RelatedEntitySlug     string `json:"related_entity_slug"`
+	ViaAttribute          string `json:"via_attribute"`
+	ListSlug              string `json:"list_slug,omitempty"`
+	FollowsParentEditMode *bool  `json:"follows_parent_edit_mode,omitempty"`
 }
 
 func (RelatedListElement) isLayoutElement()              {}

@@ -48,7 +48,7 @@ func TestPageLayout_RoundTrip(t *testing.T) {
           { "id": "activity", "label": "Activity",
             "content": { "type": "component", "component_slug": "activity-feed" } },
           { "id": "contacts", "label": "Contacts",
-            "content": { "type": "related_list", "related_entity_slug": "contact", "via_attribute": "accountId" } }
+            "content": { "type": "related_list", "related_entity_slug": "contact", "via_attribute": "accountId", "follows_parent_edit_mode": false } }
         ]
       }
     ]
@@ -85,6 +85,15 @@ func TestPageLayout_RoundTrip(t *testing.T) {
 	}
 	if _, ok := mainCol.Children[1].(*TabsElement); !ok {
 		t.Errorf("main.children[1]: want *TabsElement, got %T", mainCol.Children[1])
+	}
+	if tabs, ok := mainCol.Children[1].(*TabsElement); ok {
+		related, ok := tabs.Tabs[1].Content.(*RelatedListElement)
+		if !ok {
+			t.Fatalf("tabs[1].content: want *RelatedListElement, got %T", tabs.Tabs[1].Content)
+		}
+		if related.FollowsParentEditMode == nil || *related.FollowsParentEditMode {
+			t.Errorf("followsParentEditMode: want false, got %v", related.FollowsParentEditMode)
+		}
 	}
 
 	if layout.SidePanel == nil {

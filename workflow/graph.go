@@ -14,9 +14,9 @@ import (
 type NodeType string
 
 const (
-	NodeTypeTriggerCron    NodeType = "trigger.cron"
-	NodeTypeTriggerManual  NodeType = "trigger.manual"
-	NodeTypeTriggerWebhook NodeType = "trigger.webhook"
+	NodeTypeTriggerCron      NodeType = "trigger.cron"
+	NodeTypeTriggerManual    NodeType = "trigger.manual"
+	NodeTypeTriggerWebhook   NodeType = "trigger.webhook"
 	NodeTypeTriggerEvent     NodeType = "trigger.event"
 	NodeTypeTriggerMessage   NodeType = "trigger.message"
 	NodeTypeTriggerConnector NodeType = "trigger.connector"

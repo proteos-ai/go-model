@@ -20,13 +20,13 @@ import (
 // on an API-set reaction it is the calling user while the participant is the
 // connection's bot (who the provider records).
 type MessageReaction struct {
-	Id                    string         `json:"id"`
-	OrgId                 string         `json:"org_id"`
-	MessageId             string         `json:"message_id"`
-	ConnectionId          string         `json:"connection_id"`
-	Emoji                 string         `json:"emoji"`
-	Participant           ParticipantRef `json:"participant"`
-	ParticipantExternalId string         `json:"participant_external_id"`
+	Id                    string     `json:"id"`
+	OrgId                 string     `json:"org_id"`
+	MessageId             string     `json:"message_id"`
+	ConnectionId          string     `json:"connection_id"`
+	Emoji                 string     `json:"emoji"`
+	Participant           ContactRef `json:"participant"`
+	ParticipantExternalId string     `json:"participant_external_id"`
 	// ExternalReactionId is the provider-side identity when one exists; Slack
 	// reactions have none (identity IS message+emoji+user), so it may be empty.
 	ExternalReactionId string         `json:"external_reaction_id,omitempty"`
@@ -38,9 +38,9 @@ type MessageReaction struct {
 // Reaction is the aggregated read VO riding on Message.Reactions: one entry
 // per emoji with the count and the reacting participants.
 type Reaction struct {
-	Emoji        string           `json:"emoji"`
-	Count        int              `json:"count"`
-	Participants []ParticipantRef `json:"participants"`
+	Emoji        string       `json:"emoji"`
+	Count        int          `json:"count"`
+	Participants []ContactRef `json:"participants"`
 }
 
 // ReactionAction discriminates a NormalizedReaction: the participant added or
@@ -56,13 +56,13 @@ const (
 // NormalizedReaction is the wire shape a ChannelIngestor produces for a
 // reaction event (sibling of NormalizedInboundMessage). It carries only the
 // reactor's external id — reaction events have no name/email; the domain
-// resolves the rich ParticipantRef snapshot from the participant directory
+// resolves the rich ContactRef snapshot from the participant directory
 // before persisting.
 type NormalizedReaction struct {
 	ConnectorKey          ConnectorKey   `json:"connector_key"`
 	Channel               Channel        `json:"channel"`
 	ConnectionId          string         `json:"connection_id,omitempty"`
-	ExternalWorkspaceId   string         `json:"external_workspace_id"`
+	ExternalAccountId     string         `json:"external_account_id"`
 	ExternalMessageId     string         `json:"external_message_id"`
 	Emoji                 string         `json:"emoji"`
 	ParticipantExternalId string         `json:"participant_external_id"`

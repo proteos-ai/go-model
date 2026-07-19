@@ -25,10 +25,10 @@ type Connection struct {
 	// the `user` attribute) rather than a bare id string.
 	Scope ConnectionScope `json:"scope"`
 	Owner *common.UserRef `json:"owner,omitempty"`
-	// ExternalWorkspaceId is the integration-side tenant identity (Slack team_id,
+	// ExternalAccountId is the integration-side tenant identity (Slack team_id,
 	// the connected Gmail address, …). UNIQUE per connector_key where non-empty —
 	// inbound webhooks recover the org + connection from it.
-	ExternalWorkspaceId string `json:"external_workspace_id"`
+	ExternalAccountId string `json:"external_account_id"`
 	// Credentials is the connector-owned secret material (JSONB), a
 	// kind-discriminated union (see connection-credentials.go) — nil for a
 	// pending connection. Stored plaintext per current repo convention

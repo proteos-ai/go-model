@@ -18,8 +18,8 @@ import (
 // a CONNECTION is one configured instance, a METHOD is one callable operation.
 // Same words in DB/Go/wire/SDK/UI.
 type ConnectorManifest struct {
-	Key         string `json:"key" sortable:""`
-	OrgId       string `json:"org_id" sortable:""`
+	Key            string         `json:"key" sortable:""`
+	OrgId          string         `json:"org_id" sortable:""`
 	Title          string         `json:"title" sortable:""`
 	Description    string         `json:"description,omitempty"`
 	Icon           string         `json:"icon,omitempty"`
@@ -31,7 +31,7 @@ type ConnectorManifest struct {
 	// the platform's attribute language, so the UI can render a form and the
 	// service can validate.
 	ConfigSchema []metamodel.Attribute `json:"config_schema,omitempty"`
-	Methods []MethodDeclaration `json:"methods"`
+	Methods      []MethodDeclaration   `json:"methods"`
 	// OAuthRedirectUri is COMPUTED on API reads (never stored): the broker's
 	// single per-environment callback the provider app must whitelist. Shown
 	// in the connect wizard so operators can register it without digging

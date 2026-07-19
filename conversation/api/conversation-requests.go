@@ -24,11 +24,18 @@ type GetManyConversationsQuery struct {
 	// ParentConversationId filters a conversation's thread children (Slack
 	// threads forked from one main conversation).
 	ParentConversationId *string `json:"parent_conversation_id" form:"parent_conversation_id" db:"parent_conversation_id"`
-	// ParticipantExternalId filters threads whose roster contains the given
-	// external party (Slack user id, email address) — the person stream. No db
-	// tag: a jsonb-array containment match the generic mapper can't express, so
-	// the repository applies it manually (participants @> …::jsonb).
-	ParticipantExternalId *string `json:"participant_external_id" form:"participant_external_id"`
+	// ContactId filters threads whose roster contains the resolved person — the
+	// contact stream (subsumes the retired participant_external_id filter:
+	// the expansion below covers raw-identifier matching too). Post-contacts
+	// snapshots match on the roster's contact_id; pre-contacts rows are covered
+	// by the server-side expansion below. No db tag (jsonb containment,
+	// repository-applied).
+	ContactId *string `json:"contact_id" form:"contact_id"`
+	// ContactAddressExternalIds is SERVER-FILLED (never bound from the wire —
+	// no form tag): the contact's address identifiers (raw + canonical values),
+	// OR-ed into the roster containment so pre-contacts snapshots (which carry
+	// no contact_id) still match the person stream.
+	ContactAddressExternalIds []string `json:"-" form:"-"`
 	// Include opts into expensive read projections; the only value today is
 	// "messages_summary" (root/latest message, totals, repliers). No db tag —
 	// handled by the repository, not the generic filter mapper.

@@ -75,7 +75,7 @@ type Conversation struct {
 	MessagesTotal int             `json:"messages_total,omitempty"`
 	// LastRepliers are up to 3 most recent distinct senders excluding the root
 	// sender — the stream's stacked mini avatars.
-	LastRepliers []ParticipantRef `json:"last_repliers,omitempty"`
+	LastRepliers []ContactRef `json:"last_repliers,omitempty"`
 	// Read state of the requesting user (never another user's) — projected onto
 	// every authenticated read. LastReadAt nil = never opened. IsUnread is the
 	// server-computed inbox predicate: activity after the marker AND the latest
@@ -93,23 +93,33 @@ type Conversation struct {
 // first ~500 chars of text, direction/status for outbound identity — without
 // the full content blocks.
 type MessagePreview struct {
-	Sender     ParticipantRef   `json:"sender"`
+	Sender     ContactRef       `json:"sender"`
 	Text       string           `json:"text"`
 	Direction  MessageDirection `json:"direction"`
 	Status     MessageStatus    `json:"status"`
 	OccurredAt time.Time        `json:"occurred_at"`
 }
 
-// ParticipantRef is the inline snapshot of a person on a message/reaction —
-// the integration-side identity plus, when resolved, the platform user. It is
-// hydrated from the participant directory at ingest (a local read, never a
-// provider call), so reads carry rich identity with no extra hop. Name
-// is always populated when known so UIs and agents have something to show;
-// Email rides along when the directory has it and backs the platform-user
-// resolution (email match).
-type ParticipantRef struct {
-	ExternalId   string          `json:"external_id,omitempty"`
-	Name         string          `json:"name"`
-	Email        string          `json:"email,omitempty"`
+// ContactRef is the inline snapshot of a person on a message/reaction — the
+// integration-side identity plus, when resolved, the platform user and the
+// contact id. It is hydrated from the contact-address directory at ingest (a
+// local read, never a provider call), so reads carry rich identity with no
+// extra hop. Name is always populated when known so UIs and agents have
+// something to show; Email rides along when the directory has it and backs the
+// platform-user resolution (email match).
+//
+// Renamed from ParticipantRef in the contacts model (2026-07): the JSON keys
+// are UNCHANGED — stored jsonb snapshots and GIN containment queries keep
+// working — and ContactId is the only addition (forward-only; pre-contacts
+// snapshots simply lack it and are covered at query time by expanding a
+// contact to its address values).
+type ContactRef struct {
+	ExternalId string `json:"external_id,omitempty"`
+	Name       string `json:"name"`
+	Email      string `json:"email,omitempty"`
+	// ContactId is the resolved person; empty when unresolved (pre-contacts
+	// snapshots, wire-only fallbacks). After a merge, old snapshots keep the
+	// loser's id — readers chase Contact.MergedIntoContactId one hop.
+	ContactId    string          `json:"contact_id,omitempty"`
 	PlatformUser *common.UserRef `json:"platform_user,omitempty"`
 }

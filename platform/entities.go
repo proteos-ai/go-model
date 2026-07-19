@@ -72,6 +72,10 @@ var platformEntities = []PlatformEntity{
 	{Slug: "agent-listeners", Name: "Agent Listeners"},
 	{Slug: "transcriptions", Name: "Transcriptions"},
 	{Slug: "glossary-terms", Name: "Glossary Terms"},
+	// The person-level identity layer (contacts + contact addresses + merges +
+	// permission ledger + erasure requests) — one grant governs the whole
+	// aggregate.
+	{Slug: "contacts", Name: "Contacts"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},
