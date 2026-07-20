@@ -335,3 +335,63 @@ const (
 	RoomSourceSync   RoomSource = "sync"
 	RoomSourceIngest RoomSource = "ingest"
 )
+
+// ConversationFilterType discriminates a conversation filter's matching rule —
+// the tagged-union key for ConversationFilterConfig (see
+// conversation-filter-config.go). Ordered here by evaluation specificity:
+// address (one exact person-address) beats domain (a whole email domain) beats
+// role_based/automated (email heuristics) beats internal_conversations (the
+// all-participants-internal classification) beats all (unconditional).
+type ConversationFilterType string
+
+const (
+	FilterTypeAddress               ConversationFilterType = "address"
+	FilterTypeDomain                ConversationFilterType = "domain"
+	FilterTypeRoleBased             ConversationFilterType = "role_based"
+	FilterTypeAutomated             ConversationFilterType = "automated"
+	FilterTypeInternalConversations ConversationFilterType = "internal_conversations"
+	FilterTypeAll                   ConversationFilterType = "all"
+)
+
+// ConversationFilterAction says what a matching filter does to the inbound
+// message: block drops it at ingest (never persisted, no contact minted),
+// allow exempts it — within a specificity class and scope, allow beats block,
+// so an allow rule punches a hole through a broader block (block domain X,
+// allow alice@X). internal_conversations rows are always block (an "allow
+// internal" rule is meaningless — internal exclusion is already the most
+// general class an address/domain allow overrides).
+type ConversationFilterAction string
+
+const (
+	FilterActionBlock ConversationFilterAction = "block"
+	FilterActionAllow ConversationFilterAction = "allow"
+)
+
+// FilterMatchOn says which side of the message an address/domain filter tests:
+// the sender only (the default — HubSpot-style ingest suppression), or any
+// participant (sender OR any To/Cc recipient — the EAC/Attio matching model,
+// for "never ingest anything this address is on").
+type FilterMatchOn string
+
+const (
+	FilterMatchOnSender         FilterMatchOn = "sender"
+	FilterMatchOnAnyParticipant FilterMatchOn = "any_participant"
+)
+
+// AutomatedSignal names one detectable class of machine-generated email for
+// the automated filter type — all are deterministic header signals (RFC 3834
+// and industry practice) read from NormalizedInboundMessage.Headers:
+// auto_submitted (Auto-Submitted present and not "no": auto-replies,
+// out-of-office), bulk (Precedence: bulk/junk/list), mailing_list (List-Id or
+// List-Unsubscribe present), bounce (empty Return-Path <> or a
+// MAILER-DAEMON/postmaster sender: DSNs), auto_response_suppress (Microsoft's
+// X-Auto-Response-Suppress: OOO/read receipts/delivery reports).
+type AutomatedSignal string
+
+const (
+	AutomatedSignalAutoSubmitted        AutomatedSignal = "auto_submitted"
+	AutomatedSignalBulk                 AutomatedSignal = "bulk"
+	AutomatedSignalMailingList          AutomatedSignal = "mailing_list"
+	AutomatedSignalBounce               AutomatedSignal = "bounce"
+	AutomatedSignalAutoResponseSuppress AutomatedSignal = "auto_response_suppress"
+)

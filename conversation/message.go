@@ -141,6 +141,13 @@ type NormalizedInboundMessage struct {
 	// "now" (the domain stamps ingestion time).
 	OccurredAt *time.Time     `json:"occurred_at,omitempty"`
 	Metadata   map[string]any `json:"metadata,omitempty"`
+	// Headers is a small fixed allow-list of filter-relevant email headers
+	// (lowercased keys: auto-submitted, precedence, list-id, list-unsubscribe,
+	// x-auto-response-suppress, return-path), populated by email ingestors only
+	// — the input to the `automated` conversation-filter type. Nil on non-email
+	// channels (those filters are then inert). Consumed at ingest, never
+	// persisted; deliberately NOT a full header dump (PII + payload bloat).
+	Headers map[string]string `json:"headers,omitempty"`
 	// Attachments carries the message's files as decoded bytes; the domain
 	// uploads them to storage-service and stores Attachment rows. Connectors
 	// bound the sizes (a connector never hands over unbounded payloads).

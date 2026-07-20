@@ -76,6 +76,9 @@ var platformEntities = []PlatformEntity{
 	// permission ledger + erasure requests) — one grant governs the whole
 	// aggregate.
 	{Slug: "contacts", Name: "Contacts"},
+	// Ingest-time filter rules + their drop-audit events — one grant governs
+	// the whole aggregate.
+	{Slug: "conversation-filters", Name: "Conversation Filters"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},
