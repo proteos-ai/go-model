@@ -52,3 +52,23 @@ type GetManyEntitiesResponse struct {
 	Meta common.ResponseMeta `json:"meta"`
 	Data []metamodel.Entity  `json:"data"`
 }
+
+// InboundRelation is one relation attribute on EntitySlug that references a
+// target entity, together with the delete policy to apply when a target record
+// is removed. Returned by GET /meta/v1/entities/:slug/inbound-relations and
+// consumed by data-service's record-delete cascade.
+type InboundRelation struct {
+	// EntitySlug is the referencing (child) entity.
+	EntitySlug string `json:"entity_slug"`
+	// AttributeName is the relation attribute on EntitySlug holding the reference.
+	AttributeName string `json:"attribute_name"`
+	// RelatedAttribute is the target-entity attribute the reference points at
+	// (normally "id").
+	RelatedAttribute string `json:"related_attribute"`
+	// OnDelete is the policy: cascade | restrict | set-null.
+	OnDelete metamodel.OnDeleteAction `json:"on_delete"`
+}
+
+type GetInboundRelationsResponse struct {
+	Data []InboundRelation `json:"data"`
+}
