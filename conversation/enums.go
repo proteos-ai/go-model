@@ -101,6 +101,10 @@ const (
 // MessageStatus is the delivery state of a Message. Inbound messages are
 // `received` on arrival; outbound messages start `pending` and flip to `sent`
 // or `failed` after the connector Send (published as message.updated).
+// `draft` is the human-review holding state for agent-prepared outbound
+// messages: nothing reaches the connector until a human sends it
+// (draft→pending→sent/failed) or rejects it (draft→rejected, terminal).
+// Draft edits keep status=draft; every transition publishes message.updated.
 type MessageStatus string
 
 const (
@@ -108,6 +112,8 @@ const (
 	MessageStatusPending  MessageStatus = "pending"
 	MessageStatusSent     MessageStatus = "sent"
 	MessageStatusFailed   MessageStatus = "failed"
+	MessageStatusDraft    MessageStatus = "draft"
+	MessageStatusRejected MessageStatus = "rejected"
 )
 
 // ConnectionScope says who a connection belongs to: an org-wide integration
@@ -134,13 +140,17 @@ const (
 
 // ConversationStatus is the lifecycle of a conversation. `ended` carries real
 // semantics for time-bounded media (a meeting that finished); `archived` is a
-// user-facing tidy-up state.
+// user-facing tidy-up state. `draft` marks a conversation minted BY a draft
+// message (originate-mode drafting) — hidden from the hub list by default and
+// flipped to active by the first successful draft send (or by inbound arrival
+// via the conversation upsert).
 type ConversationStatus string
 
 const (
 	ConversationStatusActive   ConversationStatus = "active"
 	ConversationStatusEnded    ConversationStatus = "ended"
 	ConversationStatusArchived ConversationStatus = "archived"
+	ConversationStatusDraft    ConversationStatus = "draft"
 )
 
 // TranscriptionStatus is the batch-transcription lifecycle. v1 transcribes

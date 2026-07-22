@@ -31,7 +31,13 @@ type Message struct {
 	Recipients []MessageRecipient `json:"recipients,omitempty"`
 	Content    []ContentBlock     `json:"content"`
 	Status     MessageStatus      `json:"status"`
-	OccurredAt time.Time          `json:"occurred_at" sortable:""`
+	// ReplyToMessageId records the message this one was targeted at (the
+	// thread-mode send anchor). Persisted so a draft remembers its target until
+	// the human sends it (the provider-side anchor is re-resolved at send time);
+	// stamped on directly-sent targeted replies too, as provenance. Empty for
+	// everything else.
+	ReplyToMessageId string    `json:"reply_to_message_id,omitempty"`
+	OccurredAt       time.Time `json:"occurred_at" sortable:""`
 	// Reactions is a READ-TIME projection aggregated from the message_reaction
 	// edges (never a stored column): empty for a message nobody reacted to and
 	// for channels without reactions — that IS the graceful degradation.

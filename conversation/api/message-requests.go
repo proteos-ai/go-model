@@ -42,6 +42,26 @@ type SendMessageRequest struct {
 	Attachments []common.FileRef `json:"attachments,omitempty"`
 }
 
+// UpdateDraftRequest edits a status=draft message — full replacement of the
+// editable surface (PUT semantics), the addressing MODE stays immutable (a
+// reply draft cannot become an originate draft). To/Cc/Bcc replace the draft's
+// recipients PRESENCE-based: any group present in the JSON (including an
+// explicit empty `[]` — a clear) replaces the stored set from exactly the
+// provided groups; all three absent keeps the stored recipients. Email
+// contact-address drafts only — room drafts address their venue, not people.
+// Subject applies only while the draft's conversation is itself status=draft
+// (mirroring Send, where subject is originate-only); Attachments replace the
+// draft's attachment rows (files pre-uploaded to storage like
+// SendMessageRequest).
+type UpdateDraftRequest struct {
+	To          []conversationmodel.Recipient    `json:"to,omitempty"`
+	Cc          []conversationmodel.Recipient    `json:"cc,omitempty"`
+	Bcc         []conversationmodel.Recipient    `json:"bcc,omitempty"`
+	Subject     string                           `json:"subject"`
+	Content     []conversationmodel.ContentBlock `json:"content"`
+	Attachments []common.FileRef                 `json:"attachments,omitempty"`
+}
+
 // GetManyMessagesQuery pages a conversation's messages; list order is
 // occurred_at (when it was said), not created_at.
 type GetManyMessagesQuery struct {
