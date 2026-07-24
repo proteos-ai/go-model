@@ -38,11 +38,13 @@ type SkillVersion struct {
 // SkillBundle pins the exact immutable storage Version the SKILL.md+files tar.gz
 // was uploaded as. file_id alone resolves to the File's latest version, which
 // would break old-version immutability — so FileVersionId is the real pin;
-// ChecksumSha256 / SizeInBytes are denormalized from that storage Version for
-// cheap display without a round-trip.
+// Checksum / SizeInBytes are denormalized from that storage Version for cheap
+// display without a round-trip. Checksum is the canonical "<algo>:<hex>" content
+// address (see common.FormatChecksum) — the same convention as hook/action/
+// component artifacts, so the CLI compares all of them uniformly.
 type SkillBundle struct {
-	FileId         string `json:"file_id"`
-	FileVersionId  string `json:"file_version_id"`
-	ChecksumSha256 string `json:"checksum_sha256"`
-	SizeInBytes    int64  `json:"size_in_bytes"`
+	FileId        string `json:"file_id"`
+	FileVersionId string `json:"file_version_id"`
+	Checksum      string `json:"checksum"`
+	SizeInBytes   int64  `json:"size_in_bytes"`
 }

@@ -22,7 +22,12 @@ type Hook struct {
 	Event      HookEvent      `json:"event" sortable:""`
 	IsActive   bool           `json:"is_active" sortable:""`
 	FileId     string         `json:"file_id" sortable:""`
-	CreatedAt  time.Time      `json:"created_at" sortable:""`
+	// Checksum is the content address of the deployed wasm blob in canonical
+	// "<algo>:<hex>" form (see common.FormatChecksum), stamped at deploy time.
+	// Lets the CLI's plan/deploy diff skip re-uploading an unchanged artifact.
+	// Empty on rows deployed before checksum stamping.
+	Checksum  string    `json:"checksum,omitempty"`
+	CreatedAt time.Time `json:"created_at" sortable:""`
 	CreatedBy  common.UserRef `json:"created_by"`
 	UpdatedAt  time.Time      `json:"updated_at" sortable:""`
 	UpdatedBy  common.UserRef `json:"updated_by"`

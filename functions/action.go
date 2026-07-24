@@ -33,8 +33,13 @@ type Action struct {
 	// Opt-in; defaults false. Only honoured for ActionScopeGlobal — the
 	// public dispatch query also gates on `scope = 'global'`.
 	IsPublic      bool                  `json:"is_public" sortable:""`
-	FileId        string                `json:"file_id" sortable:""`
-	ParamsSchema  []metamodel.Attribute `json:"params"`
+	FileId string `json:"file_id" sortable:""`
+	// Checksum is the content address of the deployed wasm blob in canonical
+	// "<algo>:<hex>" form (see common.FormatChecksum), stamped at deploy time.
+	// Lets the CLI's plan/deploy diff skip re-uploading an unchanged artifact.
+	// Empty on rows deployed before checksum stamping.
+	Checksum     string                `json:"checksum,omitempty"`
+	ParamsSchema []metamodel.Attribute `json:"params"`
 	ReturnsSchema []metamodel.Attribute `json:"returns"`
 	CreatedAt     time.Time             `json:"created_at" sortable:""`
 	CreatedBy     common.UserRef        `json:"created_by"`

@@ -18,6 +18,12 @@ type Component struct {
 	// SourceFileId points at a tar.gz of the component's source directory in
 	// storage-service, kept for provenance / rebuild. Not served to the runtime.
 	SourceFileId string `json:"source_file_id" sortable:""`
+	// BundleChecksum is the content address of the compiled ESM bundle in
+	// canonical "<algo>:<hex>" form (see common.FormatChecksum), stamped
+	// server-side at deploy time (never client-supplied). Lets the CLI's
+	// plan/deploy diff skip re-uploading an unchanged bundle. Empty on rows
+	// deployed before checksum stamping.
+	BundleChecksum string `json:"bundle_checksum,omitempty"`
 	// PropsSchema is the component's JSON Schema (jsonb). Drives the
 	// page-designer's props editor and runtime prop validation.
 	PropsSchema map[string]any `json:"props_schema"`

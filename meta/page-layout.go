@@ -417,6 +417,12 @@ type ComponentElement struct {
 	CommonProps
 	ComponentSlug string         `json:"component_slug"`
 	Props         map[string]any `json:"props,omitempty"`
+	// ReservedHeight is the placeholder height (px) the host reserves while the
+	// component bundle loads, used ONLY when Height is unset/auto. It does not
+	// constrain the rendered component — after load it auto-sizes to its real
+	// content. Reserving roughly the right space keeps the reveal from shoving
+	// the content below it. Nil falls back to the host's default (80px).
+	ReservedHeight *float64 `json:"reserved_height,omitempty"`
 }
 
 func (ComponentElement) isLayoutElement()              {}
