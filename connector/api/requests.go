@@ -66,14 +66,16 @@ type GetManyConnectionsResponse struct {
 // method rows land on function-service afterwards and are resolved lazily at
 // catalog time.
 type UpsertConnectorRequest struct {
-	Title          string                             `json:"title" validate:"required"`
-	Description    string                             `json:"description,omitempty"`
-	Icon           string                             `json:"icon,omitempty"`
-	CredentialKind connectormodel.CredentialKind      `json:"credential_kind" validate:"required"`
-	OAuth          *connectormodel.OAuthConfig        `json:"oauth,omitempty"`
-	ConfigSchema   []metamodel.Attribute              `json:"config_schema,omitempty"`
-	Methods        []connectormodel.MethodDeclaration `json:"methods,omitempty"`
-	ModuleSlug     string                             `json:"module_slug,omitempty"`
+	Title                    string                               `json:"title" validate:"required"`
+	Description              string                               `json:"description,omitempty"`
+	Icon                     string                               `json:"icon,omitempty"`
+	CredentialKind           connectormodel.CredentialKind        `json:"credential_kind" validate:"required"`
+	SupportedCredentialKinds []connectormodel.CredentialKind      `json:"supported_credential_kinds,omitempty"`
+	OAuth                    *connectormodel.OAuthConfig          `json:"oauth,omitempty"`
+	ServiceAccount           *connectormodel.ServiceAccountConfig `json:"service_account,omitempty"`
+	ConfigSchema             []metamodel.Attribute                `json:"config_schema,omitempty"`
+	Methods                  []connectormodel.MethodDeclaration   `json:"methods,omitempty"`
+	ModuleSlug               string                               `json:"module_slug,omitempty"`
 }
 
 type GetManyConnectorsQuery struct {

@@ -29,8 +29,16 @@ type Conversation struct {
 	// Summary is the conversation's markdown summary — auto-generated at
 	// transcript attach for meeting conversations, editable via PATCH. Empty
 	// means no summary.
-	Summary string             `json:"summary,omitempty"`
-	Status  ConversationStatus `json:"status" sortable:""`
+	Summary string `json:"summary,omitempty"`
+	// SummaryStatus is the generation lifecycle of Summary — `processing` while a
+	// run is in flight, so any client can render "Summarizing…" without owning
+	// the request that started it.
+	SummaryStatus ConversationSummaryStatus `json:"summary_status"`
+	// SummaryStartedAt stamps the current `processing` claim and clears on a
+	// terminal status. Bounds the claim (a process that dies mid-generation must
+	// not wedge the row) and lets a client show elapsed time while generating.
+	SummaryStartedAt *time.Time         `json:"summary_started_at,omitempty"`
+	Status           ConversationStatus `json:"status" sortable:""`
 	// RoomId links a room-borne thread (a Slack channel conversation) to its
 	// room directory row; empty for DMs, email, meeting, adhoc. Stamped at
 	// ingest; no FK — a pruned room leaves the id dangling by design.

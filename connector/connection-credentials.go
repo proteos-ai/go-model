@@ -37,6 +37,12 @@ const (
 	// CredentialKindBotToken: a long-lived bot token + bot user id (Slack-style
 	// integrations, once conversation connectors migrate here).
 	CredentialKindBotToken CredentialKind = "bot_token"
+	// CredentialKindServiceAccount: a Google-style service account. The raw SA
+	// key is a metadata-service variable referenced from Connection.Settings —
+	// this store holds only the broker-minted access token (JWT-bearer grant)
+	// plus the derived identity, so it is broker-managed like oauth, not a
+	// static kind.
+	CredentialKindServiceAccount CredentialKind = "service_account"
 )
 
 // redactedPlaceholder is what a set secret field reads as on the API —
@@ -117,6 +123,27 @@ func (credentials BotTokenCredentials) Redact() ConnectionCredentials {
 	return credentials
 }
 
+// ServiceAccountCredentials backs service-account connectors. It never holds
+// the raw SA key (that lives in a metadata-service variable, referenced via
+// Connection.Settings) — only the token the broker minted from it and the
+// identity derived from the key. ClientEmail is not a secret; the UI shows it
+// so users can tell service accounts apart.
+type ServiceAccountCredentials struct {
+	ClientEmail    string    `json:"client_email,omitempty"`
+	AccessToken    string    `json:"access_token,omitempty"`
+	TokenExpiresAt time.Time `json:"token_expires_at,omitzero"`
+}
+
+func (ServiceAccountCredentials) isConnectionCredentials() {}
+func (ServiceAccountCredentials) Kind() CredentialKind     { return CredentialKindServiceAccount }
+
+func (credentials ServiceAccountCredentials) Redact() ConnectionCredentials {
+	if credentials.AccessToken != "" {
+		credentials.AccessToken = redactedPlaceholder
+	}
+	return credentials
+}
+
 // credentialEnvelope is the serialized form: a self-describing {kind, data}
 // wrapper so the decode switch keys on the auth mechanism, decoupled from
 // connector_key. connector-service vault-encrypts this envelope's JSON into a
@@ -181,6 +208,12 @@ func DecodeConnectionCredentials(raw []byte) (ConnectionCredentials, error) {
 		return credentials, nil
 	case CredentialKindBotToken:
 		var credentials BotTokenCredentials
+		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
+			return nil, err
+		}
+		return credentials, nil
+	case CredentialKindServiceAccount:
+		var credentials ServiceAccountCredentials
 		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
 			return nil, err
 		}

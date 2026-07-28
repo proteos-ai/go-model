@@ -51,6 +51,11 @@ type Message struct {
 	// zero-valued for messages no child conversation forked from.
 	ChildConversationId string `json:"child_conversation_id,omitempty"`
 	ChildMessagesTotal  int    `json:"child_messages_total,omitempty"`
+	// EmailHeaders carries the message's RFC 5322 threading/routing headers —
+	// set by email connectors at ingest, nil on every other channel (and on
+	// pre-migration email rows). The send path reads them to thread replies
+	// without a provider round-trip.
+	EmailHeaders *EmailHeaders `json:"email_headers,omitempty"`
 	// Metadata carries channel-specific extras; for spoken messages (materialized
 	// transcription turns): start_ms, end_ms, confidence, attribution_source.
 	Metadata map[string]any `json:"metadata"`
@@ -60,6 +65,28 @@ type Message struct {
 	CreatedBy common.UserRef `json:"created_by"`
 	UpdatedAt time.Time      `json:"updated_at" sortable:""`
 	UpdatedBy common.UserRef `json:"updated_by"`
+}
+
+// EmailHeaders is the email-only header trio persisted per message (one JSONB
+// column, nil for non-email channels). All three are standard RFC 5322
+// headers, snake_cased; the email_headers scope is what disambiguates
+// message_id from the platform message id. In-Reply-To is deliberately NOT
+// stored: outgoing it is derived (= the anchor's message_id), incoming it is
+// consumed at ingest to link reply_to_message_id.
+//
+//   - MessageId: the Message-ID header — the mail's GLOBALLY unique identity
+//     (the same mail in two mailboxes shares it, unlike the provider-local
+//     ExternalMessageId). Inbound replies reference it via In-Reply-To.
+//   - ReplyTo: the raw Reply-To header — the per-message "respond over here"
+//     routing instruction (mailing lists, helpdesk tag addresses). Message-
+//     scoped on purpose: NEVER fold into the durable contact_address.
+//   - References: the ancestor Message-ID chain — the wire encoding of thread
+//     ancestry. Write-only plumbing: stored to be APPENDED to on reply
+//     (References = anchor's chain + anchor's message_id), never parsed.
+type EmailHeaders struct {
+	MessageId  string `json:"message_id,omitempty"`
+	ReplyTo    string `json:"reply_to,omitempty"`
+	References string `json:"references,omitempty"`
 }
 
 // ContentBlock is one unit of message content — what was SAID: text, or html
@@ -147,6 +174,13 @@ type NormalizedInboundMessage struct {
 	// "now" (the domain stamps ingestion time).
 	OccurredAt *time.Time     `json:"occurred_at,omitempty"`
 	Metadata   map[string]any `json:"metadata,omitempty"`
+	// EmailHeaders is the persisted RFC 5322 header trio (see EmailHeaders);
+	// email connectors populate it from the parsed envelope, nil elsewhere.
+	EmailHeaders *EmailHeaders `json:"email_headers,omitempty"`
+	// InReplyTo is the mail's In-Reply-To header value — consumed at ingest to
+	// resolve reply_to_message_id (the parent lives in the same conversation
+	// and is matched on email_headers.message_id), never persisted itself.
+	InReplyTo string `json:"in_reply_to,omitempty"`
 	// Headers is a small fixed allow-list of filter-relevant email headers
 	// (lowercased keys: auto-submitted, precedence, list-id, list-unsubscribe,
 	// x-auto-response-suppress, return-path), populated by email ingestors only

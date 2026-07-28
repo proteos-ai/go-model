@@ -50,6 +50,9 @@ type ConnectorKey string
 const (
 	ConnectorKeySlack ConnectorKey = "slack"
 	ConnectorKeyGmail ConnectorKey = "gmail"
+	// ConnectorKeyOutlook is the Microsoft Graph mailbox connector — the second
+	// native connector on the email channel, side by side with gmail.
+	ConnectorKeyOutlook ConnectorKey = "outlook"
 	// ConnectorKeyEcho is the in-repo stub connector used by tests/e2e to prove
 	// the registry + ingestor seam without an external dependency.
 	ConnectorKeyEcho ConnectorKey = "echo"
@@ -151,6 +154,23 @@ const (
 	ConversationStatusEnded    ConversationStatus = "ended"
 	ConversationStatusArchived ConversationStatus = "archived"
 	ConversationStatusDraft    ConversationStatus = "draft"
+)
+
+// ConversationSummaryStatus is the lifecycle of a conversation's generated
+// markdown summary. `none` is the resting default: no summary exists and none is
+// being produced — the state of every conversation that is not a
+// transcript-backed meeting, so it must not read like something is pending.
+// `processing` is claimed for the duration of one generation run (automatic at
+// transcript attach, or a manual regenerate) and released to `completed` /
+// `failed` when it lands, so clients render "Summarizing…" across reloads, tabs
+// and users without owning the request.
+type ConversationSummaryStatus string
+
+const (
+	ConversationSummaryStatusNone       ConversationSummaryStatus = "none"
+	ConversationSummaryStatusProcessing ConversationSummaryStatus = "processing"
+	ConversationSummaryStatusCompleted  ConversationSummaryStatus = "completed"
+	ConversationSummaryStatusFailed     ConversationSummaryStatus = "failed"
 )
 
 // TranscriptionStatus is the batch-transcription lifecycle. v1 transcribes

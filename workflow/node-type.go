@@ -49,6 +49,11 @@ const (
 	PropertyTypeFixedCollection   PropertyType = "fixed_collection"
 	PropertyTypeCredentialsSelect PropertyType = "credentials_select"
 	PropertyTypeButton            PropertyType = "button"
+	// PropertyTypeAttributeSchema edits a platform attribute list
+	// ([]metamodel.Attribute) — the editor renders the shared attribute schema
+	// builder. Used for declared structured outputs (agent node) and reusable by
+	// any node that authors a schema.
+	PropertyTypeAttributeSchema PropertyType = "attribute_schema"
 	// Wave 2 (editor support lands with Phase 3):
 	PropertyTypeResourceLocator      PropertyType = "resource_locator"
 	PropertyTypeResourceMapper       PropertyType = "resource_mapper"

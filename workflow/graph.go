@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	metamodel "go.proteos.ai/model/meta"
 )
 
 // NodeType identifies a node's registered type in the node catalog. Catalog
@@ -214,11 +216,35 @@ type ConnectorTriggerParams struct {
 }
 
 // AgentActionParams runs an agent (in agent-service) and waits for it to finish.
-// Kickoff selects how the agent is started — a plain message turn, or an
-// Anthropic-graded outcome loop.
+// The parameters are flat (descriptor-driven form fields, gated by
+// display_options on kickoff_type / *_source), not the former nested kickoff
+// union — the nested AgentKickoff below survives only as the normalized
+// execution shape the node builds from these fields. Renames from the nested
+// wire shape: kickoff.type → kickoff_type; the message slot's source/prompt_key
+// gained a message_ prefix (they now sit flat beside the outcome fields);
+// rubric.{type,content,file_id} → rubric_type/rubric_content/rubric_file_id.
+//
+// OutputSchema declares the node's structured output as platform attributes
+// (converted to JSON Schema at run time and enforced via the set_output client
+// tool); IsOutputRequired makes the run fail when the agent finishes without
+// setting it.
 type AgentActionParams struct {
-	AgentKey string       `json:"agent_key"`
-	Kickoff  AgentKickoff `json:"kickoff"`
+	AgentKey             string                `json:"agent_key"`
+	KickoffType          KickoffType           `json:"kickoff_type"`
+	MessageSource        KickoffSource         `json:"message_source,omitempty"`
+	MessageText          string                `json:"message_text,omitempty"`
+	MessagePromptKey     string                `json:"message_prompt_key,omitempty"`
+	DescriptionSource    KickoffSource         `json:"description_source,omitempty"`
+	Description          string                `json:"description,omitempty"`
+	DescriptionPromptKey string                `json:"description_prompt_key,omitempty"`
+	RubricSource         KickoffSource         `json:"rubric_source,omitempty"`
+	RubricType           string                `json:"rubric_type,omitempty"` // "text" | "file"
+	RubricContent        string                `json:"rubric_content,omitempty"`
+	RubricFileId         string                `json:"rubric_file_id,omitempty"`
+	RubricPromptKey      string                `json:"rubric_prompt_key,omitempty"`
+	MaxIterations        *int                  `json:"max_iterations,omitempty"`
+	OutputSchema         []metamodel.Attribute `json:"output_schema,omitempty"`
+	IsOutputRequired     bool                  `json:"is_output_required,omitempty"`
 }
 
 // KickoffType discriminates how an agent node starts the agent.
@@ -239,8 +265,10 @@ const (
 	KickoffSourcePrompt KickoffSource = "prompt"
 )
 
-// AgentKickoff is the tagged union of agent-node kickoffs. Exactly one of Message
-// / Outcome is populated, selected by Type.
+// AgentKickoff is the tagged union of agent-node kickoffs — the NORMALIZED
+// execution shape the node builds from the flat AgentActionParams (expressions
+// resolved, prompts folded in). Exactly one of Message / Outcome is populated,
+// selected by Type. It is not a wire params shape.
 type AgentKickoff struct {
 	Type    KickoffType     `json:"type"`
 	Message *MessageKickoff `json:"message,omitempty"`

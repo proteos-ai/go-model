@@ -1,6 +1,7 @@
 package connectormodel
 
 import (
+	"slices"
 	"time"
 
 	"go.proteos.ai/model/common"
@@ -24,9 +25,17 @@ type ConnectorManifest struct {
 	Description    string         `json:"description,omitempty"`
 	Icon           string         `json:"icon,omitempty"`
 	CredentialKind CredentialKind `json:"credential_kind"`
+	// SupportedCredentialKinds lists every kind a connection of this connector
+	// may use; empty means exactly [CredentialKind] (single-kind connectors
+	// never set it). CredentialKind stays the primary/default kind and must be
+	// a member. Read through EffectiveCredentialKinds.
+	SupportedCredentialKinds []CredentialKind `json:"supported_credential_kinds,omitempty"`
 	// OAuth carries the provider config the broker needs; required when
-	// CredentialKind is oauth, nil otherwise.
+	// oauth is a supported kind, nil otherwise.
 	OAuth *OAuthConfig `json:"oauth,omitempty"`
+	// ServiceAccount carries the service-account wiring; required when
+	// service_account is a supported kind, nil otherwise.
+	ServiceAccount *ServiceAccountConfig `json:"service_account,omitempty"`
 	// ConfigSchema declares the user-supplied part of Connection.Settings in
 	// the platform's attribute language, so the UI can render a form and the
 	// service can validate.
@@ -36,7 +45,12 @@ type ConnectorManifest struct {
 	// single per-environment callback the provider app must whitelist. Shown
 	// in the connect wizard so operators can register it without digging
 	// through deployment config.
-	OAuthRedirectUri string          `json:"oauth_redirect_uri,omitempty"`
+	OAuthRedirectUri string `json:"oauth_redirect_uri,omitempty"`
+	// HasDefaultAppCredentials is COMPUTED on API reads (never stored): true
+	// when the environment ships platform-default OAuth app credentials for
+	// this connector's variable keys, so the connect wizard can skip
+	// collecting them. Org variables always override the platform default.
+	HasDefaultAppCredentials bool `json:"has_default_app_credentials,omitempty"`
 	Origin           ConnectorOrigin `json:"origin" sortable:""`
 	// ModuleSlug names the deploying module when Origin is custom; empty for
 	// pre-built connectors.
@@ -46,6 +60,20 @@ type ConnectorManifest struct {
 	CreatedBy  common.UserRef  `json:"created_by"`
 	UpdatedAt  time.Time       `json:"updated_at" sortable:""`
 	UpdatedBy  common.UserRef  `json:"updated_by"`
+}
+
+// EffectiveCredentialKinds resolves the supported-kinds list: an unset list
+// means the connector supports exactly its primary CredentialKind.
+func (manifest ConnectorManifest) EffectiveCredentialKinds() []CredentialKind {
+	if len(manifest.SupportedCredentialKinds) == 0 {
+		return []CredentialKind{manifest.CredentialKind}
+	}
+	return manifest.SupportedCredentialKinds
+}
+
+// HasCredentialKind reports whether connections of this connector may use kind.
+func (manifest ConnectorManifest) HasCredentialKind(kind CredentialKind) bool {
+	return slices.Contains(manifest.EffectiveCredentialKinds(), kind)
 }
 
 // ConnectorOrigin distinguishes compiled-in Go connectors from module-deployed
@@ -87,6 +115,18 @@ type OAuthConfig struct {
 	// IdentityProbe derives external_account_id + display_name after the code
 	// exchange; nil means the connection keeps an empty external identity.
 	IdentityProbe *IdentityProbe `json:"identity_probe,omitempty"`
+}
+
+// ServiceAccountConfig is the per-connector service-account wiring. Like the
+// OAuth app credentials, the SA key itself is a metadata-service variable —
+// KeyVariableKey names the DEFAULT variable; each connection may point at a
+// different one via settings["service_account_key_variable"], so one org can
+// connect any number of service accounts.
+type ServiceAccountConfig struct {
+	KeyVariableKey string `json:"key_variable_key"`
+	// Scopes is the scope claim of the JWT-bearer assertion the broker signs
+	// when minting an access token from the key.
+	Scopes []string `json:"scopes"`
 }
 
 // IdentityProbe describes where the broker reads the remote account identity
