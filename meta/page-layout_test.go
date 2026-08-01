@@ -48,7 +48,9 @@ func TestPageLayout_RoundTrip(t *testing.T) {
           { "id": "activity", "label": "Activity",
             "content": { "type": "component", "component_slug": "activity-feed" } },
           { "id": "contacts", "label": "Contacts",
-            "content": { "type": "related_list", "related_entity_slug": "contact", "via_attribute": "accountId", "follows_parent_edit_mode": false } }
+            "content": { "type": "related_list", "related_entity_slug": "contact", "via_attribute": "accountId", "follows_parent_edit_mode": false } },
+          { "id": "primary", "label": "Primary contact",
+            "content": { "type": "related_record", "related_entity_slug": "contact", "via_attribute": "accountId", "page_slug": "contact-detail" } }
         ]
       }
     ]
@@ -94,6 +96,19 @@ func TestPageLayout_RoundTrip(t *testing.T) {
 		if related.FollowsParentEditMode == nil || *related.FollowsParentEditMode {
 			t.Errorf("followsParentEditMode: want false, got %v", related.FollowsParentEditMode)
 		}
+		record, ok := tabs.Tabs[2].Content.(*RelatedRecordElement)
+		if !ok {
+			t.Fatalf("tabs[2].content: want *RelatedRecordElement, got %T", tabs.Tabs[2].Content)
+		}
+		if record.RelatedEntitySlug != "contact" || record.ViaAttribute != "accountId" {
+			t.Errorf("relation: want contact.accountId, got %s.%s", record.RelatedEntitySlug, record.ViaAttribute)
+		}
+		if record.PageSlug != "contact-detail" {
+			t.Errorf("pageSlug: want contact-detail, got %q", record.PageSlug)
+		}
+		if record.FollowsParentEditMode != nil {
+			t.Errorf("followsParentEditMode: want nil (defaults to follow), got %v", *record.FollowsParentEditMode)
+		}
 	}
 
 	if layout.SidePanel == nil {
@@ -110,6 +125,26 @@ func TestPageLayout_RoundTrip(t *testing.T) {
 	var roundTripped PageLayout
 	if err := json.Unmarshal(out, &roundTripped); err != nil {
 		t.Fatalf("re-unmarshal: %v", err)
+	}
+}
+
+// An unpinned related_record leaves page_slug off the wire entirely, so the
+// renderer falls back to the related entity's default record page.
+func TestRelatedRecordElement_OmitsUnpinnedPageSlug(t *testing.T) {
+	src := `{"version":1,"main":{"type":"related_record","related_entity_slug":"contact","via_attribute":"accountId"}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if _, ok := layout.Main.(*RelatedRecordElement); !ok {
+		t.Fatalf("main: want *RelatedRecordElement, got %T", layout.Main)
+	}
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(out), "page_slug") {
+		t.Errorf("page_slug: want omitted, got %s", string(out))
 	}
 }
 

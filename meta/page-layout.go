@@ -18,9 +18,12 @@ const (
 	LayoutElementTypeTabs        LayoutElementType = "tabs"
 	LayoutElementTypeField       LayoutElementType = "field"
 	LayoutElementTypeRelatedList LayoutElementType = "related_list"
-	LayoutElementTypeComponent   LayoutElementType = "component"
-	LayoutElementTypeDivider     LayoutElementType = "divider"
-	LayoutElementTypeText        LayoutElementType = "text"
+	// LayoutElementTypeRelatedRecord is the singular counterpart of
+	// LayoutElementTypeRelatedList: one related record, rendered as a page.
+	LayoutElementTypeRelatedRecord LayoutElementType = "related_record"
+	LayoutElementTypeComponent     LayoutElementType = "component"
+	LayoutElementTypeDivider       LayoutElementType = "divider"
+	LayoutElementTypeText          LayoutElementType = "text"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -31,6 +34,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeTabs,
 	LayoutElementTypeField,
 	LayoutElementTypeRelatedList,
+	LayoutElementTypeRelatedRecord,
 	LayoutElementTypeComponent,
 	LayoutElementTypeDivider,
 	LayoutElementTypeText,
@@ -410,6 +414,37 @@ type RelatedListElement struct {
 func (RelatedListElement) isLayoutElement()              {}
 func (RelatedListElement) LayoutType() LayoutElementType { return LayoutElementTypeRelatedList }
 
+// ────────────────────────────────────────────────── RelatedRecord ──
+
+// RelatedRecordElement renders the FIRST record related to the current page
+// record, laid out with a record page of its own. The relation is addressed
+// exactly like RelatedListElement — inbound: `RelatedEntitySlug` names the
+// entity to pull from and `ViaAttribute` names the relation attribute on that
+// entity pointing back at the current one — but only the first match is
+// rendered (oldest first, so the choice is stable).
+//
+// `PageSlug` optionally pins which record page supplies the layout; when
+// omitted (or dangling) the renderer falls back to the related entity's
+// default record page. `FollowsParentEditMode` mirrors RelatedListElement:
+// nil/true = the element enters edit mode together with the host page,
+// false = independent, editable only through its own hover control. Either
+// way the element saves the related record itself — the host page's Save
+// never covers it.
+//
+// The element carries no chrome of its own: it renders the nested page bare.
+// Wrap it in a SectionElement for a title or collapse affordance.
+type RelatedRecordElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	RelatedEntitySlug     string `json:"related_entity_slug"`
+	ViaAttribute          string `json:"via_attribute"`
+	PageSlug              string `json:"page_slug,omitempty"`
+	FollowsParentEditMode *bool  `json:"follows_parent_edit_mode,omitempty"`
+}
+
+func (RelatedRecordElement) isLayoutElement()              {}
+func (RelatedRecordElement) LayoutType() LayoutElementType { return LayoutElementTypeRelatedRecord }
+
 // ────────────────────────────────────────────────────── Component ──
 
 type ComponentElement struct {
@@ -578,6 +613,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeRelatedList:
 		var v RelatedListElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeRelatedRecord:
+		var v RelatedRecordElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

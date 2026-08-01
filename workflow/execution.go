@@ -49,10 +49,14 @@ const (
 	TriggerKindSchedule TriggerKind = "schedule"
 	TriggerKindManual   TriggerKind = "manual"
 	TriggerKindWebhook  TriggerKind = "webhook"
-	TriggerKindEvent    TriggerKind = "event"
-	TriggerKindMessage  TriggerKind = "message"
+	// TriggerKindEvent fires on a data-service RECORD event. The generic
+	// bus-topic equivalent is TriggerKindPlatformEvent.
+	TriggerKindEvent   TriggerKind = "event"
+	TriggerKindMessage TriggerKind = "message"
 	// TriggerKindConnector fires on a connector-service sync.item_changed event.
 	TriggerKindConnector TriggerKind = "connector"
+	// TriggerKindPlatformEvent fires on any catalogued platform bus topic.
+	TriggerKindPlatformEvent TriggerKind = "platform_event"
 	// TriggerKindWorkflow marks a child execution started by a parent workflow's
 	// execute-workflow intrinsic.
 	TriggerKindWorkflow TriggerKind = "workflow"

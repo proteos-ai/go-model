@@ -1,6 +1,9 @@
 package agentmodel
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // GenerationRequest is a single, stateless model call: send content blocks, get
 // one message back. It is the synchronous, no-persistence counterpart to a Session
@@ -15,6 +18,10 @@ type GenerationRequest struct {
 	System string `json:"system,omitempty"`
 	// Content is the message body the model answers — text and file blocks.
 	Content []ContentBlock `json:"content"`
+	// OutputSchema, when non-empty, is the JSON Schema of the structured reply the
+	// caller expects. The provider forces the model to answer through a
+	// schema-constrained tool; the reply's structured value comes back as Output.
+	OutputSchema json.RawMessage `json:"output_schema,omitempty"`
 }
 
 // ModelStopReason is why the model stopped generating. An open string so a new
@@ -31,6 +38,9 @@ type GenerationResult struct {
 	StopReason ModelStopReason `json:"stop_reason,omitempty"`
 	ModelId    string          `json:"model_id"`
 	Usage      ModelUsage      `json:"usage"`
+	// Output is the structured value of a schema-constrained generation (the forced
+	// tool's input, verbatim). Nil unless the request carried an OutputSchema.
+	Output json.RawMessage `json:"output,omitempty"`
 }
 
 // Text concatenates the text of all blocks — the common case where the caller

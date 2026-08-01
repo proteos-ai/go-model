@@ -141,6 +141,32 @@ const (
 	ConnectionStatusRevoked ConnectionStatus = "revoked"
 )
 
+// ConnectionSyncStatus is the lifecycle of a historical backfill ("sync all")
+// on an email connection, carried as the string `sync_status` key in
+// Connection.Settings — no dedicated column. An absent key reads as `none`:
+// the connection has never been synced, and nothing is pending. `in_progress`
+// is claimed synchronously before the trigger request returns, so clients
+// render "Syncing…" across reloads and users without owning the request.
+type ConnectionSyncStatus string
+
+const (
+	ConnectionSyncStatusNone       ConnectionSyncStatus = "none"
+	ConnectionSyncStatusInProgress ConnectionSyncStatus = "in_progress"
+	ConnectionSyncStatusDone       ConnectionSyncStatus = "done"
+	ConnectionSyncStatusFailed     ConnectionSyncStatus = "failed"
+)
+
+// ConnectionSyncRange is how far back a historical backfill reaches, chosen by
+// the user at trigger time. `all` means the entire mailbox history.
+type ConnectionSyncRange string
+
+const (
+	ConnectionSyncRange30d  ConnectionSyncRange = "30d"
+	ConnectionSyncRange90d  ConnectionSyncRange = "90d"
+	ConnectionSyncRange365d ConnectionSyncRange = "365d"
+	ConnectionSyncRangeAll  ConnectionSyncRange = "all"
+)
+
 // ConversationStatus is the lifecycle of a conversation. `ended` carries real
 // semantics for time-bounded media (a meeting that finished); `archived` is a
 // user-facing tidy-up state. `draft` marks a conversation minted BY a draft

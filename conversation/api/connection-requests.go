@@ -23,6 +23,16 @@ type UpdateConnectionRequest struct {
 	Settings *map[string]any `json:"settings,omitempty"`
 }
 
+// SyncConnectionRequest triggers a historical backfill for an email connection
+// (POST /connections/:id/sync): fetch provider messages received within Range
+// and drive each through the normal ingest funnel, so conversation filters,
+// dedupe, and agent-listener dispatch apply exactly as for live mail. Progress
+// lands in Connection.Settings under the sync_* keys; poll GET /connections/:id
+// until sync_status leaves in_progress.
+type SyncConnectionRequest struct {
+	Range conversationmodel.ConnectionSyncRange `json:"range" validate:"required,oneof=30d 90d 365d all"`
+}
+
 // InstallConnectionResponse is returned by POST /connections/:id/install: the
 // browser opens AuthorizationUrl in a popup; install completion lands on the
 // connector's pre-auth oauth-callback ingest route.

@@ -16,13 +16,20 @@ import (
 type NodeType string
 
 const (
-	NodeTypeTriggerCron      NodeType = "trigger.cron"
-	NodeTypeTriggerManual    NodeType = "trigger.manual"
-	NodeTypeTriggerWebhook   NodeType = "trigger.webhook"
-	NodeTypeTriggerEvent     NodeType = "trigger.event"
-	NodeTypeTriggerMessage   NodeType = "trigger.message"
-	NodeTypeTriggerConnector NodeType = "trigger.connector"
-	NodeTypeActionAgent      NodeType = "action.agent"
+	NodeTypeTriggerCron    NodeType = "trigger.cron"
+	NodeTypeTriggerManual  NodeType = "trigger.manual"
+	NodeTypeTriggerWebhook NodeType = "trigger.webhook"
+	// NodeTypeTriggerEvent is the RECORD event trigger (entity + verbs). The
+	// generic bus-topic trigger is NodeTypeTriggerPlatformEvent.
+	NodeTypeTriggerEvent         NodeType = "trigger.event"
+	NodeTypeTriggerMessage       NodeType = "trigger.message"
+	NodeTypeTriggerConnector     NodeType = "trigger.connector"
+	NodeTypeTriggerPlatformEvent NodeType = "trigger.platform-event"
+	NodeTypeActionAgent          NodeType = "action.agent"
+	// NodeTypeModelCall is the host-executed model-call node — typed here (unlike
+	// the other catalog nodes) because workflow-service validates its parameters
+	// at save time.
+	NodeTypeModelCall NodeType = "proteos-nodes-core.model-call"
 )
 
 // Interpreter intrinsics — catalog-registered node types the interpreter
@@ -215,6 +222,22 @@ type ConnectorTriggerParams struct {
 	ConnectionId string `json:"connection_id,omitempty"`
 }
 
+// PlatformEventTriggerParams fires the workflow when an event whose type is in
+// EventTypes arrives on the named platform bus topic. Unlike EventTriggerParams
+// (records only), any PerOrg topic in the event catalog is a valid target. The
+// event payload becomes the trigger item.
+//
+// EventTypes may hold the single wildcard "*" to match every type on the topic
+// — custom topics published by the events-publish node have no catalogued type
+// list, so there is nothing to enumerate.
+type PlatformEventTriggerParams struct {
+	Topic      string   `json:"topic"`
+	EventTypes []string `json:"event_types"`
+}
+
+// PlatformEventWildcard matches any event type on the subscribed topic.
+const PlatformEventWildcard = "*"
+
 // AgentActionParams runs an agent (in agent-service) and waits for it to finish.
 // The parameters are flat (descriptor-driven form fields, gated by
 // display_options on kickoff_type / *_source), not the former nested kickoff
@@ -316,6 +339,47 @@ func DecodeAgentActionParams(raw json.RawMessage) (AgentActionParams, error) {
 	return params, nil
 }
 
+// ModelCallActionParams is the flat, descriptor-driven parameter shape of the
+// proteos-nodes-core.model-call node: one stateless LLM call per input item.
+// The prompt and the optional system instruction are independently sourced —
+// typed inline ("manual", Liquid-resolved per item) or resolved verbatim from a
+// reusable Prompt by key ("prompt"). When HasStructuredOutput is set,
+// OutputSchema declares the reply's shape as platform attributes: generation is
+// schema-constrained (forced tool) AND the node validates the returned JSON,
+// failing the item after one automatic repair attempt.
+type ModelCallActionParams struct {
+	ModelId             string                `json:"model_id,omitempty"` // empty = service default
+	Temperature         *float64              `json:"temperature,omitempty"`
+	MaxTokens           *int                  `json:"max_tokens,omitempty"`
+	PromptSource        KickoffSource         `json:"prompt_source,omitempty"`
+	PromptText          string                `json:"prompt_text,omitempty"`
+	PromptKey           string                `json:"prompt_key,omitempty"`
+	SystemSource        SystemSource          `json:"system_source,omitempty"`
+	SystemText          string                `json:"system_text,omitempty"`
+	SystemPromptKey     string                `json:"system_prompt_key,omitempty"`
+	HasStructuredOutput bool                  `json:"has_structured_output,omitempty"`
+	OutputSchema        []metamodel.Attribute `json:"output_schema,omitempty"`
+}
+
+// SystemSource selects where a model call's optional system instruction comes
+// from. Empty defaults to none (backward compatible).
+type SystemSource string
+
+const (
+	SystemSourceNone   SystemSource = "none"
+	SystemSourceManual SystemSource = "manual"
+	SystemSourcePrompt SystemSource = "prompt"
+)
+
+// DecodeModelCallActionParams decodes a model-call node's raw parameters.
+func DecodeModelCallActionParams(raw json.RawMessage) (ModelCallActionParams, error) {
+	var params ModelCallActionParams
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return ModelCallActionParams{}, err
+	}
+	return params, nil
+}
+
 // DecodeCronTriggerParams decodes a trigger.cron node's raw parameters.
 func DecodeCronTriggerParams(raw json.RawMessage) (CronTriggerParams, error) {
 	var params CronTriggerParams
@@ -339,6 +403,16 @@ func DecodeEventTriggerParams(raw json.RawMessage) (EventTriggerParams, error) {
 	var params EventTriggerParams
 	if err := json.Unmarshal(raw, &params); err != nil {
 		return EventTriggerParams{}, err
+	}
+	return params, nil
+}
+
+// DecodePlatformEventTriggerParams decodes a trigger.platform-event node's raw
+// parameters.
+func DecodePlatformEventTriggerParams(raw json.RawMessage) (PlatformEventTriggerParams, error) {
+	var params PlatformEventTriggerParams
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return PlatformEventTriggerParams{}, err
 	}
 	return params, nil
 }

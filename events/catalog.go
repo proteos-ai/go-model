@@ -2,22 +2,30 @@ package eventmodel
 
 import "strings"
 
-// displayNames maps known platform topic names to friendly labels. The set of
-// topics is ALWAYS discovered live from Redis (SCAN) — this map only supplies
-// nicer labels on top. record.<entity>.events is dynamic (one stream per
-// entity), so it is matched structurally below rather than enumerated here.
+// displayNames maps known platform topic names to friendly labels. Live topic
+// DISCOVERY still happens against Redis — this map only supplies nicer labels
+// on top, for both the live view and the catalog. record.<entity>.events is
+// dynamic (one stream per entity), so it is matched structurally below rather
+// than enumerated here.
 //
-// Catalog sources are fragmented across the codebase by design:
-//   - organization.events  → accountmodel (Global; excluded from per-org views)
-//   - record.<entity>.events → datamodel (PerOrg, dynamic per entity slug)
-//   - hooks.events / actions.events → function-service-private
-//
-// We do not import those (it would invert dependency direction); we re-declare
-// the bare names here purely for display.
+// The topics themselves are declared in go.proteos.ai/events/topics, which this
+// package deliberately does NOT import: eventmodel is a leaf the SDK-facing
+// shapes live in, and importing the transport's topic catalogue would invert
+// the dependency direction. The bare names are re-declared here purely for
+// display; event-service performs the actual registry merge.
 var displayNames = map[string]string{
-	"organization.events": "Organization Events",
-	"hooks.events":        "Hook Events",
-	"actions.events":      "Action Events",
+	"organization.events":         "Organization Events",
+	"hooks.events":                "Hook Events",
+	"actions.events":              "Action Events",
+	"message.events":              "Message Events",
+	"reaction.events":             "Reaction Events",
+	"conversation.events":         "Conversation Events",
+	"conversation.domain.events":  "Conversation Milestones",
+	"contact.events":              "Contact Events",
+	"connection.events":           "Connection Events",
+	"connector.events":            "Connector Events",
+	"connector-sync.events":       "Connector Sync Events",
+	"file-version-content.events": "File Content Events",
 }
 
 // DisplayNameFor returns a friendly label for a topic name, falling back to the
