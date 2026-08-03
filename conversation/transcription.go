@@ -21,8 +21,14 @@ type Transcription struct {
 	AudioFileId      string              `json:"audio_file_id"`
 	TranscriptFileId string              `json:"transcript_file_id"`
 	Status           TranscriptionStatus `json:"status" sortable:""`
-	Language         string              `json:"language"`
-	DurationSeconds  float64             `json:"duration_seconds"`
+	// ReviewStatus is the post-transcription review lifecycle (the
+	// glossary-aware mistranscription pass) — see TranscriptionReviewStatus.
+	// ReviewStartedAt stamps a `processing` claim so a run that died can be
+	// reclaimed after the TTL.
+	ReviewStatus    TranscriptionReviewStatus `json:"review_status" sortable:""`
+	ReviewStartedAt *time.Time                `json:"review_started_at,omitempty"`
+	Language        string                    `json:"language"`
+	DurationSeconds float64                   `json:"duration_seconds"`
 	// Model is the provider model that ran (e.g. nova-3), recorded for
 	// reproducibility.
 	Model      string `json:"model"`

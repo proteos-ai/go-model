@@ -42,7 +42,10 @@ type Workflow struct {
 	Key         string         `json:"key" sortable:""`
 	Name        string         `json:"name" sortable:""`
 	Description string         `json:"description"`
-	Status      WorkflowStatus `json:"status" sortable:""`
+	// ModuleSlug attributes the workflow to the module that deployed it
+	// (empty = not module-owned), mirroring every other module-deployable kind.
+	ModuleSlug string         `json:"module_slug"`
+	Status     WorkflowStatus `json:"status" sortable:""`
 	Graph       WorkflowGraph  `json:"graph"`
 	Version     int            `json:"version"`
 	CreatedAt   time.Time      `json:"created_at" sortable:""`

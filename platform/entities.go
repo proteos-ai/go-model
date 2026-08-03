@@ -72,6 +72,9 @@ var platformEntities = []PlatformEntity{
 	{Slug: "agent-listeners", Name: "Agent Listeners"},
 	{Slug: "transcriptions", Name: "Transcriptions"},
 	{Slug: "glossary-terms", Name: "Glossary Terms"},
+	// Mistranscribed terms proposed by the post-transcription review pass,
+	// awaiting human accept/reject.
+	{Slug: "mistranscribed-terms", Name: "Mistranscribed Terms"},
 	// The person-level identity layer (contacts + contact addresses + merges +
 	// permission ledger + erasure requests) — one grant governs the whole
 	// aggregate.
@@ -79,6 +82,9 @@ var platformEntities = []PlatformEntity{
 	// Ingest-time filter rules + their drop-audit events — one grant governs
 	// the whole aggregate.
 	{Slug: "conversation-filters", Name: "Conversation Filters"},
+	// The org's conversation taxonomy — read by the pre-summary classifier to
+	// type meetings and pick a per-type summary prompt.
+	{Slug: "conversation-types", Name: "Conversation Types"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},

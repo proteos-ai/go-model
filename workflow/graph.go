@@ -252,22 +252,25 @@ const PlatformEventWildcard = "*"
 // tool); IsOutputRequired makes the run fail when the agent finishes without
 // setting it.
 type AgentActionParams struct {
-	AgentKey             string                `json:"agent_key"`
-	KickoffType          KickoffType           `json:"kickoff_type"`
-	MessageSource        KickoffSource         `json:"message_source,omitempty"`
-	MessageText          string                `json:"message_text,omitempty"`
-	MessagePromptKey     string                `json:"message_prompt_key,omitempty"`
-	DescriptionSource    KickoffSource         `json:"description_source,omitempty"`
-	Description          string                `json:"description,omitempty"`
-	DescriptionPromptKey string                `json:"description_prompt_key,omitempty"`
-	RubricSource         KickoffSource         `json:"rubric_source,omitempty"`
-	RubricType           string                `json:"rubric_type,omitempty"` // "text" | "file"
-	RubricContent        string                `json:"rubric_content,omitempty"`
-	RubricFileId         string                `json:"rubric_file_id,omitempty"`
-	RubricPromptKey      string                `json:"rubric_prompt_key,omitempty"`
-	MaxIterations        *int                  `json:"max_iterations,omitempty"`
-	OutputSchema         []metamodel.Attribute `json:"output_schema,omitempty"`
-	IsOutputRequired     bool                  `json:"is_output_required,omitempty"`
+	AgentKey                string                `json:"agent_key"`
+	KickoffType             KickoffType           `json:"kickoff_type"`
+	MessageSource           KickoffSource         `json:"message_source,omitempty"`
+	MessageText             string                `json:"message_text,omitempty"`
+	MessagePromptKey        string                `json:"message_prompt_key,omitempty"`
+	MessagePromptInputs     map[string]any        `json:"message_prompt_inputs,omitempty"`
+	DescriptionSource       KickoffSource         `json:"description_source,omitempty"`
+	Description             string                `json:"description,omitempty"`
+	DescriptionPromptKey    string                `json:"description_prompt_key,omitempty"`
+	DescriptionPromptInputs map[string]any        `json:"description_prompt_inputs,omitempty"`
+	RubricSource            KickoffSource         `json:"rubric_source,omitempty"`
+	RubricType              string                `json:"rubric_type,omitempty"` // "text" | "file"
+	RubricContent           string                `json:"rubric_content,omitempty"`
+	RubricFileId            string                `json:"rubric_file_id,omitempty"`
+	RubricPromptKey         string                `json:"rubric_prompt_key,omitempty"`
+	RubricPromptInputs      map[string]any        `json:"rubric_prompt_inputs,omitempty"`
+	MaxIterations           *int                  `json:"max_iterations,omitempty"`
+	OutputSchema            []metamodel.Attribute `json:"output_schema,omitempty"`
+	IsOutputRequired        bool                  `json:"is_output_required,omitempty"`
 }
 
 // KickoffType discriminates how an agent node starts the agent.
@@ -342,8 +345,10 @@ func DecodeAgentActionParams(raw json.RawMessage) (AgentActionParams, error) {
 // ModelCallActionParams is the flat, descriptor-driven parameter shape of the
 // proteos-nodes-core.model-call node: one stateless LLM call per input item.
 // The prompt and the optional system instruction are independently sourced —
-// typed inline ("manual", Liquid-resolved per item) or resolved verbatim from a
-// reusable Prompt by key ("prompt"). When HasStructuredOutput is set,
+// typed inline ("manual", Liquid-resolved per item) or resolved from a reusable
+// Prompt by key ("prompt"; a prompt with declared inputs is materialized from
+// the sibling *_prompt_inputs values, one without passes through verbatim).
+// When HasStructuredOutput is set,
 // OutputSchema declares the reply's shape as platform attributes: generation is
 // schema-constrained (forced tool) AND the node validates the returned JSON,
 // failing the item after one automatic repair attempt.
@@ -354,9 +359,11 @@ type ModelCallActionParams struct {
 	PromptSource        KickoffSource         `json:"prompt_source,omitempty"`
 	PromptText          string                `json:"prompt_text,omitempty"`
 	PromptKey           string                `json:"prompt_key,omitempty"`
+	PromptInputs        map[string]any        `json:"prompt_inputs,omitempty"`
 	SystemSource        SystemSource          `json:"system_source,omitempty"`
 	SystemText          string                `json:"system_text,omitempty"`
 	SystemPromptKey     string                `json:"system_prompt_key,omitempty"`
+	SystemPromptInputs  map[string]any        `json:"system_prompt_inputs,omitempty"`
 	HasStructuredOutput bool                  `json:"has_structured_output,omitempty"`
 	OutputSchema        []metamodel.Attribute `json:"output_schema,omitempty"`
 }

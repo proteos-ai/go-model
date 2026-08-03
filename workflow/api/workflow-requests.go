@@ -17,6 +17,7 @@ type CreateWorkflowRequest struct {
 	Key         string                      `json:"key" validate:"required"`
 	Name        string                      `json:"name" validate:"required"`
 	Description string                      `json:"description"`
+	ModuleSlug  string                      `json:"module_slug"`
 	Graph       workflowmodel.WorkflowGraph `json:"graph"`
 }
 
@@ -40,6 +41,7 @@ type GetManyWorkflowsQuery struct {
 	Name         *string `json:"name" form:"name" db:"name"`
 	NameContains *string `json:"name[contains]" form:"name[contains]" db:"name" op:"contains"`
 	Status       *string `json:"status" form:"status" db:"status"`
+	ModuleSlug   *string `json:"module_slug" form:"module_slug" db:"module_slug"`
 	common.Pagination
 	common.Sorting
 }

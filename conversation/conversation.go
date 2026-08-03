@@ -37,8 +37,12 @@ type Conversation struct {
 	// SummaryStartedAt stamps the current `processing` claim and clears on a
 	// terminal status. Bounds the claim (a process that dies mid-generation must
 	// not wedge the row) and lets a client show elapsed time while generating.
-	SummaryStartedAt *time.Time         `json:"summary_started_at,omitempty"`
-	Status           ConversationStatus `json:"status" sortable:""`
+	SummaryStartedAt *time.Time `json:"summary_started_at,omitempty"`
+	// TypeKey is the ConversationType key the pre-summary classifier assigned;
+	// empty = never classified or no type matched. Best-effort, no FK — types
+	// may be deleted/redeployed independently of historic conversations.
+	TypeKey string             `json:"type_key,omitempty"`
+	Status  ConversationStatus `json:"status" sortable:""`
 	// RoomId links a room-borne thread (a Slack channel conversation) to its
 	// room directory row; empty for DMs, email, meeting, adhoc. Stamped at
 	// ingest; no FK — a pruned room leaves the id dangling by design.

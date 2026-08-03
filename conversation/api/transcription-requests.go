@@ -25,6 +25,18 @@ type MaterializeTranscriptionRequest struct {
 	SpeakerNames map[string]string         `json:"speaker_names"`
 }
 
+// UpdateTranscriptionRequest edits a COMPLETED transcription in place. Turns,
+// when present, replace the diarized turns wholesale (the canonical structured
+// form — the flat-text artifact is regenerated from them). SpeakerLabels maps
+// diarized speaker indexes to display labels (e.g. {"0": "Tonio"}) and is
+// applied across all turns after any replacement. Editing does NOT retro-update
+// messages of an already-materialized conversation.
+type UpdateTranscriptionRequest struct {
+	Turns         []conversationmodel.TranscriptTurn `json:"turns,omitempty"`
+	SpeakerLabels map[string]string                  `json:"speaker_labels,omitempty"`
+	Language      *string                            `json:"language,omitempty"`
+}
+
 type GetManyTranscriptionsQuery struct {
 	Status *string `json:"status" form:"status" db:"status"`
 	// ConversationId lists a conversation's transcription artifacts (the

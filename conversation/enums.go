@@ -211,6 +211,45 @@ const (
 	TranscriptionStatusFailed     TranscriptionStatus = "failed"
 )
 
+// TranscriptionReviewStatus is the post-transcription review lifecycle — the
+// glossary-aware LLM pass that hunts mistranscribed terms between transcript
+// completion and conversation/summary use. `open` = not yet reviewed;
+// `processing` = one run claimed (review_started_at bounds the claim);
+// `feedback_pending` = proposed mistranscribed terms await human resolution;
+// `completed` = zero findings or all findings resolved; `failed` = the pass
+// errored (the transcript stays usable).
+type TranscriptionReviewStatus string
+
+const (
+	TranscriptionReviewStatusOpen            TranscriptionReviewStatus = "open"
+	TranscriptionReviewStatusProcessing      TranscriptionReviewStatus = "processing"
+	TranscriptionReviewStatusFeedbackPending TranscriptionReviewStatus = "feedback_pending"
+	TranscriptionReviewStatusCompleted       TranscriptionReviewStatus = "completed"
+	TranscriptionReviewStatusFailed          TranscriptionReviewStatus = "failed"
+)
+
+// MistranscribedTermStatus is a review finding's lifecycle. `auto_replaced` =
+// both confidences cleared the threshold and the fix was applied without a
+// human; `proposed` = awaiting human resolution; `accepted`/`rejected` =
+// resolved. Resolved and auto-replaced rows persist as the learning corpus.
+type MistranscribedTermStatus string
+
+const (
+	MistranscribedTermStatusAutoReplaced MistranscribedTermStatus = "auto_replaced"
+	MistranscribedTermStatusProposed     MistranscribedTermStatus = "proposed"
+	MistranscribedTermStatusAccepted     MistranscribedTermStatus = "accepted"
+	MistranscribedTermStatusRejected     MistranscribedTermStatus = "rejected"
+)
+
+// MistranscriptionSuggestionSource says where a suggested replacement came
+// from: a matched org glossary term, or the model's own judgement.
+type MistranscriptionSuggestionSource string
+
+const (
+	MistranscriptionSuggestionSourceGlossary MistranscriptionSuggestionSource = "glossary"
+	MistranscriptionSuggestionSourceModel    MistranscriptionSuggestionSource = "model"
+)
+
 // AgentListenerTriggerType says when a listener fires for an inbound message:
 // on every message (always), only when the connection's bot user is mentioned
 // (mention), only in a specific external channel (channel), or when the text
