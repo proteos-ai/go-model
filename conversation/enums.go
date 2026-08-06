@@ -259,8 +259,24 @@ type AgentListenerTriggerType string
 const (
 	TriggerTypeAlways  AgentListenerTriggerType = "always"
 	TriggerTypeMention AgentListenerTriggerType = "mention"
+	// Deprecated: channel matching is superseded by room scoping
+	// (AgentListener.RoomId), which composes with any trigger type. Kept
+	// matching for existing listeners; hidden for new ones in the UI/MCP.
 	TriggerTypeChannel AgentListenerTriggerType = "channel"
 	TriggerTypeKeyword AgentListenerTriggerType = "keyword"
+)
+
+// AgentListenerAcknowledgementType says how the dispatcher immediately
+// acknowledges a triggering message once the agent turn is queued: not at all
+// (none, the default — empty mirrors wake-phrase-empty-is-off), by placing an
+// emoji reaction on the message (reaction — only on connections that support
+// reactions), or by posting a short configurable text (message).
+type AgentListenerAcknowledgementType string
+
+const (
+	AcknowledgementTypeNone     AgentListenerAcknowledgementType = ""
+	AcknowledgementTypeReaction AgentListenerAcknowledgementType = "reaction"
+	AcknowledgementTypeMessage  AgentListenerAcknowledgementType = "message"
 )
 
 // RecipientKind discriminates the send-time Recipient VO: the target is a

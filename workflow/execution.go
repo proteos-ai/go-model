@@ -53,7 +53,9 @@ const (
 	// bus-topic equivalent is TriggerKindPlatformEvent.
 	TriggerKindEvent   TriggerKind = "event"
 	TriggerKindMessage TriggerKind = "message"
-	// TriggerKindConnector fires on a connector-service sync.item_changed event.
+	// TriggerKindConnector fires on a connector-service connector_event.received
+	// event. The kind's wire value stays "connector" — it names the trigger, not
+	// the event type, and is persisted in every saved workflow's graph.
 	TriggerKindConnector TriggerKind = "connector"
 	// TriggerKindPlatformEvent fires on any catalogued platform bus topic.
 	TriggerKindPlatformEvent TriggerKind = "platform_event"

@@ -14,9 +14,13 @@ import (
 // a tri-state pointer — omitted defaults to TRUE (an omitted create should NOT
 // yield a silently-disabled listener).
 type CreateAgentListenerRequest struct {
-	ConnectionId   string                                     `json:"connection_id"`
-	ConversationId string                                     `json:"conversation_id"`
-	Name           string                                     `json:"name" validate:"required"`
+	ConnectionId   string `json:"connection_id"`
+	ConversationId string `json:"conversation_id"`
+	// RoomId optionally narrows a connection-bound listener to one room — the
+	// internal room row id (NOT the provider channel id). Only valid together
+	// with ConnectionId; the service verifies the room belongs to it.
+	RoomId string                                     `json:"room_id"`
+	Name   string                                     `json:"name" validate:"required"`
 	AgentKey       string                                     `json:"agent_key" validate:"required"`
 	TriggerType    conversationmodel.AgentListenerTriggerType `json:"trigger_type" validate:"required"`
 	TriggerConfig  map[string]any                             `json:"trigger_config"`
@@ -25,7 +29,13 @@ type CreateAgentListenerRequest struct {
 	// stays dormant (trigger suppressed) until a message containing the phrase
 	// wakes it by starting a session. Empty ⇒ no gate.
 	WakePhrase string `json:"wake_phrase"`
-	IsEnabled  *bool  `json:"is_enabled,omitempty"`
+	// AcknowledgementType + AcknowledgementConfig: immediate platform
+	// acknowledgement of the triggering message ("" ⇒ none). Raw per-type
+	// parameters; the service validates + types them against the type
+	// (reaction ⇒ {emoji}, message ⇒ {text}).
+	AcknowledgementType   conversationmodel.AgentListenerAcknowledgementType `json:"acknowledgement_type"`
+	AcknowledgementConfig map[string]any                                     `json:"acknowledgement_config"`
+	IsEnabled             *bool                                              `json:"is_enabled,omitempty"`
 	// IsAutoForwardAgentRepliesEnabled is a tri-state pointer — omitted defaults to
 	// TRUE (an omitted create must keep the historic auto-forward behavior). TRUE ⇒
 	// the platform posts the agent's reply automatically; FALSE ⇒ the agent replies
@@ -35,6 +45,11 @@ type CreateAgentListenerRequest struct {
 }
 
 type UpdateAgentListenerRequest struct {
+	// RoomId is a tri-state pointer: nil leaves the stored value untouched, ""
+	// clears the room narrowing, a value narrows to that room (validated against
+	// the listener's connection). The connection/conversation target itself is
+	// fixed at creation.
+	RoomId        *string                                     `json:"room_id,omitempty"`
 	Name          *string                                     `json:"name,omitempty"`
 	AgentKey      *string                                     `json:"agent_key,omitempty"`
 	TriggerType   *conversationmodel.AgentListenerTriggerType `json:"trigger_type,omitempty"`
@@ -43,6 +58,11 @@ type UpdateAgentListenerRequest struct {
 	// WakePhrase is a tri-state pointer: nil leaves the stored value untouched,
 	// "" clears the gate, a value sets it.
 	WakePhrase *string `json:"wake_phrase,omitempty"`
+	// AcknowledgementType is tri-state: nil untouched, "" clears (the service
+	// resets the stored config to {}), a non-empty value REQUIRES
+	// AcknowledgementConfig in the same request (both variants carry payload).
+	AcknowledgementType   *conversationmodel.AgentListenerAcknowledgementType `json:"acknowledgement_type,omitempty"`
+	AcknowledgementConfig *map[string]any                                     `json:"acknowledgement_config,omitempty"`
 	IsEnabled  *bool   `json:"is_enabled,omitempty"`
 	// IsAutoForwardAgentRepliesEnabled is a tri-state pointer: nil leaves the stored
 	// value untouched, true/false sets it.
@@ -53,6 +73,7 @@ type UpdateAgentListenerRequest struct {
 type GetManyAgentListenersQuery struct {
 	ConnectionId   *string `json:"connection_id" form:"connection_id" db:"connection_id"`
 	ConversationId *string `json:"conversation_id" form:"conversation_id" db:"conversation_id"`
+	RoomId         *string `json:"room_id" form:"room_id" db:"room_id"`
 	AgentKey       *string `json:"agent_key" form:"agent_key" db:"agent_key"`
 	IsEnabled      *bool   `json:"is_enabled" form:"is_enabled" db:"is_enabled"`
 	common.Pagination

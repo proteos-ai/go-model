@@ -213,10 +213,11 @@ type MessageTriggerParams struct {
 }
 
 // ConnectorTriggerParams fires the workflow on a connector-service
-// sync.item_changed event — a pre-built connector's sync loop observed a
-// changed item on the remote system (a Google Calendar event edited, …).
-// ConnectorKey/ConnectionId narrow the match (all when empty). The changed
-// item becomes the trigger item.
+// connector_event.received event — a pre-built connector received an event
+// from the system it connects to, by webhook or by sweep (a Google Calendar
+// event edited, an Intercom conversation replied to, …).
+// ConnectorKey/ConnectionId narrow the match (all when empty). The connector
+// event becomes the trigger item.
 type ConnectorTriggerParams struct {
 	ConnectorKey string `json:"connector_key,omitempty"`
 	ConnectionId string `json:"connection_id,omitempty"`

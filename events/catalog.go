@@ -24,7 +24,7 @@ var displayNames = map[string]string{
 	"contact.events":              "Contact Events",
 	"connection.events":           "Connection Events",
 	"connector.events":            "Connector Events",
-	"connector-sync.events":       "Connector Sync Events",
+	"connector.inbound.events":    "Connector Inbound Events",
 	"file-version-content.events": "File Content Events",
 }
 

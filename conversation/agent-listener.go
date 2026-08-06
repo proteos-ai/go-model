@@ -11,14 +11,24 @@ import (
 // <agent_key> and send its reply back". Exactly one of ConnectionId /
 // ConversationId is set (DB CHECK): connection-bound listeners cover a whole
 // integration (a Slack workspace), conversation-bound ones a single thread (the
-// meeting-companion case). The dispatcher acts as ActingUser — that user needs
+// meeting-companion case). A connection-bound listener may be narrowed to one
+// room via RoomId. When several listeners are eligible for a message, the most
+// specific scope wins (conversation > room > connection); Priority orders
+// within a tier. The dispatcher acts as ActingUser — that user needs
 // agent-sessions:write + messages:write FGA grants (documented setup step).
 type AgentListener struct {
 	Id             string `json:"id"`
 	OrgId          string `json:"org_id"`
 	ConnectionId   string `json:"connection_id"`
 	ConversationId string `json:"conversation_id"`
-	Name           string `json:"name" sortable:""`
+	// RoomId optionally NARROWS a connection-bound listener to one room — the
+	// internal room-table row id, matched against Conversation.RoomId at
+	// dispatch. Empty ⇒ the whole connection. Never set on conversation-bound
+	// listeners (DB CHECK). No FK: a pruned-and-re-minted room gets a new id and
+	// the listener then silently stops matching new threads (a conversation
+	// stamped room-less at ingest is backfilled by the next inbound message).
+	RoomId string `json:"room_id,omitempty"`
+	Name   string `json:"name" sortable:""`
 	// AgentKey references an agent-service agent by its immutable key.
 	AgentKey    string                   `json:"agent_key" sortable:""`
 	TriggerType AgentListenerTriggerType `json:"trigger_type"`
@@ -36,6 +46,13 @@ type AgentListener struct {
 	// on top of whichever trigger matched (a meeting "Hey Ava" companion is
 	// trigger=always + wake_phrase="hey ava").
 	WakePhrase string `json:"wake_phrase,omitempty"`
+	// AcknowledgementType + AcknowledgementConfig configure the immediate
+	// acknowledgement the DISPATCHER (never the agent) places on the triggering
+	// message once the agent turn is queued — an emoji reaction or a short text
+	// — so people see the agent is on it while it thinks. Tagged union like
+	// TriggerType/TriggerConfig; "" ⇒ no acknowledgement, config nil.
+	AcknowledgementType   AgentListenerAcknowledgementType   `json:"acknowledgement_type"`
+	AcknowledgementConfig AgentListenerAcknowledgementConfig `json:"acknowledgement_config,omitempty"`
 	// ActingUser is the platform user the dispatcher acts as when driving the
 	// agent — a common.UserRef ({type,id}) so a non-person actor (agent/api) can
 	// own a listener later; it needs agent-sessions:write + messages:write grants.
