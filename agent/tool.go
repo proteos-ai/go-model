@@ -53,6 +53,16 @@ type McpBinding struct {
 
 func (McpBinding) isToolBinding() {}
 
+// PlatformBinding binds to one tool of the platform MCP server (mcp-service).
+// Toolset pins the server mount the tool lives in (a few tool names exist in
+// more than one toolset), so schema resolution and execution are unambiguous.
+type PlatformBinding struct {
+	Toolset  string `json:"toolset"`
+	ToolName string `json:"tool_name"`
+}
+
+func (PlatformBinding) isToolBinding() {}
+
 // DecodeToolBinding decodes a raw binding payload according to kind (mirrors the
 // v3 model's DecodePayload). Returns (nil, nil) for client — it has no binding.
 func DecodeToolBinding(kind ToolKind, raw json.RawMessage) (ToolBinding, error) {
@@ -72,6 +82,12 @@ func DecodeToolBinding(kind ToolKind, raw json.RawMessage) (ToolBinding, error) 
 		return binding, nil
 	case ToolKindMcp:
 		var binding McpBinding
+		if err := json.Unmarshal(raw, &binding); err != nil {
+			return nil, err
+		}
+		return binding, nil
+	case ToolKindPlatform:
+		var binding PlatformBinding
 		if err := json.Unmarshal(raw, &binding); err != nil {
 			return nil, err
 		}

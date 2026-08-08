@@ -25,21 +25,26 @@ type McpServer struct {
 	UpdatedBy  common.UserRef `json:"updated_by"`
 }
 
-// McpServerAuth is the auth config for reaching an MCP server. IsSecret flags the
-// bearer token as secret-managed; it is still returned on read, so callers with
-// access see the real value. For type=oauth the bearer is not stored here at all —
-// access/refresh tokens live in the adapter's Redis store; only the durable client
-// identity + discovered endpoints persist (in OAuth). (header variant deferred.)
+// McpServerAuth is the auth config for reaching an MCP server. Token is REDACTED
+// on every API read (masked to "********" when set, empty when unset) — the real
+// value never leaves agent-service. For type=oauth the bearer is not stored here at
+// all — access/refresh tokens live in the adapter's Redis store; only the durable
+// client identity + discovered endpoints persist (in OAuth). (header variant deferred.)
+//
+// IsSecret is RESERVED and currently inert: nothing reads it, and it does not affect
+// redaction (which is unconditional). It is kept for the planned "token is a
+// metadata-service variable reference, resolved server-side" variant.
 type McpServerAuth struct {
 	Type     string          `json:"type"`            // none | bearer | oauth
-	IsSecret bool            `json:"is_secret"`       // bearer token is secret-managed
-	Token    string          `json:"token,omitempty"` // bearer token (type==bearer)
+	IsSecret bool            `json:"is_secret"`       // reserved; inert (see type doc)
+	Token    string          `json:"token,omitempty"` // bearer token (type==bearer); redacted on read
 	OAuth    *McpServerOAuth `json:"oauth,omitempty"` // durable oauth client config (type==oauth)
 }
 
 // McpServerOAuth is the durable OAuth client configuration for an MCP server.
 // Tokens are NOT stored here (they live in the adapter's Redis store); only the
 // client identity + the discovery hints needed to refresh and re-authorize.
+// ClientSecret is REDACTED on every API read, like McpServerAuth.Token.
 // Either DCR fills ClientId/ClientSecret on first connect (RegistrationMode="dcr"),
 // or the user supplies them when the authorization server has no registration
 // endpoint (RegistrationMode="manual").

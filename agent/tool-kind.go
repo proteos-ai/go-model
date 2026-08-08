@@ -20,9 +20,12 @@ const (
 	ToolKindMcp ToolKind = "mcp"
 	// ToolKindClient is a host-provided builtin — it carries no binding.
 	ToolKindClient ToolKind = "client"
+	// ToolKindPlatform binds to one tool of the platform MCP server (mcp-service),
+	// executed server-side by agent-service as the acting user.
+	ToolKindPlatform ToolKind = "platform"
 )
 
-var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient}
+var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient, ToolKindPlatform}
 
 func (ToolKind) Enum() []interface{} {
 	enums := []interface{}{}

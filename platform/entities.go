@@ -55,6 +55,7 @@ var platformEntities = []PlatformEntity{
 	{Slug: "prompts", Name: "Prompts"},
 	{Slug: "skills", Name: "Skills"},
 	{Slug: "tools", Name: "Tools"},
+	{Slug: "toolsets", Name: "Toolsets"},
 	{Slug: "mcp-servers", Name: "MCP Servers"},
 	{Slug: "agent-sessions", Name: "Agent Sessions"},
 	// Messaging bus (event-service)

@@ -16,6 +16,7 @@ type CreateAgentRequest struct {
 	Tools        []string               `json:"tools"`
 	Subagents    []string               `json:"subagents"`
 	McpServers   []string               `json:"mcp_servers"`
+	Toolsets     []string               `json:"toolsets"`
 	IsOrgDefault bool                   `json:"is_org_default"`
 }
 
@@ -29,6 +30,7 @@ type UpdateAgentRequest struct {
 	Tools        *[]string               `json:"tools,omitempty"`
 	Subagents    *[]string               `json:"subagents,omitempty"`
 	McpServers   *[]string               `json:"mcp_servers,omitempty"`
+	Toolsets     *[]string               `json:"toolsets,omitempty"`
 	IsOrgDefault *bool                   `json:"is_org_default,omitempty"`
 }
 

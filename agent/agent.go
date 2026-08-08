@@ -7,12 +7,15 @@ import (
 )
 
 // Agent is a configured persona: a system prompt + model config + the skills,
-// tools, sub-agents and MCP servers it can use. All references are by key —
-// SystemPrompt is a Prompt key, Skills/Tools/Subagents/McpServers are
-// Skill/Tool/Agent/McpServer keys — and keys are immutable so references survive
-// renames. Sub-agents are surfaced to the model as agents-as-tools. McpServers
-// attach the whole server: every tool the server exposes becomes available to
-// the agent (vs a kind=mcp Tool, which binds a single tool). Keyed by (org_id, key).
+// tools, sub-agents, MCP servers and toolsets it can use. All references are by
+// key — SystemPrompt is a Prompt key, Skills/Tools/Subagents/McpServers/Toolsets
+// are Skill/Tool/Agent/McpServer/Toolset keys — and keys are immutable so
+// references survive renames. Sub-agents are surfaced to the model as
+// agents-as-tools. McpServers attach the whole server: every tool the server
+// exposes becomes available to the agent (vs a kind=mcp Tool, which binds a
+// single tool). Toolsets attach a tool group as one unit: a platform toolset
+// expands into every tool of that mcp-service mount, a custom toolset into its
+// member Tool rows. Keyed by (org_id, key).
 type Agent struct {
 	OrgId        string      `json:"org_id"`
 	Key          string      `json:"key" sortable:""`
@@ -25,6 +28,7 @@ type Agent struct {
 	Tools        []string    `json:"tools"`
 	Subagents    []string    `json:"subagents"`
 	McpServers   []string    `json:"mcp_servers"`
+	Toolsets     []string    `json:"toolsets"`
 	// IsOrgDefault marks the single agent surfaced by default for the org (e.g. the
 	// Ask Proteos assistant). At most one agent per org may carry it.
 	IsOrgDefault bool           `json:"is_org_default"`

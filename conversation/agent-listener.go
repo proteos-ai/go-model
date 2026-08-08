@@ -14,8 +14,9 @@ import (
 // meeting-companion case). A connection-bound listener may be narrowed to one
 // room via RoomId. When several listeners are eligible for a message, the most
 // specific scope wins (conversation > room > connection); Priority orders
-// within a tier. The dispatcher acts as ActingUser — that user needs
-// agent-sessions:write + messages:write FGA grants (documented setup step).
+// within a tier. The dispatcher acts as the resolved acting user (see
+// ActingUserMode) — that user needs agent-sessions:write + messages:write FGA
+// grants (documented setup step).
 type AgentListener struct {
 	Id             string `json:"id"`
 	OrgId          string `json:"org_id"`
@@ -53,9 +54,20 @@ type AgentListener struct {
 	// TriggerType/TriggerConfig; "" ⇒ no acknowledgement, config nil.
 	AcknowledgementType   AgentListenerAcknowledgementType   `json:"acknowledgement_type"`
 	AcknowledgementConfig AgentListenerAcknowledgementConfig `json:"acknowledgement_config,omitempty"`
+	// ActingUserMode says where the dispatcher takes its acting user from:
+	// defined ⇒ ActingUser below (historic behavior, zero-value default so
+	// pre-mode rows and stale cache entries keep working); inferred ⇒ the
+	// triggering message sender's resolved platform user, with ActingUser as
+	// OPTIONAL fallback — sender unresolved and no fallback ⇒ the dispatch is
+	// skipped (no session, no acknowledgement, no fall-through to another
+	// listener).
+	ActingUserMode AgentListenerActingUserMode `json:"acting_user_mode"`
 	// ActingUser is the platform user the dispatcher acts as when driving the
-	// agent — a common.UserRef ({type,id}) so a non-person actor (agent/api) can
-	// own a listener later; it needs agent-sessions:write + messages:write grants.
+	// agent (mode=defined), or the optional fallback when the sender has no
+	// platform user (mode=inferred; zero-value = no fallback). A common.UserRef
+	// ({type,id}) so a non-person actor (agent/api) can own a listener later;
+	// whoever the dispatcher acts as needs agent-sessions:write +
+	// messages:write grants.
 	ActingUser common.UserRef `json:"acting_user"`
 	IsEnabled  bool           `json:"is_enabled" sortable:""`
 	// IsAutoForwardAgentRepliesEnabled controls how the agent's reply reaches the

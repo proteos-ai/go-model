@@ -279,6 +279,19 @@ const (
 	AcknowledgementTypeMessage  AgentListenerAcknowledgementType = "message"
 )
 
+// AgentListenerActingUserMode says where the dispatcher takes its acting user
+// from when driving the agent: 'defined' (the listener's stored acting_user —
+// the historic behavior, and the zero-value default so pre-mode rows and stale
+// cache entries keep working) or 'inferred' (the triggering message sender's
+// resolved platform user, with the stored acting_user as OPTIONAL fallback —
+// no platform user and no fallback ⇒ the dispatch is skipped).
+type AgentListenerActingUserMode string
+
+const (
+	ActingUserModeDefined  AgentListenerActingUserMode = "defined"
+	ActingUserModeInferred AgentListenerActingUserMode = "inferred"
+)
+
 // RecipientKind discriminates the send-time Recipient VO: the target is a
 // person's contact address or a venue (room).
 type RecipientKind string
