@@ -39,6 +39,18 @@ const (
 	ChannelX Channel = "x"
 )
 
+// IsMeeting reports whether the channel is the meeting-bot family: the generic
+// meeting fallback plus the platform-tagged *-meeting channels. Adhoc (uploaded
+// recordings) is not a bot-served meeting channel.
+func (channel Channel) IsMeeting() bool {
+	switch channel {
+	case ChannelMeeting, ChannelZoomMeeting, ChannelGoogleMeet,
+		ChannelTeamsMeeting, ChannelWebexMeeting:
+		return true
+	}
+	return false
+}
+
 // ConnectorKey identifies a concrete integration that produces and/or sends
 // messages on a channel. A typed enum (not an open string — every connector is
 // hand-coded, so the set is exactly the compiled-in connector packages; decision

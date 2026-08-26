@@ -38,6 +38,11 @@ type Transcription struct {
 	// fully reconstructable from Turns, the canonical structured form.
 	Turns        []TranscriptTurn `json:"turns"`
 	SpeakerCount int              `json:"speaker_count"`
+	// Speakers maps each turn's Speaker index to the person: index-aligned
+	// ContactRefs (provider participant id, name, email, resolved contact) —
+	// the identity layer the flat SpeakerLabel strings lack. Empty for
+	// transcriptions whose source carries no speaker identities (file uploads).
+	Speakers []ContactRef `json:"speakers,omitempty"`
 	// ProviderRequestId is Deepgram's request id, for support/debugging.
 	ProviderRequestId string `json:"provider_request_id"`
 	// ConversationId is set once the transcription is materialized/linked.

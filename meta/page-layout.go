@@ -566,8 +566,9 @@ func (s *PageLayoutSidePanel) UnmarshalJSON(data []byte) error {
 // (or "auto") together with zero padding lets a component fill the page
 // edge-to-edge.
 //
-// Currently honored only on `public` and `kiosk` pages (see the metadata-service
-// layout validator's type gate).
+// Honored on `platform`, `public` and `kiosk` pages; record pages reject it
+// (see the metadata-service layout validator's type gate). On platform pages
+// it styles the app shell's content area rather than a standalone shell.
 type PageStyle struct {
 	// Background is a design-token key ("bg", "bg-2", "accent", …) resolved to
 	// var(--color-<key>) by the renderer, or a raw CSS color for branded pages.
