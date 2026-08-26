@@ -41,6 +41,16 @@ type UpdateContactRequest struct {
 	GroupKey *string `json:"group_key"`
 }
 
+// CreateContactRequest manually mints a contact with at least one address.
+// Addresses are canonicalized and probed synchronously; any address already
+// owned by an existing contact rejects the create with 409
+// contact_address_taken (use that contact, or merge — a manual create never
+// silently adopts identity).
+type CreateContactRequest struct {
+	Name      string                        `json:"name" binding:"required"`
+	Addresses []AttachContactAddressRequest `json:"addresses" binding:"required,min=1,dive"`
+}
+
 // MergeContactsRequest folds source_contact_id INTO the path contact (the path
 // contact is the winner).
 type MergeContactsRequest struct {
