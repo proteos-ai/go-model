@@ -12,9 +12,12 @@ import (
 type LayoutElementType string
 
 const (
-	LayoutElementTypeRow         LayoutElementType = "row"
-	LayoutElementTypeColumn      LayoutElementType = "column"
-	LayoutElementTypeSection     LayoutElementType = "section"
+	LayoutElementTypeRow     LayoutElementType = "row"
+	LayoutElementTypeColumn  LayoutElementType = "column"
+	LayoutElementTypeSection LayoutElementType = "section"
+	// LayoutElementTypeCard is Section's carded twin: same grouping contract,
+	// drawn as a real card with the title in its header bar.
+	LayoutElementTypeCard        LayoutElementType = "card"
 	LayoutElementTypeTabs        LayoutElementType = "tabs"
 	LayoutElementTypeField       LayoutElementType = "field"
 	LayoutElementTypeRelatedList LayoutElementType = "related_list"
@@ -31,6 +34,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeRow,
 	LayoutElementTypeColumn,
 	LayoutElementTypeSection,
+	LayoutElementTypeCard,
 	LayoutElementTypeTabs,
 	LayoutElementTypeField,
 	LayoutElementTypeRelatedList,
@@ -329,6 +333,47 @@ func (e *SectionElement) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ─────────────────────────────────────────────────────────── Card ──
+
+// CardElement groups content the way SectionElement does, but renders as an
+// actual card — border, surface fill, rounded corners — with Title in the
+// card's header bar. Collapsing needs a header to hang the toggle off, so a
+// card with neither Title nor Description never collapses.
+type CardElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	Title            string        `json:"title,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	IsCollapsible    *bool         `json:"is_collapsible,omitempty"`
+	DefaultCollapsed *bool         `json:"default_collapsed,omitempty"`
+	Content          LayoutElement `json:"content"`
+}
+
+func (CardElement) isLayoutElement()              {}
+func (CardElement) LayoutType() LayoutElementType { return LayoutElementTypeCard }
+
+// UnmarshalJSON exists because Content is interface-typed and needs the
+// discriminator dispatch; same shape as SectionElement's.
+func (e *CardElement) UnmarshalJSON(data []byte) error {
+	type wireCard CardElement
+	var wire struct {
+		wireCard
+		Content json.RawMessage `json:"content"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	*e = CardElement(wire.wireCard)
+	if len(wire.Content) > 0 && string(wire.Content) != "null" {
+		content, err := unmarshalLayoutElement(wire.Content)
+		if err != nil {
+			return fmt.Errorf("content: %w", err)
+		}
+		e.Content = content
+	}
+	return nil
+}
+
 // ─────────────────────────────────────────────────────────── Tabs ──
 
 type LayoutTab struct {
@@ -595,6 +640,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeSection:
 		var v SectionElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeCard:
+		var v CardElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

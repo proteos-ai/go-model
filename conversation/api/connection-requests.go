@@ -40,6 +40,16 @@ type InstallConnectionResponse struct {
 	AuthorizationUrl string `json:"authorization_url"`
 }
 
+// DeleteConnectionQuery carries the delete's one escape hatch. A delete first
+// makes the connector release its provider-side registration (Recall calendar +
+// the OAuth grant behind it) and 502s with connector_uninstall_failed when that
+// fails, because the row is the only handle on that state. IsForced deletes the
+// row anyway, accepting the provider-side leftovers as a manual cleanup — the
+// is_self_domain_acknowledged precedent: a footgun you opt into explicitly.
+type DeleteConnectionQuery struct {
+	IsForced bool `json:"is_forced" form:"is_forced"`
+}
+
 type GetManyConnectionsQuery struct {
 	ConnectorKey *string `json:"connector_key" form:"connector_key" db:"connector_key"`
 	Channel      *string `json:"channel" form:"channel" db:"channel"`

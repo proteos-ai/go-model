@@ -14,6 +14,9 @@ import (
 type SearchContactsQuery struct {
 	Q      *string                          `json:"q" form:"q"`
 	Status *conversationmodel.ContactStatus `json:"status" form:"status"`
+	// GroupKey filters to members of one contact group (drives group-member
+	// lists in the UI).
+	GroupKey *string `json:"group_key" form:"group_key"`
 	common.Pagination
 	common.Sorting
 }
@@ -32,6 +35,10 @@ type UpdateContactRequest struct {
 	Name         *string                          `json:"name"`
 	Status       *conversationmodel.ContactStatus `json:"status"`
 	HasLegalHold *bool                            `json:"has_legal_hold"`
+	// GroupKey assigns the contact to a contact group ('' clears the
+	// assignment). Any user-initiated change stamps GroupSource=manual, which
+	// tone synthesis treats as authoritative and never overrides.
+	GroupKey *string `json:"group_key"`
 }
 
 // MergeContactsRequest folds source_contact_id INTO the path contact (the path

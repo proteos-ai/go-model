@@ -4,8 +4,8 @@ import "testing"
 
 func TestEntities_CanonicalSet(t *testing.T) {
 	entities := Entities()
-	if len(entities) != 43 {
-		t.Fatalf("expected 43 platform entities, got %d", len(entities))
+	if len(entities) != 46 {
+		t.Fatalf("expected 46 platform entities, got %d", len(entities))
 	}
 	seen := make(map[string]bool, len(entities))
 	for _, entity := range entities {
@@ -30,11 +30,11 @@ func TestSlugs_MatchEntities(t *testing.T) {
 		"hooks", "actions",
 		"workflows", "workflow-executions",
 		"knowledge-nodes", "knowledge-links", "knowledge-labels",
-		"agents", "prompts", "skills", "tools", "mcp-servers", "agent-sessions",
+		"agents", "prompts", "skills", "tools", "toolsets", "mcp-servers", "agent-sessions",
 		"topics", "events",
 		"connections", "conversations", "messages", "agent-listeners", "transcriptions",
 		"glossary-terms", "mistranscribed-terms", "contacts", "conversation-filters",
-		"conversation-types", "connectors",
+		"conversation-types", "contact-groups", "tone-profiles", "connectors",
 	}
 	got := Slugs()
 	if len(got) != len(want) {

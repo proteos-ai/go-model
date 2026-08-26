@@ -464,15 +464,23 @@ const (
 // the tagged-union key for ConversationFilterConfig (see
 // conversation-filter-config.go). Ordered here by evaluation specificity:
 // address (one exact person-address) beats domain (a whole email domain) beats
-// role_based/automated (email heuristics) beats internal_conversations (the
-// all-participants-internal classification) beats all (unconditional).
+// title_keyword (subject/title content) beats role_based/automated (email
+// heuristics) beats self_originated/internal_participant (origin/audience
+// classifications) beats internal_conversations (the all-participants-internal
+// classification) beats all (unconditional). A rule is enforced at every stage
+// whose facts can compute it: the ingest evaluator AND, for meeting calendar
+// connections, the pre-join gate that decides whether a bot is scheduled at
+// all (see logic.EvaluateMeetingJoin).
 type ConversationFilterType string
 
 const (
 	FilterTypeAddress               ConversationFilterType = "address"
 	FilterTypeDomain                ConversationFilterType = "domain"
+	FilterTypeTitleKeyword          ConversationFilterType = "title_keyword"
 	FilterTypeRoleBased             ConversationFilterType = "role_based"
 	FilterTypeAutomated             ConversationFilterType = "automated"
+	FilterTypeSelfOriginated        ConversationFilterType = "self_originated"
+	FilterTypeInternalParticipant   ConversationFilterType = "internal_participant"
 	FilterTypeInternalConversations ConversationFilterType = "internal_conversations"
 	FilterTypeAll                   ConversationFilterType = "all"
 )
@@ -518,4 +526,37 @@ const (
 	AutomatedSignalMailingList          AutomatedSignal = "mailing_list"
 	AutomatedSignalBounce               AutomatedSignal = "bounce"
 	AutomatedSignalAutoResponseSuppress AutomatedSignal = "auto_response_suppress"
+)
+
+// ContactGroupSource guards assignment authority on Contact.GroupKey: manual
+// assignments are authoritative and tone synthesis never touches them; model
+// assignments may be reassigned by a later synthesis run. Empty = unassigned.
+type ContactGroupSource string
+
+const (
+	ContactGroupSourceManual ContactGroupSource = "manual"
+	ContactGroupSourceModel  ContactGroupSource = "model"
+)
+
+// ToneProfileSetupStatus is the whole-user synthesis lifecycle on the setup
+// row. processing is a claim (one run at a time per user); started_at bounds
+// it so a crashed run cannot wedge the row.
+type ToneProfileSetupStatus string
+
+const (
+	ToneProfileSetupStatusEmpty      ToneProfileSetupStatus = "empty"
+	ToneProfileSetupStatusProcessing ToneProfileSetupStatus = "processing"
+	ToneProfileSetupStatusReady      ToneProfileSetupStatus = "ready"
+)
+
+// ToneProfileScope names a tone profile's tier. Derived from which scope
+// columns are set — never stored. Most specific wins at read time:
+// contact > group > channel > user.
+type ToneProfileScope string
+
+const (
+	ToneProfileScopeUser    ToneProfileScope = "user"
+	ToneProfileScopeChannel ToneProfileScope = "channel"
+	ToneProfileScopeGroup   ToneProfileScope = "group"
+	ToneProfileScopeContact ToneProfileScope = "contact"
 )

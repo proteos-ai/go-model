@@ -23,9 +23,13 @@ const (
 	// ToolKindPlatform binds to one tool of the platform MCP server (mcp-service),
 	// executed server-side by agent-service as the acting user.
 	ToolKindPlatform ToolKind = "platform"
+	// ToolKindQuery stores a SQL query (data-service dialect) with declared, typed
+	// params; agent-service substitutes escaped literals and executes it via
+	// data-service as the acting user.
+	ToolKindQuery ToolKind = "query"
 )
 
-var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient, ToolKindPlatform}
+var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient, ToolKindPlatform, ToolKindQuery}
 
 func (ToolKind) Enum() []interface{} {
 	enums := []interface{}{}

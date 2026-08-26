@@ -86,6 +86,12 @@ var platformEntities = []PlatformEntity{
 	// The org's conversation taxonomy — read by the pre-summary classifier to
 	// type meetings and pick a per-type summary prompt.
 	{Slug: "conversation-types", Name: "Conversation Types"},
+	// Generic org-shared audience taxonomy; membership lives on the contact
+	// (one group per contact). First consumer is tone-of-voice synthesis.
+	{Slug: "contact-groups", Name: "Contact Groups"},
+	// Tone-of-voice synthesis: per-user setups + the generated instruction
+	// profiles — one grant governs the whole aggregate.
+	{Slug: "tone-profiles", Name: "Tone Profiles"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},

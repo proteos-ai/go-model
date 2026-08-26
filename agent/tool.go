@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.proteos.ai/model/common"
+	metamodel "go.proteos.ai/model/meta"
 )
 
 // Tool is a thin registry entry over one of three binding sources (action / mcp /
@@ -63,6 +64,18 @@ type PlatformBinding struct {
 
 func (PlatformBinding) isToolBinding() {}
 
+// QueryBinding stores a SELECT-only SQL query (data-service dialect: bare
+// attribute references, org schema stamped server-side) whose {{param}}
+// placeholders are filled from the declared Params at execution time. Params
+// are restricted to scalar attribute types (string, number, integer, boolean,
+// datetime, enum) — the set with an unambiguous SQL-literal rendering.
+type QueryBinding struct {
+	Sql    string                `json:"sql"`
+	Params []metamodel.Attribute `json:"params,omitempty"`
+}
+
+func (QueryBinding) isToolBinding() {}
+
 // DecodeToolBinding decodes a raw binding payload according to kind (mirrors the
 // v3 model's DecodePayload). Returns (nil, nil) for client — it has no binding.
 func DecodeToolBinding(kind ToolKind, raw json.RawMessage) (ToolBinding, error) {
@@ -88,6 +101,12 @@ func DecodeToolBinding(kind ToolKind, raw json.RawMessage) (ToolBinding, error) 
 		return binding, nil
 	case ToolKindPlatform:
 		var binding PlatformBinding
+		if err := json.Unmarshal(raw, &binding); err != nil {
+			return nil, err
+		}
+		return binding, nil
+	case ToolKindQuery:
+		var binding QueryBinding
 		if err := json.Unmarshal(raw, &binding); err != nil {
 			return nil, err
 		}

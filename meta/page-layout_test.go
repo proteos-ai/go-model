@@ -148,6 +148,57 @@ func TestRelatedRecordElement_OmitsUnpinnedPageSlug(t *testing.T) {
 	}
 }
 
+func TestCardElement_RoundTrip(t *testing.T) {
+	src := `{"version":1,"main":{"type":"card","title":"Details","description":"All of it",` +
+		`"is_collapsible":true,"default_collapsed":true,` +
+		`"content":{"type":"column","children":[{"type":"field","attribute":"name"}]}}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	card, ok := layout.Main.(*CardElement)
+	if !ok {
+		t.Fatalf("main: want *CardElement, got %T", layout.Main)
+	}
+	if card.Title != "Details" || card.Description != "All of it" {
+		t.Errorf("title/description: got %q / %q", card.Title, card.Description)
+	}
+	if card.IsCollapsible == nil || !*card.IsCollapsible {
+		t.Errorf("is_collapsible: want true, got %v", card.IsCollapsible)
+	}
+	if card.DefaultCollapsed == nil || !*card.DefaultCollapsed {
+		t.Errorf("default_collapsed: want true, got %v", card.DefaultCollapsed)
+	}
+	// The interface-typed Content must dispatch, not decode as nil.
+	col, ok := card.Content.(*ColumnElement)
+	if !ok {
+		t.Fatalf("content: want *ColumnElement, got %T", card.Content)
+	}
+	if len(col.Children) != 1 {
+		t.Fatalf("content.children: want 1, got %d", len(col.Children))
+	}
+	if _, err := json.Marshal(&layout); err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+}
+
+func TestCardElement_OmitsUnsetOptionals(t *testing.T) {
+	src := `{"version":1,"main":{"type":"card","content":{"type":"column","children":[]}}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{"title", "description", "is_collapsible", "default_collapsed"} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("%s: want omitted, got %s", key, string(out))
+		}
+	}
+}
+
 func TestPageLayout_UnknownType(t *testing.T) {
 	src := `{"version":1,"main":{"type":"fild","attribute":"x"}}`
 	var layout PageLayout

@@ -7,8 +7,8 @@ import (
 
 // ConversationFilterConfig is the typed, per-type configuration of a
 // ConversationFilter — a tagged union discriminated by the sibling FilterType
-// (mirrors AgentListenerTriggerConfig). all carries no parameters; the other
-// five do.
+// (mirrors AgentListenerTriggerConfig). all and self_originated carry no
+// parameters; the other types do.
 type ConversationFilterConfig interface {
 	isConversationFilterConfig()
 	FilterType() ConversationFilterType
@@ -45,6 +45,19 @@ type DomainFilterConfig struct {
 func (DomainFilterConfig) isConversationFilterConfig()        {}
 func (DomainFilterConfig) FilterType() ConversationFilterType { return FilterTypeDomain }
 
+// TitleKeywordFilterConfig — match when the conversation's title/subject
+// contains any of these keywords (case-insensitive substring; keywords are
+// stored lowercased by the write path). At ingest it tests the message
+// Subject (meetings carry the meeting title as Subject on every utterance);
+// at the meeting pre-join gate it tests the calendar event title — the
+// Fireflies-style "don't record 1:1 / Personal meetings" rule.
+type TitleKeywordFilterConfig struct {
+	Keywords []string `json:"keywords"`
+}
+
+func (TitleKeywordFilterConfig) isConversationFilterConfig()        {}
+func (TitleKeywordFilterConfig) FilterType() ConversationFilterType { return FilterTypeTitleKeyword }
+
 // RoleBasedFilterConfig — match when the sender's email local-part is a role
 // mailbox (info@, noreply@, postmaster@ …). Empty Prefixes = the built-in
 // logic.DefaultRolePrefixes set; non-empty overrides it. Email-only; the
@@ -68,6 +81,36 @@ type AutomatedFilterConfig struct {
 
 func (AutomatedFilterConfig) isConversationFilterConfig()        {}
 func (AutomatedFilterConfig) FilterType() ConversationFilterType { return FilterTypeAutomated }
+
+// SelfOriginatedFilterConfig — match when the conversation originates from
+// the connection's own identity. No parameters. At ingest: the sender is the
+// connection self (outbound-ingested mail, own Slack bot, …). At the meeting
+// pre-join gate: the calendar event's organizer is the connected calendar's
+// own account. Its allow form is the "organized by me" auto-join composition:
+// a connection-scoped all-block plus a self_originated allow joins only
+// meetings the calendar owner organizes.
+type SelfOriginatedFilterConfig struct{}
+
+func (SelfOriginatedFilterConfig) isConversationFilterConfig() {}
+func (SelfOriginatedFilterConfig) FilterType() ConversationFilterType {
+	return FilterTypeSelfOriginated
+}
+
+// InternalParticipantFilterConfig — match when at least ONE participant other
+// than the connection self has an email domain in Domains (any-internal, the
+// counterpart to InternalConversationsFilterConfig's all-internal). The org
+// declares what "internal" means via the explicit domain list, exactly as it
+// does for internal_conversations. Its allow form is the "with teammates"
+// auto-join composition: a connection-scoped all-block plus an
+// internal_participant allow joins only meetings with at least one teammate.
+type InternalParticipantFilterConfig struct {
+	Domains []string `json:"domains"`
+}
+
+func (InternalParticipantFilterConfig) isConversationFilterConfig() {}
+func (InternalParticipantFilterConfig) FilterType() ConversationFilterType {
+	return FilterTypeInternalParticipant
+}
 
 // InternalConversationsFilterConfig — drop a message only when the sender AND
 // every To/Cc recipient are on one of these email domains (all-participants-
@@ -119,8 +162,22 @@ func DecodeFilterConfig(filterType ConversationFilterType, raw []byte) (Conversa
 			return nil, err
 		}
 		return config, nil
+	case FilterTypeTitleKeyword:
+		config := TitleKeywordFilterConfig{}
+		if err := unmarshalConfig(raw, &config); err != nil {
+			return nil, err
+		}
+		return config, nil
 	case FilterTypeRoleBased:
 		config := RoleBasedFilterConfig{}
+		if err := unmarshalConfig(raw, &config); err != nil {
+			return nil, err
+		}
+		return config, nil
+	case FilterTypeSelfOriginated:
+		return SelfOriginatedFilterConfig{}, nil
+	case FilterTypeInternalParticipant:
+		config := InternalParticipantFilterConfig{}
 		if err := unmarshalConfig(raw, &config); err != nil {
 			return nil, err
 		}

@@ -46,6 +46,11 @@ type Contact struct {
 	// stale snapshot id resolves in a single redirect. Empty = not merged.
 	MergedIntoContactId string        `json:"merged_into_contact_id,omitempty"`
 	Source              ContactSource `json:"source"`
+	// GroupKey is the contact's ContactGroup membership (one group per
+	// contact); empty = unassigned. GroupSource guards assignment authority:
+	// manual assignments are never touched by tone synthesis.
+	GroupKey    string             `json:"group_key,omitempty"`
+	GroupSource ContactGroupSource `json:"group_source,omitempty"`
 	// HasManualEdits flips true on any user-driven update and is the thinness
 	// signal for auto-merge safety: only never-edited, pipeline-minted
 	// (sync/ingest) contacts may be folded away without human review.

@@ -120,14 +120,30 @@ type ErrorPayload struct {
 
 func (ErrorPayload) isEventPayload() {}
 
-// StopReason is why a turn went idle. Type is an open string ("turn_ended" |
-// "user_action_required" | …) so new provider reasons don't break decoding.
+// StopReason is why a turn went idle. Type is an open string so new provider
+// reasons don't break decoding; the two we emit are the constants below.
 type StopReason struct {
 	Type string `json:"type"`
 }
 
-// SessionIdlePayload is emitted when a turn ends. EventIds carries the tool_use
-// event ids awaiting a client response when Type is user_action_required.
+const (
+	// StopReasonTurnEnded means the agent finished its turn and the session is
+	// ready for the next message.
+	StopReasonTurnEnded = "turn_ended"
+	// StopReasonUserActionRequired means the turn is PARKED: something outside
+	// the server has to act before it can continue. EventIds names what.
+	StopReasonUserActionRequired = "user_action_required"
+)
+
+// SessionIdlePayload ends a turn. It is published by the DOMAIN, once per turn —
+// it is not an echo of the provider's session status, which flips idle/running
+// once per server-tool round inside a single turn.
+//
+// EventIds is set only with StopReasonUserActionRequired, and lists the tool_use
+// events still OUTSTANDING — the ones a client must answer (a client tool, or an
+// mcp tool no executor covers). Server-executed tools never appear here: they are
+// resolved before this event exists, so seeing this event at all means the turn
+// cannot progress without help.
 type SessionIdlePayload struct {
 	StopReason StopReason `json:"stop_reason"`
 	EventIds   []string   `json:"event_ids,omitempty"`
