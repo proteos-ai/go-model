@@ -27,6 +27,9 @@ type SearchNodesRequest struct {
 	Status     *string  `json:"status,omitempty" validate:"omitempty,oneof=draft published archived"`
 	LabelIds   []string `json:"label_ids,omitempty"`
 	LinkedToId *string  `json:"linked_to_id,omitempty"`
+	// SpaceSlugs keeps only hits living in ANY of these spaces (union). Use
+	// UnassignedSpaceSlug to ask for nodes that belong to no space.
+	SpaceSlugs []string `json:"space_slugs,omitempty"`
 	// Date-range filters (RFC3339). These only narrow the candidate set; ordering
 	// stays relevance-based (score), so a date filter never reorders results.
 	CreatedAfter  *string `json:"created_after,omitempty" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`

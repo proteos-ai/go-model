@@ -1,6 +1,8 @@
 package metamodel
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestPlatformAttributes_CanonicalSet(t *testing.T) {
 	attrs := PlatformAttributes()
@@ -15,8 +17,16 @@ func TestPlatformAttributes_CanonicalSet(t *testing.T) {
 		if !attrs[i].IsPlatformManaged {
 			t.Errorf("attr %q: expected IsPlatformManaged=true", attrs[i].Name)
 		}
-		if !attrs[i].IsReadOnly {
-			t.Errorf("attr %q: expected IsReadOnly=true", attrs[i].Name)
+	}
+}
+
+// Every platform attribute is server-managed and read-only. There is no
+// writable platform attribute any more: ownership moved to the business field
+// (a principal attribute granting `share`), so the one exception is gone.
+func TestPlatformAttributes_AllReadOnly(t *testing.T) {
+	for _, attr := range PlatformAttributes() {
+		if !attr.IsReadOnly {
+			t.Errorf("attr %q: expected IsReadOnly=true", attr.Name)
 		}
 	}
 }
@@ -37,6 +47,28 @@ func TestEnsurePlatformAttributes_AddsWhenMissing(t *testing.T) {
 	}
 	if got[5].Name != "email" {
 		t.Errorf("user attribute should follow platform attributes, got %q", got[5].Name)
+	}
+}
+
+// THE RETIREMENT PIN. `owned_by` was persisted into every stored schema as a
+// platform attribute. Once it stops being one, an unstripped entry would come
+// back as a USER attribute — principal-typed, no column behind it — which is
+// the worst of both worlds. It must vanish, in whatever shape it arrives.
+func TestEnsurePlatformAttributes_StripsRetiredOwnedBy(t *testing.T) {
+	got := EnsurePlatformAttributes([]Attribute{
+		{Name: "owned_by", Type: AttributeTypePrincipal, IsPlatformManaged: true},
+		{Name: "email", Type: AttributeTypeString},
+	})
+	for _, attr := range got {
+		if attr.Name == "owned_by" {
+			t.Fatalf("retired owned_by survived: %+v", got)
+		}
+	}
+	if len(got) != 6 || got[5].Name != "email" {
+		t.Fatalf("expected 5 platform + email, got %+v", got)
+	}
+	if !IsRetiredPlatformAttributeName("owned_by") || IsRetiredPlatformAttributeName("email") {
+		t.Error("IsRetiredPlatformAttributeName is wrong")
 	}
 }
 
@@ -66,7 +98,7 @@ func TestIsPlatformAttributeName(t *testing.T) {
 			t.Errorf("%q should be a platform attribute name", name)
 		}
 	}
-	for _, name := range []string{"email", "name", "createdAt", ""} {
+	for _, name := range []string{"email", "name", "createdAt", "owned_by", ""} {
 		if IsPlatformAttributeName(name) {
 			t.Errorf("%q should NOT be a platform attribute name", name)
 		}

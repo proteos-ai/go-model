@@ -16,6 +16,19 @@ type UpdateUserRequest struct {
 	GivenName    *string `json:"given_name,omitempty" form:"given_name,omitempty"`
 	FamilyName   *string `json:"family_name,omitempty" form:"family_name,omitempty"`
 	DefaultOrgId *string `json:"default_org_id,omitempty" form:"default_org_id,omitempty"`
+	// ProfileImage is tri-state: absent = unchanged, null = remove the photo,
+	// object = set it. The file itself lives in the storage-service; the caller
+	// uploads first and references it here.
+	ProfileImage common.Optional[common.FileRef] `json:"profile_image" bun:"-"`
+}
+
+// UpdateMeRequest is the caller-scoped PATCH /me body. Deliberately narrower
+// than UpdateUserRequest: a user may edit their own name and photo, but not
+// re-home themselves (no default_org_id).
+type UpdateMeRequest struct {
+	GivenName    *string                         `json:"given_name,omitempty"`
+	FamilyName   *string                         `json:"family_name,omitempty"`
+	ProfileImage common.Optional[common.FileRef] `json:"profile_image"`
 }
 
 type GetManyUsersQuery struct {

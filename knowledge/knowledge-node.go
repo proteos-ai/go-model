@@ -23,9 +23,19 @@ type KnowledgeNodeMetadata struct {
 	// and staleness detectable (null model / EmbeddedAt < UpdatedAt ⇒ re-embed).
 	EmbeddingModel *string    `json:"embedding_model,omitempty"`
 	EmbeddedAt     *time.Time `json:"embedded_at,omitempty"`
-	FileId         *string    `json:"file_id,omitempty"` // source pointer (type=file → storage-service)
-	Url            *string    `json:"url,omitempty"`     // source pointer (type=url)
-	Summary        *string    `json:"summary,omitempty"`
+	// SpaceSlug is the space this node lives in, or nil when UNASSIGNED. A nil
+	// space means the node is visible to anyone holding knowledge-nodes:read —
+	// which is the behaviour every node had before spaces existed.
+	//
+	// A POINTER, and that is load-bearing: the (org_id, space_slug) foreign key
+	// is composite and checked MATCH SIMPLE, so it is skipped only when the
+	// column is NULL. A plain string would write '' and make every unassigned
+	// node violate the key (the bug that made root teams unreachable in
+	// account-service — see parent_team_slug and `bun:",nullzero"`).
+	SpaceSlug *string `json:"space_slug,omitempty" sortable:""`
+	FileId    *string `json:"file_id,omitempty"` // source pointer (type=file → storage-service)
+	Url       *string `json:"url,omitempty"`     // source pointer (type=url)
+	Summary   *string `json:"summary,omitempty"`
 	// ValidFrom / ValidUntil are the node's temporal validity window — when the
 	// fact it asserts starts and stops being true, decoupled from CreatedAt (a
 	// node ingested today can be valid_from years ago). Both nullable and

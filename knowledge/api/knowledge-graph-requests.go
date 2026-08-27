@@ -7,4 +7,9 @@ package knowledgeapi
 // because the query binder only supports primitive query params.)
 type GetKnowledgeGraphQuery struct {
 	LabelIds string `json:"label_ids"`
+	// SpaceSlugs prunes the graph to nodes in ANY of these spaces (union),
+	// comma-separated like LabelIds. Empty means every space. Unassigned nodes
+	// (space_slug IS NULL) are excluded by a non-empty filter — ask for them
+	// with the reserved sentinel, see UnassignedSpaceSlug.
+	SpaceSlugs string `json:"space_slugs"`
 }

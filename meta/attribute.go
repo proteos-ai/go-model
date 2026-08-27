@@ -16,6 +16,7 @@ const (
 
 	AttributeTypeRelation      AttributeType = "relation"       // Foreign-key reference to another entity
 	AttributeTypeUser          AttributeType = "user"           // Reference to a platform user (account-service)
+	AttributeTypePrincipal     AttributeType = "principal"      // Reference to anything that can hold access: user | team | org
 	AttributeTypeCurrency      AttributeType = "currency"       // Monetary amount in a currency: {amount, currency_code}
 	AttributeTypeKnowledgeText AttributeType = "knowledge-text" // Long text stored as a knowledge node; record holds {id}
 	AttributeTypeFile          AttributeType = "file"           // Reference to a stored file (storage-service); record holds {id, name}
@@ -46,6 +47,13 @@ type Attribute struct {
 	// "platform-managed" flag (the same concept will later mark platform-managed
 	// entities, permissions, etc.).
 	IsPlatformManaged bool `json:"is_platform_managed,omitempty"`
+
+	// Restrictions gates reading and writing this attribute independently of
+	// the record's own access. nil is today's behaviour: unrestricted.
+	//
+	// Stored inside the attribute definition (JSONB), so adding a restriction
+	// needs no migration.
+	Restrictions *AttributeRestrictions `json:"restrictions,omitempty"`
 
 	// === Type-specific metadata ===
 	// The concrete type is determined by the Type field

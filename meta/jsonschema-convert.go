@@ -66,6 +66,11 @@ func AttributeToJSONSchema(attr Attribute) *JSONSchema {
 		Description: attr.Description,
 		Default:     attr.DefaultValue,
 	}
+	// The current-user sentinel is resolved per write; as a JSON Schema
+	// default it would be a literal object no value can ever equal.
+	if IsCurrentUserDefault(attr.DefaultValue) {
+		schema.Default = nil
+	}
 
 	if attr.IsReadOnly {
 		readOnly := true
@@ -118,6 +123,14 @@ func AttributeToJSONSchema(attr Attribute) *JSONSchema {
 		// lives in data-service's recordvalidation.
 		schema.Type = "object"
 		applyUserMeta(schema)
+
+	case AttributeTypePrincipal:
+		// A principal attribute stores the composite { type, id }
+		// (common.PrincipalRef) — a user, team or org that can hold access. The
+		// JSON Schema is a backwards-compat export only — authoritative
+		// record-value enforcement lives in data-service's recordvalidation.
+		schema.Type = "object"
+		applyPrincipalMeta(schema)
 
 	case AttributeTypeCurrency:
 		// A currency value is the composite { amount, currency_code }. The
@@ -345,6 +358,18 @@ func applyCurrencyMeta(schema *JSONSchema) {
 func applyUserMeta(schema *JSONSchema) {
 	schema.Properties = map[string]*JSONSchema{
 		"type": {Type: "string", Enum: []any{"person", "agent", "api"}},
+		"id":   {Type: "string"},
+	}
+	schema.Required = []string{"type", "id"}
+}
+
+// applyPrincipalMeta shapes the JSON Schema for a `principal` value — the
+// composite { type, id } (common.PrincipalRef). The type vocabulary is a strict
+// superset of a user attribute's: person, agent and api all denote a platform
+// user, while team and org denote a group that can hold access.
+func applyPrincipalMeta(schema *JSONSchema) {
+	schema.Properties = map[string]*JSONSchema{
+		"type": {Type: "string", Enum: []any{"person", "agent", "api", "team", "org"}},
 		"id":   {Type: "string"},
 	}
 	schema.Required = []string{"type", "id"}

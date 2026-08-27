@@ -16,6 +16,9 @@ type KnowledgeGraphNode struct {
 	// label, which the UI uses to colour the node. Empty (never null) when the
 	// node carries no labels.
 	LabelIds []string `json:"label_ids"`
+	// SpaceSlug is the node's space, or nil when unassigned — sent so the client
+	// can filter the canvas by space without a second request.
+	SpaceSlug *string `json:"space_slug,omitempty"`
 	// Degree is the count of links incident to this node (in + out) within the
 	// returned graph. The renderer scales node size by degree.
 	Degree int `json:"degree"`
@@ -31,8 +34,8 @@ type KnowledgeGraphLink struct {
 }
 
 // KnowledgeGraph is the whole org graph in a single payload: lean nodes + links,
-// the full org label set (sent once so the client can render every label — and
-// colour every node — even when the graph is pruned by a label filter), and
+// the full org label set and space set (sent once so the client can render every
+// label and space — and colour every node — even when the graph is pruned), and
 // Total: the unfiltered org node count. Total lets the client decide whether to
 // load the whole graph or switch to progressive/level-of-detail loading.
 //
@@ -42,5 +45,9 @@ type KnowledgeGraph struct {
 	Nodes  []KnowledgeGraphNode `json:"nodes"`
 	Links  []KnowledgeGraphLink `json:"links"`
 	Labels []KnowledgeLabel     `json:"labels"`
-	Total  int                  `json:"total"`
+	// Spaces is the org's full space set, sent once for the same reason as
+	// Labels: the client renders the space navigator and colours or filters by
+	// space without a second request, even when the graph is pruned.
+	Spaces []KnowledgeSpace `json:"spaces"`
+	Total  int              `json:"total"`
 }

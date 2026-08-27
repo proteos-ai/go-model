@@ -5,6 +5,8 @@ type EnumValue struct {
 	Value       string `json:"value"`                 // The actual value stored
 	Label       string `json:"label,omitempty"`       // Display label (defaults to Value if empty)
 	Description string `json:"description,omitempty"` // Optional description/help text
+	Icon        string `json:"icon,omitempty"`        // Optional Lucide icon name (PascalCase, e.g. "CircleCheck")
+	Color       string `json:"color,omitempty"`       // Optional tint as #rrggbb; UI derives border/background from it
 }
 
 // EnumAttributeMeta holds enum-specific options with inline values

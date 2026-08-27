@@ -22,6 +22,7 @@ var validAttributeTypes = map[AttributeType]bool{
 	AttributeTypeObject:        true,
 	AttributeTypeRelation:      true,
 	AttributeTypeUser:          true,
+	AttributeTypePrincipal:     true,
 	AttributeTypeCurrency:      true,
 	AttributeTypeKnowledgeText: true,
 	AttributeTypeFile:          true,

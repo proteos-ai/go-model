@@ -20,9 +20,14 @@ type GetManyExecutionsResponse struct {
 
 // GetExecutionResponse is the execution detail: the header row plus its
 // append-only node executions (ordered by started_at, then run_index).
+// NodesTotal is the number of nodes the pinned graph version schedules for
+// THIS run (reachable from the trigger, scoped to the destination path on a
+// partial run; dead-branch and disabled nodes end as `skipped` rows) — the progress denominator; skipped
+// nodes never get a node execution row.
 type GetExecutionResponse struct {
 	Execution      workflowmodel.WorkflowExecution `json:"execution"`
 	NodeExecutions []workflowmodel.NodeExecution   `json:"node_executions"`
+	NodesTotal     int                             `json:"nodes_total"`
 }
 
 // NodeItemsSide selects which side of a node run an item window reads:

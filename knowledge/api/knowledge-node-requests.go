@@ -8,13 +8,16 @@ import (
 )
 
 type CreateKnowledgeNodeRequest struct {
-	Title   string  `json:"title" validate:"required"`
-	Type    string  `json:"type" validate:"required,oneof=markdown file url"`
-	Status  string  `json:"status" validate:"required,oneof=draft published archived"`
-	Content string  `json:"content"`
-	FileId  *string `json:"file_id,omitempty"`
-	Url     *string `json:"url,omitempty"`
-	Summary *string `json:"summary,omitempty"`
+	Title   string `json:"title" validate:"required"`
+	Type    string `json:"type" validate:"required,oneof=markdown file url"`
+	Status  string `json:"status" validate:"required,oneof=draft published archived"`
+	Content string `json:"content"`
+	// SpaceSlug files the node into a space at creation. Optional: omitted means
+	// unassigned, which is what every node was before spaces existed.
+	SpaceSlug *string `json:"space_slug,omitempty"`
+	FileId    *string `json:"file_id,omitempty"`
+	Url       *string `json:"url,omitempty"`
+	Summary   *string `json:"summary,omitempty"`
 	// ValidFrom / ValidUntil set the node's temporal validity window at creation.
 	// Both optional and unbounded when omitted (null). Plain pointers — create has
 	// no need to distinguish "clear" from "omit" (omitted = NULL = unbounded).
@@ -53,6 +56,11 @@ type UpdateKnowledgeNodeRequest struct {
 	// unchanged, JSON null = clear, value = set. See common.Optional.
 	ValidFrom  common.Optional[time.Time] `json:"valid_from"`
 	ValidUntil common.Optional[time.Time] `json:"valid_until"`
+	// SpaceSlug moves the node between spaces. Tri-state for the same reason as
+	// the validity window: absent = leave where it is, JSON null = move back to
+	// unassigned, value = move into that space. A plain pointer could not
+	// express "unassign", since nil would be indistinguishable from "omitted".
+	SpaceSlug common.Optional[string] `json:"space_slug"`
 }
 
 type GetManyKnowledgeNodesQuery struct {
@@ -65,6 +73,11 @@ type GetManyKnowledgeNodesQuery struct {
 	// of a repeated param, so the union list is passed CSV-joined). No `db` tag — the
 	// repository applies the EXISTS predicate manually, like IsValidAt.
 	LabelIds string `json:"label_ids"`
+	// SpaceSlugs keeps only nodes in ANY of the given spaces (union), sent as one
+	// comma-separated param like LabelIds. Use knowledgemodel.UnassignedSpaceSlug
+	// to ask for nodes belonging to no space. No `db` tag — the repository
+	// applies the predicate manually, like LabelIds and IsValidAt.
+	SpaceSlugs string `json:"space_slugs"`
 	// Date-range filters (RFC3339 timestamps). The `op` tag maps each field to a
 	// comparison on its `db` column, so a pair sharing a column forms a closed
 	// range (created_after + created_before).

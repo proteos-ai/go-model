@@ -4,8 +4,8 @@ import "testing"
 
 func TestEntities_CanonicalSet(t *testing.T) {
 	entities := Entities()
-	if len(entities) != 46 {
-		t.Fatalf("expected 46 platform entities, got %d", len(entities))
+	if len(entities) != 49 {
+		t.Fatalf("expected 49 platform entities, got %d", len(entities))
 	}
 	seen := make(map[string]bool, len(entities))
 	for _, entity := range entities {
@@ -25,11 +25,12 @@ func TestSlugs_MatchEntities(t *testing.T) {
 	}
 	want := []string{
 		"organizations", "users", "roles", "user-role-assignments", "role-entity-permissions",
+		"teams", "team-members",
 		"entities", "pages", "menu-configurations", "apps", "components", "lists",
 		"list-views", "design-references", "modules", "variables", "deployments", "files",
 		"hooks", "actions",
 		"workflows", "workflow-executions",
-		"knowledge-nodes", "knowledge-links", "knowledge-labels",
+		"knowledge-nodes", "knowledge-links", "knowledge-labels", "knowledge-spaces",
 		"agents", "prompts", "skills", "tools", "toolsets", "mcp-servers", "agent-sessions",
 		"topics", "events",
 		"connections", "conversations", "messages", "agent-listeners", "transcriptions",
@@ -57,5 +58,24 @@ func TestIsReserved(t *testing.T) {
 		if IsReserved(slug) {
 			t.Errorf("%q should NOT be reserved", slug)
 		}
+	}
+}
+
+func TestIsReservedTableName(t *testing.T) {
+	if !IsReservedTableName(AccessGrantsTable) {
+		t.Fatalf("IsReservedTableName(%q) must be true", AccessGrantsTable)
+	}
+	// A physical-table claim is not a permission target: the two sets must not
+	// overlap, or the table name would surface in the role-permission dropdown.
+	if IsReserved(AccessGrantsTable) {
+		t.Fatalf("%q must not be a platform ENTITY slug", AccessGrantsTable)
+	}
+	for _, slug := range Slugs() {
+		if IsReservedTableName(slug) {
+			t.Fatalf("platform entity slug %q must not also be a reserved table name", slug)
+		}
+	}
+	if IsReservedTableName("deals") {
+		t.Fatal("ordinary slugs must not be reserved table names")
 	}
 }

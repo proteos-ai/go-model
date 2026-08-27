@@ -49,10 +49,40 @@ func (pageType PageType) Normalized() PageType {
 	return pageType
 }
 
+// PageActionKind selects what a page toolbar button invokes. Empty normalizes
+// to PageActionKindAction so pages persisted before `kind` existed keep working.
+type PageActionKind string
+
+const (
+	// PageActionKindAction invokes a function-service Action (by slug).
+	PageActionKindAction PageActionKind = "action"
+	// PageActionKindWorkflow starts a manual run of a workflow (by key).
+	PageActionKindWorkflow PageActionKind = "workflow"
+)
+
+// Normalized returns the kind with the empty value defaulting to action.
+func (kind PageActionKind) Normalized() PageActionKind {
+	if kind == "" {
+		return PageActionKindAction
+	}
+	return kind
+}
+
+// PageAction is one toolbar button on a page. Which target it invokes follows
+// from Kind: action → Action (slug) + Params, workflow → Workflow (key) +
+// Inputs. Params / Inputs map target field names to Liquid templates rendered
+// client-side against the page scope ({record, entity, params, user}); a
+// resolved field is locked in the invoke dialog. SkipConfirmation fires the
+// target immediately when every required field resolved from the templates.
 type PageAction struct {
-	Label  string `json:"label"`
-	Icon   Icon   `json:"icon"`
-	Action string `json:"action"`
+	Label            string            `json:"label"`
+	Icon             Icon              `json:"icon"`
+	Kind             PageActionKind    `json:"kind,omitempty"`
+	Action           string            `json:"action,omitempty"`
+	Workflow         string            `json:"workflow,omitempty"`
+	Params           map[string]string `json:"params,omitempty"`
+	Inputs           map[string]string `json:"inputs,omitempty"`
+	SkipConfirmation bool              `json:"skip_confirmation,omitempty"`
 }
 
 type Page struct {

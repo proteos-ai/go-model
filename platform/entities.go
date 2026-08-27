@@ -25,6 +25,15 @@ var platformEntities = []PlatformEntity{
 	{Slug: "roles", Name: "Roles"},
 	{Slug: "user-role-assignments", Name: "User Role Assignments"},
 	{Slug: "role-entity-permissions", Name: "Role Entity Permissions"},
+	// Teams are the org's structure and a principal that can hold access
+	// anywhere a user can. Membership is a separate slug from the team itself:
+	// seeing the org chart and changing who is in it are different decisions,
+	// and membership is what actually moves access.
+	{Slug: "teams", Name: "Teams"},
+	{Slug: "team-members", Name: "Team Members"},
+	// The share audit trail. A distinct grant from the resources it references:
+	// seeing WHO a record is shared with is not the same decision as seeing the
+	// record.
 	// Schema / content (metadata-service)
 	{Slug: "entities", Name: "Entities"},
 	{Slug: "pages", Name: "Pages"},
@@ -47,9 +56,10 @@ var platformEntities = []PlatformEntity{
 	{Slug: "workflows", Name: "Workflows"},
 	{Slug: "workflow-executions", Name: "Workflow Executions"},
 	// Knowledge (knowledge-service)
-	{Slug: "knowledge-nodes", Name: "Knowledge Nodes"},
-	{Slug: "knowledge-links", Name: "Knowledge Links"},
-	{Slug: "knowledge-labels", Name: "Knowledge Labels"},
+	{Slug: EntitySlugKnowledgeNodes, Name: "Knowledge Nodes"},
+	{Slug: EntitySlugKnowledgeLinks, Name: "Knowledge Links"},
+	{Slug: EntitySlugKnowledgeLabels, Name: "Knowledge Labels"},
+	{Slug: EntitySlugKnowledgeSpaces, Name: "Knowledge Spaces"},
 	// Agent suite (agent-service)
 	{Slug: "agents", Name: "Agents"},
 	{Slug: "prompts", Name: "Prompts"},
@@ -97,6 +107,17 @@ var platformEntities = []PlatformEntity{
 	{Slug: "connectors", Name: "Connectors"},
 }
 
+// The knowledge entity slugs, named because code keys off them rather than only
+// listing them: knowledge-service gates its routes on them and registers
+// knowledge-spaces / knowledge-nodes as share targets, so the string is declared
+// once here rather than spelled at every call site.
+const (
+	EntitySlugKnowledgeNodes  = "knowledge-nodes"
+	EntitySlugKnowledgeLinks  = "knowledge-links"
+	EntitySlugKnowledgeLabels = "knowledge-labels"
+	EntitySlugKnowledgeSpaces = "knowledge-spaces"
+)
+
 // reservedSlugs is the membership set behind IsReserved.
 var reservedSlugs = func() map[string]struct{} {
 	set := make(map[string]struct{}, len(platformEntities))
@@ -130,5 +151,38 @@ func Slugs() []string {
 // user-defined entities that would collide with a platform entity.
 func IsReserved(slug string) bool {
 	_, ok := reservedSlugs[slug]
+	return ok
+}
+
+// AccessGrantsTable is a physical table the platform claims inside every
+// tenant schema (org_<id>): it holds the explicit record shares for that org
+// (the same shape knowledge-service's knowledge_access_grants has). It is NOT
+// a PlatformEntity — it is not a permission target and must not appear in the
+// role-permission dropdown — but the name must still be unclaimable by
+// user-defined entities: data-service creates entity tables with
+// CREATE TABLE IF NOT EXISTS "<schema>"."<slug>", so an entity with this slug
+// would silently adopt the shares table as its record table.
+const AccessGrantsTable = "access_grants"
+
+// LegacyAccessGrantsTable is the name the table carried before the rename;
+// the tenant sweep renames it in place. Reserved so no entity can claim the
+// old name between deploy and sweep. Removable once every environment is
+// swept.
+const LegacyAccessGrantsTable = "record_shares"
+
+// reservedTableNames is the membership set behind IsReservedTableName — table
+// names the platform claims physically inside tenant schemas, distinct from
+// reservedSlugs (permission targets).
+var reservedTableNames = map[string]struct{}{
+	AccessGrantsTable:       {},
+	LegacyAccessGrantsTable: {},
+}
+
+// IsReservedTableName reports whether a slug collides with a physical table the
+// platform claims inside tenant schemas. Checked at entity creation alongside
+// IsReserved; kept separate because these names are storage claims, not
+// permission targets, and must never surface in permission UIs.
+func IsReservedTableName(slug string) bool {
+	_, ok := reservedTableNames[slug]
 	return ok
 }

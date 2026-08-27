@@ -184,9 +184,13 @@ type CronTriggerParams struct {
 	Timezone       string `json:"timezone"`
 }
 
-// ManualTriggerParams carries no configuration — the workflow is fired only by an
-// explicit "run now" API call.
-type ManualTriggerParams struct{}
+// ManualTriggerParams configures the explicit "run now" trigger. InputSchema
+// declares the typed inputs a manual run may (or must) provide; validated
+// inputs become the trigger item's json so downstream expressions address them
+// as {{ $json.<name> }}. Empty = the run takes no inputs.
+type ManualTriggerParams struct {
+	InputSchema []metamodel.Attribute `json:"input_schema,omitempty"`
+}
 
 // WebhookTriggerParams fires the workflow when its opaque token is POSTed to
 // /workflows/v1/webhooks/:token. The token is generated server-side.
@@ -384,6 +388,19 @@ func DecodeModelCallActionParams(raw json.RawMessage) (ModelCallActionParams, er
 	var params ModelCallActionParams
 	if err := json.Unmarshal(raw, &params); err != nil {
 		return ModelCallActionParams{}, err
+	}
+	return params, nil
+}
+
+// DecodeManualTriggerParams decodes a trigger.manual node's raw parameters.
+// Empty parameters (the pre-input_schema shape) decode to the zero value.
+func DecodeManualTriggerParams(raw json.RawMessage) (ManualTriggerParams, error) {
+	if len(raw) == 0 {
+		return ManualTriggerParams{}, nil
+	}
+	var params ManualTriggerParams
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return ManualTriggerParams{}, err
 	}
 	return params, nil
 }

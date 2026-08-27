@@ -32,9 +32,12 @@ type UpdateWorkflowRequest struct {
 
 // RunWorkflowRequest is the body of a manual "run now" call. DestinationNodeId
 // turns the run into a partial "run until here" execution: only nodes on a
-// path from the trigger to the destination (inclusive) execute.
+// path from the trigger to the destination (inclusive) execute. Inputs are the
+// values for the manual trigger's input_schema; they are validated against it
+// and seed the trigger item's json.
 type RunWorkflowRequest struct {
-	DestinationNodeId string `json:"destination_node_id"`
+	DestinationNodeId string         `json:"destination_node_id"`
+	Inputs            map[string]any `json:"inputs,omitempty"`
 }
 
 type GetManyWorkflowsQuery struct {

@@ -73,8 +73,10 @@ type ExecutionTriggerContext struct {
 	Kind TriggerKind `json:"kind"`
 	// schedule
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
-	// manual — the user/actor who triggered the run
-	Actor *common.UserRef `json:"actor,omitempty"`
+	// manual — the user/actor who triggered the run, and the optional partial
+	// run bound ("run until here"): only the destination's ancestors execute.
+	Actor             *common.UserRef `json:"actor,omitempty"`
+	DestinationNodeId string          `json:"destination_node_id,omitempty"`
 	// webhook
 	ReceivedAt *time.Time `json:"received_at,omitempty"`
 	// event
