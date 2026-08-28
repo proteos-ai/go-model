@@ -10,7 +10,8 @@ import (
 
 // DeployActionRequest is the JSON metadata side of the multipart body
 // for `POST /api/v1/actions` and `PUT /api/v1/actions/:slug` (upsert).
-// `EntitySlug` is required when `Scope == ActionScopeEntity`; validation
+// `EntitySlug` is required when `Scope` is entity-bound (`entity` or
+// `entity_batch`); validation
 // is enforced server-side (CHECK constraint on the `actions` table +
 // service-layer guard). The wasm bytes come from the multipart `wasm`
 // part; the entry-point Go file is by convention always `./main.go`
@@ -83,7 +84,23 @@ type GetActionLogsQuery struct {
 //
 // No additional envelope wraps either side — the slug, entity, and
 // recordId come from the URL path.
+//
+// `POST /api/v1/entities/:entity/actions/:slug/invoke` (batch dispatch) is
+// the ONE exception: an array of record ids cannot ride a path segment, so
+// that route takes the BatchInvokeActionRequest envelope below. Its response
+// is the same `{result}` shape as every other invoke.
 
 type InvokeActionResponse struct {
 	Result json.RawMessage `json:"result"`
+}
+
+// BatchInvokeActionRequest is the body of
+// `POST /api/v1/entities/:entity/actions/:slug/invoke` — the batch-action
+// dispatch route. RecordIds is the set the action runs over (required,
+// non-empty; deduped server-side, order preserved). Params is the action's
+// params object, shaped by its `params` schema, exactly as the
+// single-record routes take it at the top level.
+type BatchInvokeActionRequest struct {
+	RecordIds []string        `json:"record_ids" validate:"required,min=1"`
+	Params    json.RawMessage `json:"params,omitempty"`
 }

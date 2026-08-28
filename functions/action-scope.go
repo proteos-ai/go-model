@@ -7,7 +7,15 @@ type ActionScope string
 
 const (
 	ActionScopeEntity ActionScope = "entity"
-	ActionScopeGlobal ActionScope = "global"
+	// ActionScopeEntityBatch marks a BATCH action: invoked against a SET of
+	// records of one entity via
+	// `POST /api/v1/entities/:entity/actions/:slug/invoke` with a
+	// `{record_ids, params}` body. The guest receives the whole id array in
+	// ONE invocation (never one dispatch per record) so it can amortise the
+	// work — one query, one external call, one aggregate result. Requires an
+	// entity slug, exactly like ActionScopeEntity.
+	ActionScopeEntityBatch ActionScope = "entity_batch"
+	ActionScopeGlobal      ActionScope = "global"
 	// ActionScopeConnectorMethod marks the wasm behind one custom-connector
 	// method. It is the ONLY connector-specific fact stored on the action:
 	// the (connector, method) → action binding lives in the connector
@@ -20,8 +28,14 @@ const (
 
 var ActionScopes = []ActionScope{
 	ActionScopeEntity,
+	ActionScopeEntityBatch,
 	ActionScopeGlobal,
 	ActionScopeConnectorMethod,
+}
+
+// RequiresEntity reports whether a scope must carry an entity slug.
+func (scope ActionScope) RequiresEntity() bool {
+	return scope == ActionScopeEntity || scope == ActionScopeEntityBatch
 }
 
 func (ActionScope) Enum() []interface{} {

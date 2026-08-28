@@ -27,6 +27,12 @@ const (
 	LayoutElementTypeComponent     LayoutElementType = "component"
 	LayoutElementTypeDivider       LayoutElementType = "divider"
 	LayoutElementTypeText          LayoutElementType = "text"
+	// LayoutElementTypeRecordFilter is a filter builder placed on the page; it
+	// publishes its filter under its element id for list elements to consume.
+	LayoutElementTypeRecordFilter LayoutElementType = "record_filter"
+	// LayoutElementTypeList renders a configured List's records — the
+	// record-agnostic sibling of related_list.
+	LayoutElementTypeList LayoutElementType = "list"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -42,6 +48,8 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeComponent,
 	LayoutElementTypeDivider,
 	LayoutElementTypeText,
+	LayoutElementTypeRecordFilter,
+	LayoutElementTypeList,
 }
 
 // UnmarshalJSON validates the wire value against LayoutElementTypes. Mirrors
@@ -508,6 +516,101 @@ type ComponentElement struct {
 func (ComponentElement) isLayoutElement()              {}
 func (ComponentElement) LayoutType() LayoutElementType { return LayoutElementTypeComponent }
 
+// ─────────────────────────────────────────────────── RecordFilter ──
+
+// RecordFilterVariant selects the filter element's chrome.
+type RecordFilterVariant string
+
+const (
+	// RecordFilterVariantToolbar is the Filter button plus active-filter chips,
+	// matching every list view. The default.
+	RecordFilterVariantToolbar RecordFilterVariant = "toolbar"
+	// RecordFilterVariantPanel is the always-open AND/OR editor, for a page
+	// whose point IS the filter.
+	RecordFilterVariantPanel RecordFilterVariant = "panel"
+)
+
+var RecordFilterVariants = []RecordFilterVariant{
+	RecordFilterVariantToolbar, RecordFilterVariantPanel,
+}
+
+func (variant *RecordFilterVariant) UnmarshalJSON(b []byte) error {
+	return unmarshalEnum(b, variant, func(v RecordFilterVariant) bool {
+		return slices.Contains(RecordFilterVariants, v)
+	}, "recordFilterVariant")
+}
+
+// Normalized returns the variant with the empty value defaulting to toolbar.
+func (variant RecordFilterVariant) Normalized() RecordFilterVariant {
+	if variant == "" {
+		return RecordFilterVariantToolbar
+	}
+	return variant
+}
+
+// RecordFilterElement is a filter builder placed directly on a page. It binds
+// to no data itself: it publishes the authored filter, and the chosen subject
+// entity, under its element ID. Every ListElement naming that ID in
+// FilterElementID renders the filtered rows.
+//
+// SubjectEntity pins the entity the filter is authored against. Left empty, the
+// element renders a subject picker over the entities its bound lists offer —
+// one entry per bound list, since a List carries exactly one entity.
+//
+// IsComplexEnabled (default true) allows nested AND/OR groups. The records
+// query carries the whole tree, so the affordance costs nothing.
+type RecordFilterElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	SubjectEntity    string              `json:"subject_entity,omitempty"`
+	Variant          RecordFilterVariant `json:"variant,omitempty"`
+	IsComplexEnabled *bool               `json:"is_complex_enabled,omitempty"`
+}
+
+func (RecordFilterElement) isLayoutElement()              {}
+func (RecordFilterElement) LayoutType() LayoutElementType { return LayoutElementTypeRecordFilter }
+
+// ─────────────────────────────────────────────────────────── List ──
+
+// ListElement renders the records of a configured List. It is the
+// record-agnostic sibling of RelatedListElement, and the only way to show
+// records on a page that has no record of its own.
+//
+// The List supplies everything about presentation and behaviour — columns,
+// sorting, base filters, toolbar actions, selection mode, and the page a row
+// opens. Nothing is restated on the element: a second column or action model
+// here would be the same concept under a second name.
+//
+// ListSlugs may name more than one list, which makes the element switchable;
+// the active one is chosen by the bound filter's subject picker, or by the
+// element's own switcher when it is unbound. FilterElementID binds the element
+// to a RecordFilterElement on the same page; the bound filter is ANDed with the
+// list's own saved filters, narrowing the list rather than replacing what it
+// declared.
+type ListElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	ListSlugs       []string `json:"list_slugs"`
+	FilterElementID string   `json:"filter_element_id,omitempty"`
+	// FilterAttribute is the record-page alternative to FilterElementID: the
+	// attribute on THIS page's record holding a saved filter, as written by the
+	// `record-filter` field control. The list then renders what the record's own
+	// filter selects — a saved-segment record showing its matches.
+	//
+	// Mutually exclusive with FilterElementID (two filters driving one list has
+	// no defined precedence) and meaningless without a record, so the validator
+	// rejects both-at-once and rejects it on standalone pages.
+	FilterAttribute string `json:"filter_attribute,omitempty"`
+	// SubjectEntityAttribute names the attribute holding the subject entity
+	// slug; the element renders whichever of ListSlugs targets that entity.
+	// Without it the first configured list wins.
+	SubjectEntityAttribute string `json:"subject_entity_attribute,omitempty"`
+	PageSize               *int   `json:"page_size,omitempty"`
+}
+
+func (ListElement) isLayoutElement()              {}
+func (ListElement) LayoutType() LayoutElementType { return LayoutElementTypeList }
+
 // ──────────────────────────────────────────────────────── Divider ──
 
 type DividerElement struct {
@@ -677,6 +780,18 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeComponent:
 		var v ComponentElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeRecordFilter:
+		var v RecordFilterElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeList:
+		var v ListElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

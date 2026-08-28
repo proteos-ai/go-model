@@ -21,6 +21,7 @@ var BuiltInControls = []string{
 	"password",
 	"principal-picker",
 	"radio-group",
+	"record-filter",
 	"select",
 	"switch",
 	"tag-input",
@@ -64,7 +65,7 @@ var ControlsByAttributeType = map[string]ControlBucket{
 	"object":         {Primary: nil, Compatible: []string{}},
 	"principal":      {Primary: stringPtr("principal-picker"), Compatible: []string{"principal-picker"}},
 	"relation":       {Primary: stringPtr("entity-picker"), Compatible: []string{"entity-picker"}},
-	"string":         {Primary: stringPtr("text"), Compatible: []string{"text", "textarea", "password"}},
+	"string":         {Primary: stringPtr("text"), Compatible: []string{"text", "textarea", "password", "record-filter"}},
 	"user":           {Primary: stringPtr("user-picker"), Compatible: []string{"user-picker"}},
 }
 
