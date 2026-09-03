@@ -33,6 +33,10 @@ const (
 	// LayoutElementTypeList renders a configured List's records — the
 	// record-agnostic sibling of related_list.
 	LayoutElementTypeList LayoutElementType = "list"
+	// LayoutElementTypeWorkflowTrigger is an always-visible button that starts
+	// a workflow's manual run and shows inline step progress while it runs —
+	// the in-layout counterpart of a `kind: workflow` toolbar action.
+	LayoutElementTypeWorkflowTrigger LayoutElementType = "workflow_trigger"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -50,6 +54,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeText,
 	LayoutElementTypeRecordFilter,
 	LayoutElementTypeList,
+	LayoutElementTypeWorkflowTrigger,
 }
 
 // UnmarshalJSON validates the wire value against LayoutElementTypes. Mirrors
@@ -384,11 +389,19 @@ func (e *CardElement) UnmarshalJSON(data []byte) error {
 
 // ─────────────────────────────────────────────────────────── Tabs ──
 
+// LayoutTab is one switchable view inside a TabsElement.
+//
+// `VisibleWhen` hides the tab when it does not match the record; `DefaultWhen`
+// makes the tab the initially shown one when it matches. Both are evaluated
+// live against the record being viewed or edited. The renderer picks the
+// first visible tab (in document order) whose `DefaultWhen` matches, then
+// `TabsElement.DefaultTabID`, then the first visible tab.
 type LayoutTab struct {
 	ID          string              `json:"id"`
 	Label       string              `json:"label"`
 	Icon        string              `json:"icon,omitempty"`
 	VisibleWhen *common.FilterGroup `json:"visible_when,omitempty"`
+	DefaultWhen *common.FilterGroup `json:"default_when,omitempty"`
 	Content     LayoutElement       `json:"content"`
 }
 
@@ -621,6 +634,32 @@ type DividerElement struct {
 func (DividerElement) isLayoutElement()              {}
 func (DividerElement) LayoutType() LayoutElementType { return LayoutElementTypeDivider }
 
+// ──────────────────────────────────────────────── Workflow Trigger ──
+
+// WorkflowTriggerElement is a button placed in the layout that starts a
+// manual run of Workflow (by key). Inputs maps the manual trigger's
+// input_schema field names to Liquid templates rendered against the page
+// scope — identical semantics to a `kind: workflow` PageAction, including
+// SkipConfirmation. While the run is in flight the element shows the step
+// progress inline instead of the button.
+type WorkflowTriggerElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	Workflow         string            `json:"workflow"`
+	Label            string            `json:"label"`
+	Icon             Icon              `json:"icon,omitempty"`
+	Inputs           map[string]string `json:"inputs,omitempty"`
+	SkipConfirmation bool              `json:"skip_confirmation,omitempty"`
+	// ExecutionAttribute optionally names a string attribute on the page's
+	// record where the element persists the id of the execution it starts —
+	// and reads it back, so the run's progress survives reloads and is shared
+	// by every viewer of the record. Record pages only.
+	ExecutionAttribute string `json:"execution_attribute,omitempty"`
+}
+
+func (WorkflowTriggerElement) isLayoutElement()              {}
+func (WorkflowTriggerElement) LayoutType() LayoutElementType { return LayoutElementTypeWorkflowTrigger }
+
 // ─────────────────────────────────────────────────────────── Text ──
 
 type TextElement struct {
@@ -798,6 +837,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeDivider:
 		var v DividerElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeWorkflowTrigger:
+		var v WorkflowTriggerElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

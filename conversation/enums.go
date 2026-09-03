@@ -30,8 +30,15 @@ const (
 	ChannelGoogleMeet   Channel = "google-meet"
 	ChannelTeamsMeeting Channel = "teams-meeting"
 	ChannelWebexMeeting Channel = "webex-meeting"
-	ChannelAdhoc        Channel = "adhoc"
-	ChannelInstagram    Channel = "instagram"
+	ChannelAdhoc Channel = "adhoc"
+	// ChannelPhone is the telephony medium — PSTN voice calls. One channel for
+	// every phone provider (twilio-phone, aircall, webhook-cti feed it side by
+	// side, the email precedent); "phone" is the medium name users recognize,
+	// not a brand, so the -chat/-meeting suffix rule does not apply. A call is
+	// time-bounded spoken media: its conversation carries StartedAt/EndedAt and
+	// its transcript turns arrive as messages post-call.
+	ChannelPhone     Channel = "phone"
+	ChannelInstagram Channel = "instagram"
 	ChannelMessenger    Channel = "messenger"
 	// ChannelX is the platform formerly known as Twitter. One name across
 	// Go/SDK/UI/DB per the ubiquitous-naming rule; Unipile's provider constant
@@ -49,6 +56,22 @@ func (channel Channel) IsMeeting() bool {
 		return true
 	}
 	return false
+}
+
+// IsCall reports whether the channel is the telephony medium (phone calls).
+func (channel Channel) IsCall() bool {
+	return channel == ChannelPhone
+}
+
+// IsSpokenMedium reports whether the channel's messages are transcribed
+// speech (meetings, uploaded recordings, phone calls) rather than typed text.
+// It gates the spoken-media behaviors that IsMeeting used to proxy for —
+// per-utterance ingest skips contact resolution (identities resolve ONCE at
+// the end of the meeting/call), and clients render the transcript treatment.
+// IsMeeting stays the narrower meeting-BOT-family predicate (bot lifecycle,
+// meeting-platform classification) and must not be widened.
+func (channel Channel) IsSpokenMedium() bool {
+	return channel.IsMeeting() || channel.IsCall() || channel == ChannelAdhoc
 }
 
 // ConnectorKey identifies a concrete integration that produces and/or sends
@@ -87,7 +110,46 @@ const (
 	ConnectorKeyAdhocMeeting             ConnectorKey = "adhoc-meeting"
 	ConnectorKeyGoogleCalendarMeeting    ConnectorKey = "google-calendar-meeting"
 	ConnectorKeyMicrosoftCalendarMeeting ConnectorKey = "microsoft-calendar-meeting"
+	// The phone-channel connectors. twilio-phone is vendor-suffixed (the
+	// unipile precedent: a vendor spanning channels gets one key per medium, so
+	// a future twilio-sms coexists cleanly); aircall is log-only (calls happen
+	// in Aircall's apps, we ingest lifecycle events + recordings); webhook-cti
+	// is the provider-agnostic contract any phone system can POST call payloads
+	// to (the Zendesk Talk-Partner-Edition shape).
+	ConnectorKeyTwilioPhone ConnectorKey = "twilio-phone"
+	ConnectorKeyAircall     ConnectorKey = "aircall"
+	ConnectorKeyWebhookCti  ConnectorKey = "webhook-cti"
 )
+
+// CallStatus is the telephony lifecycle of one phone call, carried in the
+// call conversation's Metadata under "call_status" (a call is a conversation
+// plus call facts — no dedicated table; the meeting precedent). Provider
+// callbacks may arrive out of order, so writes go through the monotonic
+// logic.ApplyCallStatus guard: the rank only moves forward and a terminal
+// status never regresses.
+type CallStatus string
+
+const (
+	CallStatusQueued     CallStatus = "queued"
+	CallStatusRinging    CallStatus = "ringing"
+	CallStatusInProgress CallStatus = "in_progress"
+	CallStatusCompleted  CallStatus = "completed"
+	CallStatusNoAnswer   CallStatus = "no_answer"
+	CallStatusBusy       CallStatus = "busy"
+	CallStatusFailed     CallStatus = "failed"
+	CallStatusCanceled   CallStatus = "canceled"
+)
+
+// IsTerminal reports whether the call reached a final state (the conversation
+// flips to ended and EndedAt stamps when it does).
+func (status CallStatus) IsTerminal() bool {
+	switch status {
+	case CallStatusCompleted, CallStatusNoAnswer, CallStatusBusy,
+		CallStatusFailed, CallStatusCanceled:
+		return true
+	}
+	return false
+}
 
 // ConnectorProvider says who operates the integration mechanics behind a
 // connector: Proteos' own hand-coded integration against the provider's API

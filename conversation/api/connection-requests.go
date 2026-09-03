@@ -33,11 +33,28 @@ type SyncConnectionRequest struct {
 	Range conversationmodel.ConnectionSyncRange `json:"range" validate:"required,oneof=30d 90d 365d all"`
 }
 
-// InstallConnectionResponse is returned by POST /connections/:id/install: the
-// browser opens AuthorizationUrl in a popup; install completion lands on the
-// connector's pre-auth oauth-callback ingest route.
+// InstallConnectionRequest is the OPTIONAL body of POST
+// /connections/:id/install. Input carries user-supplied install credentials
+// for direct-install connectors (twilio-phone, aircall — connector-documented
+// snake_case keys); empty for OAuth/hosted connectors, whose install is a
+// browser flow. Values are secrets: never logged, never echoed back.
+type InstallConnectionRequest struct {
+	Input map[string]string `json:"input,omitempty"`
+}
+
+// InstallConnectionResponse is returned by POST /connections/:id/install.
+// OAuth/hosted connectors return AuthorizationUrl (the browser opens it in a
+// popup; completion lands on the connector's pre-auth callback route).
+// Direct-install connectors complete server-side in this request and return
+// IsCompleted=true with no URL — the client just refetches the connection.
 type InstallConnectionResponse struct {
-	AuthorizationUrl string `json:"authorization_url"`
+	AuthorizationUrl string `json:"authorization_url,omitempty"`
+	IsCompleted      bool   `json:"is_completed,omitempty"`
+	// Setup is a direct-install connector's one-time setup handout (callback
+	// URLs to paste provider-side; a minted token shown exactly once — only
+	// its hash is stored). Present only on the install response; never
+	// retrievable again.
+	Setup map[string]string `json:"setup,omitempty"`
 }
 
 // DeleteConnectionQuery carries the delete's one escape hatch. A delete first
@@ -54,7 +71,12 @@ type GetManyConnectionsQuery struct {
 	ConnectorKey *string `json:"connector_key" form:"connector_key" db:"connector_key"`
 	Channel      *string `json:"channel" form:"channel" db:"channel"`
 	Scope        *string `json:"scope" form:"scope" db:"scope"`
-	Status       *string `json:"status" form:"status" db:"status"`
+	// OwnerId narrows to the user-scoped connections one person owns. Owner is
+	// a common.UserRef JSONB, so the filter reads its id member — the same
+	// ->>'id' shape the tone-synthesis queries use. Org-scoped connections have
+	// no owner and never match.
+	OwnerId *string `json:"owner_id" form:"owner_id" db:"owner->>'id'"`
+	Status  *string `json:"status" form:"status" db:"status"`
 	common.Pagination
 	common.Sorting
 }

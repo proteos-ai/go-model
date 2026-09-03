@@ -40,6 +40,12 @@ const (
 	// config, so the connection stores only the aggregator-side account identity —
 	// nothing secret.
 	CredentialKindHostedAccount CredentialKind = "hosted_account"
+	// CredentialKindApiKey: a per-tenant API key pair the USER pastes at install
+	// (Twilio account SID + auth token, Aircall api_id + api_token) — unlike
+	// bot_token (a granted bot identity) or hosted_account (nothing secret
+	// stored), both halves are org-supplied secrets verified server-side by a
+	// DirectInstallConnector.
+	CredentialKindApiKey CredentialKind = "api_key"
 )
 
 // redactedPlaceholder is what a set secret field reads as on the API — presence
@@ -104,6 +110,37 @@ func (creds HostedAccountCredentials) Redact() ConnectionCredentials {
 	return creds
 }
 
+// ApiKeyCredentials backs api-key installs (twilio-phone, aircall). ApiKey is
+// the identifying half (Twilio account SID, Aircall api_id) and ApiSecret the
+// secret half (Twilio auth token, Aircall api_token); both are supplied by the
+// user at install and verified by the connector before persisting. The
+// identifying half survives redaction — reinstall flows show which account is
+// connected.
+//
+// The voice_key_* pair is the OPTIONAL derived signing key a softphone-capable
+// install provisions (Twilio API Key SID + Secret, minted server-side at
+// install to sign browser Voice access tokens) — absent on connectors/installs
+// without in-app calling.
+type ApiKeyCredentials struct {
+	ApiKey         string `json:"api_key,omitempty"`
+	ApiSecret      string `json:"api_secret,omitempty"`
+	VoiceKeySid    string `json:"voice_key_sid,omitempty"`
+	VoiceKeySecret string `json:"voice_key_secret,omitempty"`
+}
+
+func (ApiKeyCredentials) isConnectionCredentials() {}
+func (ApiKeyCredentials) Kind() CredentialKind     { return CredentialKindApiKey }
+
+func (creds ApiKeyCredentials) Redact() ConnectionCredentials {
+	if creds.ApiSecret != "" {
+		creds.ApiSecret = redactedPlaceholder
+	}
+	if creds.VoiceKeySecret != "" {
+		creds.VoiceKeySecret = redactedPlaceholder
+	}
+	return creds
+}
+
 // credentialEnvelope is the stored (JSONB) form: a self-describing {kind, data}
 // wrapper so the decode switch keys on the auth mechanism, decoupled from
 // connector_key. Only the persistence + API-output paths use this; the wire-in
@@ -161,6 +198,12 @@ func DecodeConnectionCredentials(raw []byte) (ConnectionCredentials, error) {
 		return credentials, nil
 	case CredentialKindHostedAccount:
 		var credentials HostedAccountCredentials
+		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
+			return nil, err
+		}
+		return credentials, nil
+	case CredentialKindApiKey:
+		var credentials ApiKeyCredentials
 		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
 			return nil, err
 		}
