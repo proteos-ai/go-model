@@ -141,7 +141,11 @@ type NodeExecution struct {
 // mirroring the platform CustomError shape. IsUserError marks business failures
 // the user can fix (bad input, 4xx) as opposed to infrastructure faults.
 type ExecutionError struct {
-	Code        string `json:"code"`
-	Message     string `json:"message"`
-	IsUserError bool   `json:"is_user_error,omitempty"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	// Details is the node error's machine-readable payload (a held send's
+	// earliest_allowed_at / rule_id, an HTTP status …), copied verbatim from
+	// the NodeError so the execution UI and clients can act on it.
+	Details     map[string]any `json:"details,omitempty"`
+	IsUserError bool           `json:"is_user_error,omitempty"`
 }

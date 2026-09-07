@@ -45,6 +45,12 @@ type Connection struct {
 	// UI adapts per connection. Reactions is nil when unsupported.
 	SupportsReactions bool                `json:"supports_reactions"`
 	Reactions         *ReactionCapability `json:"reactions,omitempty"`
+	// Actions is COMPUTED on read like Reactions: the channel actions the
+	// connector can perform through this connection (invitation, profile_visit,
+	// inmail, …), one capability per type. Empty when the connector performs
+	// none. Deliberately a separate list from Reactions — a reaction is a
+	// toggled edge on a message, not a performed act (see ChannelAction).
+	Actions []ChannelActionCapability `json:"actions,omitempty"`
 	// Provider is COMPUTED on read like SupportsReactions: who operates the
 	// integration mechanics (native | unipile), taken from the connector. Empty
 	// when the connector is not registered in this environment.

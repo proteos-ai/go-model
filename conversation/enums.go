@@ -30,7 +30,7 @@ const (
 	ChannelGoogleMeet   Channel = "google-meet"
 	ChannelTeamsMeeting Channel = "teams-meeting"
 	ChannelWebexMeeting Channel = "webex-meeting"
-	ChannelAdhoc Channel = "adhoc"
+	ChannelAdhoc        Channel = "adhoc"
 	// ChannelPhone is the telephony medium — PSTN voice calls. One channel for
 	// every phone provider (twilio-phone, aircall, webhook-cti feed it side by
 	// side, the email precedent); "phone" is the medium name users recognize,
@@ -39,7 +39,7 @@ const (
 	// its transcript turns arrive as messages post-call.
 	ChannelPhone     Channel = "phone"
 	ChannelInstagram Channel = "instagram"
-	ChannelMessenger    Channel = "messenger"
+	ChannelMessenger Channel = "messenger"
 	// ChannelX is the platform formerly known as Twitter. One name across
 	// Go/SDK/UI/DB per the ubiquitous-naming rule; Unipile's provider constant
 	// TWITTER stays adapter-internal (documented deviation).
@@ -633,4 +633,111 @@ const (
 	ToneProfileScopeChannel ToneProfileScope = "channel"
 	ToneProfileScopeGroup   ToneProfileScope = "group"
 	ToneProfileScopeContact ToneProfileScope = "contact"
+)
+
+// SendingRuleType discriminates a sending rule's constraint — the tagged-union
+// key for SendingRuleConfig (see sending-rule-config.go): window (WHEN sending
+// is allowed, recipient-local weekday ranges), limit (HOW MUCH one connection
+// may send per rolling period), frequency_cap (HOW OFTEN one contact may be
+// contacted per rolling period).
+type SendingRuleType string
+
+const (
+	SendingRuleTypeWindow       SendingRuleType = "window"
+	SendingRuleTypeLimit        SendingRuleType = "limit"
+	SendingRuleTypeFrequencyCap SendingRuleType = "frequency_cap"
+)
+
+// SendingPeriod is the ROLLING lookback a limit or frequency cap counts over
+// ("last 24 hours from now"), never a calendar day — no midnight burst and no
+// timezone decision; the `rolling_` prefix leaves room for calendar variants.
+type SendingPeriod string
+
+const (
+	SendingPeriodRolling24h SendingPeriod = "rolling_24h"
+	SendingPeriodRolling7d  SendingPeriod = "rolling_7d"
+	SendingPeriodRolling30d SendingPeriod = "rolling_30d"
+)
+
+// ChannelActionType names ONE kind of act performed through a channel
+// connection — the shared vocabulary of three consumers: a sending limit's
+// `action` (what it counts), a channel_action row's `action_type` (what was
+// performed) and the eligibility evaluator (what is about to be performed).
+// message is the plain send — valid on a limit, NEVER on a channel_action row
+// (a send is a Message, not an action); every other token is a channel_action
+// type. Not in this enum on purpose: reaction — an emoji on a stored message is
+// a toggled edge (see MessageReaction), not a performed act.
+type ChannelActionType string
+
+const (
+	ChannelActionTypeMessage      ChannelActionType = "message"
+	ChannelActionTypeInvitation   ChannelActionType = "invitation"
+	ChannelActionTypeInmail       ChannelActionType = "inmail"
+	ChannelActionTypeProfileVisit ChannelActionType = "profile_visit"
+)
+
+// IsChannelActionRowType reports whether the type names an act that is
+// recorded as a channel_action row (everything but the plain message send).
+func (actionType ChannelActionType) IsChannelActionRowType() bool {
+	switch actionType {
+	case ChannelActionTypeInvitation, ChannelActionTypeInmail, ChannelActionTypeProfileVisit:
+		return true
+	}
+	return false
+}
+
+// ChannelActionStatus is the ledger lifecycle of one channel_action row.
+// Execution: pending (row minted, provider not yet called) → performed |
+// failed. Outcome (invitations only): performed → accepted | declined |
+// withdrawn | expired; an INBOUND received invitation starts pending and ends
+// accepted | declined | expired.
+type ChannelActionStatus string
+
+const (
+	ChannelActionStatusPending   ChannelActionStatus = "pending"
+	ChannelActionStatusPerformed ChannelActionStatus = "performed"
+	ChannelActionStatusFailed    ChannelActionStatus = "failed"
+	ChannelActionStatusAccepted  ChannelActionStatus = "accepted"
+	ChannelActionStatusDeclined  ChannelActionStatus = "declined"
+	ChannelActionStatusWithdrawn ChannelActionStatus = "withdrawn"
+	ChannelActionStatusExpired   ChannelActionStatus = "expired"
+)
+
+// IsOpen reports whether the act may still change status provider-side (a
+// sent invitation awaiting an answer, a received one awaiting ours).
+func (status ChannelActionStatus) IsOpen() bool {
+	return status == ChannelActionStatusPending || status == ChannelActionStatusPerformed
+}
+
+// ChannelActionResponse is our answer to an INBOUND channel action (a received
+// invitation).
+type ChannelActionResponse string
+
+const (
+	ChannelActionResponseAccept  ChannelActionResponse = "accept"
+	ChannelActionResponseDecline ChannelActionResponse = "decline"
+)
+
+// ChannelActionTargetKind says what an action type acts on: a contact address
+// (a person reachable on the channel — invitation, profile_visit, inmail) or
+// an external object we do not store (a post, a comment — future types).
+type ChannelActionTargetKind string
+
+const (
+	ChannelActionTargetContactAddress ChannelActionTargetKind = "contact-address"
+	ChannelActionTargetExternal       ChannelActionTargetKind = "external"
+)
+
+// Weekday names a day of the week in a sending window (lowercase English,
+// Monday first — the ISO week).
+type Weekday string
+
+const (
+	WeekdayMonday    Weekday = "monday"
+	WeekdayTuesday   Weekday = "tuesday"
+	WeekdayWednesday Weekday = "wednesday"
+	WeekdayThursday  Weekday = "thursday"
+	WeekdayFriday    Weekday = "friday"
+	WeekdaySaturday  Weekday = "saturday"
+	WeekdaySunday    Weekday = "sunday"
 )

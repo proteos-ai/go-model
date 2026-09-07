@@ -35,6 +35,12 @@ type UpdateContactRequest struct {
 	Name         *string                          `json:"name"`
 	Status       *conversationmodel.ContactStatus `json:"status"`
 	HasLegalHold *bool                            `json:"has_legal_hold"`
+	// Timezone is an IANA zone name (Europe/Berlin); Locale a BCP-47 language
+	// tag with optional region (de-CH). Both are normalized server-side and
+	// rejected with 400 contact_timezone_invalid / contact_locale_invalid when
+	// unparseable; '' clears (the next directory sweep may refill it).
+	Timezone *string `json:"timezone"`
+	Locale   *string `json:"locale"`
 	// GroupKey assigns the contact to a contact group ('' clears the
 	// assignment). Any user-initiated change stamps GroupSource=manual, which
 	// tone synthesis treats as authoritative and never overrides.
@@ -49,6 +55,10 @@ type UpdateContactRequest struct {
 type CreateContactRequest struct {
 	Name      string                        `json:"name" binding:"required"`
 	Addresses []AttachContactAddressRequest `json:"addresses" binding:"required,min=1,dive"`
+	// Timezone (IANA) and Locale (BCP-47) — optional, normalized and validated
+	// exactly as on PATCH.
+	Timezone string `json:"timezone"`
+	Locale   string `json:"locale"`
 }
 
 // MergeContactsRequest folds source_contact_id INTO the path contact (the path

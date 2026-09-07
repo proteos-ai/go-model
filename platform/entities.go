@@ -102,6 +102,13 @@ var platformEntities = []PlatformEntity{
 	// Tone-of-voice synthesis: per-user setups + the generated instruction
 	// profiles — one grant governs the whole aggregate.
 	{Slug: "tone-profiles", Name: "Tone Profiles"},
+	// Outbound send constraints (windows, connection limits, frequency caps)
+	// + their preset catalog.
+	{Slug: "sending-rules", Name: "Sending Rules"},
+	// The channel_action ledger: acts performed through a connection that are
+	// neither a message nor a reaction (LinkedIn invitations, profile visits,
+	// InMail) — perform, withdraw, answer.
+	{Slug: "channel-actions", Name: "Channel Actions"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},

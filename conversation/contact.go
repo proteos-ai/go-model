@@ -46,6 +46,18 @@ type Contact struct {
 	// stale snapshot id resolves in a single redirect. Empty = not merged.
 	MergedIntoContactId string        `json:"merged_into_contact_id,omitempty"`
 	Source              ContactSource `json:"source"`
+	// Timezone is the person's IANA zone name (Europe/Berlin) — canonical form
+	// from logic.NormalizeTimezone. Empty = unknown. Filled from observations
+	// (the Slack directory sweep exposes it) only while empty; a manual edit
+	// sticks until cleared, and a cleared value refills on the next sweep.
+	Timezone string `json:"timezone,omitempty"`
+	// Locale is the person's BCP-47 language tag with optional region (de,
+	// de-CH, pt-BR) — canonical casing from logic.NormalizeLocale. Named
+	// locale, not language: the region subtag carries formatting conventions
+	// on top of the language; a consumer needing the bare language parses the
+	// tag (language.Parse(locale).Base()). Distinct from Transcription.Language
+	// (a spoken-audio hint, region-less). Same fill semantics as Timezone.
+	Locale string `json:"locale,omitempty"`
 	// GroupKey is the contact's ContactGroup membership (one group per
 	// contact); empty = unassigned. GroupSource guards assignment authority:
 	// manual assignments are never touched by tone synthesis.

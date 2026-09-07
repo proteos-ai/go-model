@@ -16,6 +16,12 @@ type ContactObservation struct {
 	// the correspondent address itself for email) when the provider exposes
 	// one. Yields the secondary email address key — the cross-channel join.
 	Email string `json:"email,omitempty"`
+	// Timezone and Locale are person-facts the provider may expose (Slack's
+	// tz + locale) in wire form — the domain normalizes them (IANA zone,
+	// canonical BCP-47) and drops values it cannot parse; they fill the
+	// contact only while empty. Never a key.
+	Timezone string `json:"timezone,omitempty"`
+	Locale   string `json:"locale,omitempty"`
 	// Metadata is per-channel provider enrichment (Slack handle, avatar, …)
 	// destined for ContactAddress.Metadata.
 	Metadata map[string]any `json:"metadata,omitempty"`

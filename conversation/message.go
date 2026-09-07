@@ -59,6 +59,11 @@ type Message struct {
 	// Metadata carries channel-specific extras; for spoken messages (materialized
 	// transcription turns): start_ms, end_ms, confidence, attribution_source.
 	Metadata map[string]any `json:"metadata"`
+	// ChannelActionId links a message MINTED BY a channel action (an InMail's
+	// body) back to its channel_action row. Such a message is counted under the
+	// action's own sending limit (inmail), never under the plain message limit.
+	// Empty for every ordinary message.
+	ChannelActionId string `json:"channel_action_id,omitempty"`
 	// Error holds the connector failure detail when status=failed.
 	Error     string         `json:"error"`
 	CreatedAt time.Time      `json:"created_at" sortable:""`
