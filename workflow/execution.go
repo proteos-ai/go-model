@@ -102,17 +102,19 @@ type ExecutionTriggerContext struct {
 type WorkflowExecution struct {
 	OrgId              string                  `json:"org_id"`
 	Id                 string                  `json:"id" sortable:""`
-	WorkflowKey        string                  `json:"workflow_key"`
-	WorkflowVersion    int                     `json:"workflow_version"`
+	WorkflowKey        string                  `json:"workflow_key" sortable:""`
+	WorkflowVersion    int                     `json:"workflow_version" sortable:""`
 	Status             ExecutionStatus         `json:"status" sortable:""`
 	TriggerContext     ExecutionTriggerContext `json:"trigger_context"`
 	TemporalWorkflowId string                  `json:"temporal_workflow_id,omitempty"`
 	TemporalRunId      string                  `json:"temporal_run_id,omitempty"`
 	Error              *ExecutionError         `json:"error,omitempty"`
-	StartedAt          *time.Time              `json:"started_at,omitempty"`
-	FinishedAt         *time.Time              `json:"finished_at,omitempty"`
-	CreatedAt          time.Time               `json:"created_at" sortable:""`
-	CreatedBy          common.UserRef          `json:"created_by"`
+	// Nullable timestamps: a pending execution has neither, so ordering by
+	// them puts those rows last ascending and first descending.
+	StartedAt  *time.Time     `json:"started_at,omitempty" sortable:""`
+	FinishedAt *time.Time     `json:"finished_at,omitempty" sortable:""`
+	CreatedAt  time.Time      `json:"created_at" sortable:""`
+	CreatedBy  common.UserRef `json:"created_by"`
 }
 
 // NodeExecution is one run of one node within an execution — append-only, a new

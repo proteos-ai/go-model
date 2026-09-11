@@ -31,6 +31,11 @@ var platformEntities = []PlatformEntity{
 	// and membership is what actually moves access.
 	{Slug: "teams", Name: "Teams"},
 	{Slug: "team-members", Name: "Team Members"},
+	// Profiles are the org's user-types (UI defaults: default app, app
+	// visibility; app configurations key on them). ONE per user per org.
+	// Managing profiles and assigning them are separate grants, like roles.
+	{Slug: "profiles", Name: "Profiles"},
+	{Slug: "user-profile-assignments", Name: "User Profile Assignments"},
 	// The share audit trail. A distinct grant from the resources it references:
 	// seeing WHO a record is shared with is not the same decision as seeing the
 	// record.
@@ -39,6 +44,9 @@ var platformEntities = []PlatformEntity{
 	{Slug: "pages", Name: "Pages"},
 	{Slug: "menu-configurations", Name: "Menu Configurations"},
 	{Slug: "apps", Name: "Apps"},
+	// The typed (app × profile) binding rows: home, menu, agents, record
+	// pages. Gated apart from apps — "what a profile sees" is its own decision.
+	{Slug: "app-configurations", Name: "App Configurations"},
 	{Slug: "components", Name: "Components"},
 	{Slug: "lists", Name: "Lists"},
 	{Slug: "list-views", Name: "List Views"},
@@ -109,6 +117,13 @@ var platformEntities = []PlatformEntity{
 	// neither a message nor a reaction (LinkedIn invitations, profile visits,
 	// InMail) — perform, withdraw, answer.
 	{Slug: "channel-actions", Name: "Channel Actions"},
+	// The channel_event ledger: provider-observed delivery / engagement events
+	// about outbound messages (delivered, bounced, opened, clicked,
+	// unsubscribed) — read-only.
+	{Slug: "channel-events", Name: "Channel Events"},
+	// Conversation briefs: guidance prepared ahead of a conversation (a call, a
+	// meeting) with a contact (prepare, revise, discard; binds automatically).
+	{Slug: "conversation-briefs", Name: "Conversation Briefs"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},

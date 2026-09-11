@@ -3,6 +3,7 @@ package conversationmodel
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // SendingRuleConfig is the typed, per-type configuration of a SendingRule — a
@@ -61,6 +62,28 @@ type FrequencyCapRuleConfig struct {
 func (FrequencyCapRuleConfig) isSendingRuleConfig()      {}
 func (FrequencyCapRuleConfig) RuleType() SendingRuleType { return SendingRuleTypeFrequencyCap }
 
+// WarmupRuleConfig — a limit that RAMPS: on the day the warmup started the
+// connection may send StartCount acts of Action per rolling Period; every
+// following day the allowance grows by DailyIncrease (an absolute count, or
+// a percentage of the previous day's allowance when IsIncreasePercent) until
+// it reaches MaxCount, after which the rule behaves as a plain limit of
+// MaxCount. StartedAt is the ramp's day zero (UTC calendar days); the
+// service stamps "now" when a create omits it. Domain / sender-reputation
+// warmup for sending platforms on shared IPs, where the provider offers no
+// warmup of its own.
+type WarmupRuleConfig struct {
+	Action            ChannelActionType `json:"action"`
+	StartCount        int               `json:"start_count"`
+	DailyIncrease     int               `json:"daily_increase"`
+	IsIncreasePercent bool              `json:"is_increase_percent,omitempty"`
+	MaxCount          int               `json:"max_count"`
+	Period            SendingPeriod     `json:"period"`
+	StartedAt         time.Time         `json:"started_at"`
+}
+
+func (WarmupRuleConfig) isSendingRuleConfig()      {}
+func (WarmupRuleConfig) RuleType() SendingRuleType { return SendingRuleTypeWarmup }
+
 // MarshalSendingRuleConfig encodes a variant to its stored (JSONB) bare shape.
 // The discriminator lives in the sibling rule_type column. nil → '{}'.
 func MarshalSendingRuleConfig(config SendingRuleConfig) (json.RawMessage, error) {
@@ -88,6 +111,12 @@ func DecodeSendingRuleConfig(ruleType SendingRuleType, raw []byte) (SendingRuleC
 		return config, nil
 	case SendingRuleTypeFrequencyCap:
 		config := FrequencyCapRuleConfig{}
+		if err := unmarshalConfig(raw, &config); err != nil {
+			return nil, err
+		}
+		return config, nil
+	case SendingRuleTypeWarmup:
+		config := WarmupRuleConfig{}
 		if err := unmarshalConfig(raw, &config); err != nil {
 			return nil, err
 		}

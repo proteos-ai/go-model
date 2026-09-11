@@ -36,6 +36,10 @@ type GetManyConversationsQuery struct {
 	// OR-ed into the roster containment so pre-contacts snapshots (which carry
 	// no contact_id) still match the person stream.
 	ContactAddressExternalIds []string `json:"-" form:"-"`
+	// SenderAddressId filters to conversations pinned to one sending identity
+	// (metadata.sender_address_id — the "sent as sales@" stream). No db tag
+	// (jsonb, repository-applied).
+	SenderAddressId *string `json:"sender_address_id" form:"sender_address_id"`
 	// Include opts into expensive read projections; the only value today is
 	// "messages_summary" (root/latest message, totals, repliers). No db tag —
 	// handled by the repository, not the generic filter mapper.

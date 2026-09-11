@@ -6,27 +6,25 @@ import (
 )
 
 type CreateListRequest struct {
-	Slug            string                  `json:"slug" validate:"required"`
-	ModuleSlug      string                  `json:"module_slug"`
-	EntitySlug      string                  `json:"entity_slug" validate:"required"`
-	Name            string                  `json:"name" validate:"required"`
-	Columns         []metamodel.Column      `json:"columns" validate:"required"`
-	Actions         []metamodel.PageAction  `json:"actions,omitempty"`
-	SelectionMode   metamodel.SelectionMode `json:"selection_mode,omitempty"`
-	DefaultPageSlug string                  `json:"default_page_slug,omitempty"`
-	Sorting         []metamodel.SortConfig  `json:"sorting"`
-	Filters         []common.FilterGroup    `json:"filters"`
+	Slug          string                  `json:"slug" validate:"required"`
+	ModuleSlug    string                  `json:"module_slug"`
+	EntitySlug    string                  `json:"entity_slug" validate:"required"`
+	Name          string                  `json:"name" validate:"required"`
+	Columns       []metamodel.Column      `json:"columns" validate:"required"`
+	Actions       []metamodel.PageAction  `json:"actions,omitempty"`
+	SelectionMode metamodel.SelectionMode `json:"selection_mode,omitempty"`
+	Sorting       []metamodel.SortConfig  `json:"sorting"`
+	Filters       []common.FilterGroup    `json:"filters"`
 }
 
 type UpdateListRequest struct {
-	Name            *string                  `json:"name,omitempty"`
-	ModuleSlug      *string                  `json:"module_slug,omitempty"`
-	Columns         *[]metamodel.Column      `json:"columns,omitempty"`
-	Actions         *[]metamodel.PageAction  `json:"actions,omitempty"`
-	SelectionMode   *metamodel.SelectionMode `json:"selection_mode,omitempty"`
-	DefaultPageSlug *string                  `json:"default_page_slug,omitempty"`
-	Sorting         *[]metamodel.SortConfig  `json:"sorting,omitempty"`
-	Filters         *[]common.FilterGroup    `json:"filters,omitempty"`
+	Name          *string                  `json:"name,omitempty"`
+	ModuleSlug    *string                  `json:"module_slug,omitempty"`
+	Columns       *[]metamodel.Column      `json:"columns,omitempty"`
+	Actions       *[]metamodel.PageAction  `json:"actions,omitempty"`
+	SelectionMode *metamodel.SelectionMode `json:"selection_mode,omitempty"`
+	Sorting       *[]metamodel.SortConfig  `json:"sorting,omitempty"`
+	Filters       *[]common.FilterGroup    `json:"filters,omitempty"`
 }
 
 type GetManyListsQuery struct {

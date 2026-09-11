@@ -17,9 +17,17 @@ type SearchContactsQuery struct {
 	// GroupKey filters to members of one contact group (drives group-member
 	// lists in the UI).
 	GroupKey *string `json:"group_key" form:"group_key"`
+	// PlatformUserId narrows to the contact bound to one platform user (at
+	// most one active contact per user per org); PlatformUserIdMe resolves to
+	// the caller — a client's way to its own contact.
+	PlatformUserId *string `json:"platform_user_id" form:"platform_user_id"`
 	common.Pagination
 	common.Sorting
 }
+
+// PlatformUserIdMe is the SearchContactsQuery.PlatformUserId value that
+// resolves to the requesting user.
+const PlatformUserIdMe = "me"
 
 type SearchContactsResponse struct {
 	Meta common.ResponseMeta         `json:"meta"`
@@ -52,9 +60,20 @@ type UpdateContactRequest struct {
 // owned by an existing contact rejects the create with 409
 // contact_address_taken (use that contact, or merge — a manual create never
 // silently adopts identity).
+//
+// With PlatformUserId the request is a colleague's: the contact bound to
+// that platform user is ENSURED (created from the account directory, or the
+// existing one — every colleague has exactly one) and the addresses are
+// attached to it; Name is then optional (fills an empty name only) and
+// Addresses may be empty. 404 platform_user_not_found outside the org, 409
+// contact_platform_user_conflict when their email is owned by a contact
+// bound to someone else. The response is 200 when the contact already
+// existed, 201 when this request created it.
 type CreateContactRequest struct {
-	Name      string                        `json:"name" binding:"required"`
-	Addresses []AttachContactAddressRequest `json:"addresses" binding:"required,min=1,dive"`
+	Name      string                        `json:"name"`
+	Addresses []AttachContactAddressRequest `json:"addresses" binding:"dive"`
+	// PlatformUserId turns the create into "the contact of this colleague".
+	PlatformUserId string `json:"platform_user_id"`
 	// Timezone (IANA) and Locale (BCP-47) — optional, normalized and validated
 	// exactly as on PATCH.
 	Timezone string `json:"timezone"`

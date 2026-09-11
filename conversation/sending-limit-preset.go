@@ -1,11 +1,12 @@
 package conversationmodel
 
-// SendingLimitPreset is a named bundle of recommended `limit` rule configs for
-// one class of sender account (a free LinkedIn account, an established
-// mailbox, …). Presets are a static catalog, never persisted: applying one
-// expands into concrete SendingRule rows of type limit linked to the chosen
-// connections — nothing at evaluation time knows about presets (the lemlist
-// "recommended defaults" model).
+// SendingLimitPreset is a named bundle of recommended limit-shaped rule
+// configs (`limit` and `warmup`) for one class of sender account (a free
+// LinkedIn account, an established mailbox, a fresh sending domain, …).
+// Presets are a static catalog, never persisted: applying one expands into
+// concrete SendingRule rows linked to the chosen connections — nothing at
+// evaluation time knows about presets (the lemlist "recommended defaults"
+// model).
 type SendingLimitPreset struct {
 	Key         string `json:"key"`
 	Name        string `json:"name"`
@@ -18,8 +19,11 @@ type SendingLimitPreset struct {
 	Rules         []SendingLimitPresetRule `json:"rules"`
 }
 
-// SendingLimitPresetRule is one limit the preset expands into.
+// SendingLimitPresetRule is one rule the preset expands into: a plain limit
+// (LimitRuleConfig) or a ramping warmup (WarmupRuleConfig, whose StartedAt is
+// stamped at apply time). RuleType discriminates RuleConfig exactly as on
+// SendingRule.
 type SendingLimitPresetRule struct {
-	RuleType   SendingRuleType `json:"rule_type"`
-	RuleConfig LimitRuleConfig `json:"rule_config"`
+	RuleType   SendingRuleType   `json:"rule_type"`
+	RuleConfig SendingRuleConfig `json:"rule_config"`
 }

@@ -85,3 +85,50 @@ type GetManyConnectionsResponse struct {
 	Meta common.ResponseMeta            `json:"meta"`
 	Data []conversationmodel.Connection `json:"data"`
 }
+
+// GetConnectionHealthQuery: IsRefresh forces a live provider pull instead of
+// the daily snapshot (slow — several provider calls).
+type GetConnectionHealthQuery struct {
+	IsRefresh bool `json:"refresh" form:"refresh"`
+}
+
+// GetManyConnectionSuppressionsQuery narrows the provider suppression read to
+// one list (bounces | blocks | spam_reports | invalid_emails | unsubscribes).
+type GetManyConnectionSuppressionsQuery struct {
+	Kind string `json:"kind" form:"kind" validate:"required"`
+}
+
+type GetManyConnectionSuppressionsResponse struct {
+	Data []conversationmodel.EmailSuppression `json:"data"`
+}
+
+// ConnectorCatalogEntry describes one connector WIRED in this deployment —
+// the runtime catalog the UI renders (registry membership, not enum
+// membership, decides availability). InstallModes lists the install variants
+// the environment supports for a direct-install connector (a sending
+// platform's own_account / managed); empty for OAuth / install-free
+// connectors.
+type ConnectorCatalogEntry struct {
+	Key          conversationmodel.ConnectorKey      `json:"key"`
+	Channel      conversationmodel.Channel           `json:"channel"`
+	Provider     conversationmodel.ConnectorProvider `json:"provider"`
+	InstallModes []string                            `json:"install_modes"`
+}
+
+type GetManyConnectorsResponse struct {
+	Data []ConnectorCatalogEntry `json:"data"`
+}
+
+// GetManyConnectionSendersResponse lists a connection's senders (GET
+// /connections/:id/senders): the email contact addresses on its sender
+// domain, the default flagged. Empty on connections without a sender domain.
+type GetManyConnectionSendersResponse struct {
+	Data []conversationmodel.EmailSender `json:"data"`
+}
+
+// SetDefaultSenderRequest pins the connection's fallback sender (PUT
+// /connections/:id/senders/default): a contact address id that must be an
+// email address on the connection's sender domain (400 sender_not_found).
+type SetDefaultSenderRequest struct {
+	ContactAddressId string `json:"contact_address_id" binding:"required"`
+}

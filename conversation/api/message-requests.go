@@ -40,6 +40,13 @@ type SendMessageRequest struct {
 	// empty). Content may be empty when attachments are present — "at least
 	// text OR attachments" is enforced by logic.ValidateSendContent.
 	Attachments []common.FileRef `json:"attachments,omitempty"`
+	// SenderAddressId overrides the sending identity on a sending-platform
+	// email connection: a contact address id on the connection's sender
+	// domain (GET /connections/:id/senders). Selection order without it: the
+	// conversation's pinned sender → the acting user's own address on the
+	// domain → the connection's default. Ignored on channels without sender
+	// domains; an address off the domain fails with 400 sender_not_found.
+	SenderAddressId string `json:"sender_address_id,omitempty"`
 }
 
 // UpdateDraftRequest edits a status=draft message — full replacement of the

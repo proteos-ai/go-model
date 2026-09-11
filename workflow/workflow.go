@@ -38,18 +38,18 @@ var WorkflowStatuses = []WorkflowStatus{
 // WorkflowExecution carries the key, and the key is immutable so that reference
 // is stable. Graph holds the n8n-shaped node graph (persisted as JSONB).
 type Workflow struct {
-	OrgId       string         `json:"org_id"`
-	Key         string         `json:"key" sortable:""`
-	Name        string         `json:"name" sortable:""`
-	Description string         `json:"description"`
+	OrgId       string `json:"org_id"`
+	Key         string `json:"key" sortable:""`
+	Name        string `json:"name" sortable:""`
+	Description string `json:"description"`
 	// ModuleSlug attributes the workflow to the module that deployed it
 	// (empty = not module-owned), mirroring every other module-deployable kind.
-	ModuleSlug string         `json:"module_slug"`
+	ModuleSlug string         `json:"module_slug" sortable:""`
 	Status     WorkflowStatus `json:"status" sortable:""`
-	Graph       WorkflowGraph  `json:"graph"`
-	Version     int            `json:"version"`
-	CreatedAt   time.Time      `json:"created_at" sortable:""`
-	CreatedBy   common.UserRef `json:"created_by"`
-	UpdatedAt   time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy   common.UserRef `json:"updated_by"`
+	Graph      WorkflowGraph  `json:"graph"`
+	Version    int            `json:"version" sortable:""`
+	CreatedAt  time.Time      `json:"created_at" sortable:""`
+	CreatedBy  common.UserRef `json:"created_by"`
+	UpdatedAt  time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy  common.UserRef `json:"updated_by"`
 }

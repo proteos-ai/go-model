@@ -56,6 +56,11 @@ type Message struct {
 	// pre-migration email rows). The send path reads them to thread replies
 	// without a provider round-trip.
 	EmailHeaders *EmailHeaders `json:"email_headers,omitempty"`
+	// Delivery is the provider-side outcome + engagement projection of an
+	// OUTBOUND message on a sending platform (folded from the channel_event
+	// ledger — see MessageDelivery); nil on channels that report nothing and
+	// on inbound rows.
+	Delivery *MessageDelivery `json:"delivery,omitempty"`
 	// Metadata carries channel-specific extras; for spoken messages (materialized
 	// transcription turns): start_ms, end_ms, confidence, attribution_source.
 	Metadata map[string]any `json:"metadata"`

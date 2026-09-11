@@ -46,6 +46,19 @@ const (
 	ChannelX Channel = "x"
 )
 
+// IsKnownChannel reports whether the token is one of the platform channels
+// (validation for user-supplied channel fields).
+func IsKnownChannel(channel Channel) bool {
+	switch channel {
+	case ChannelSlack, ChannelEmail, ChannelLinkedin, ChannelSms, ChannelTeamsChat,
+		ChannelTelegram, ChannelWhatsapp, ChannelMeeting, ChannelZoomMeeting,
+		ChannelGoogleMeet, ChannelTeamsMeeting, ChannelWebexMeeting, ChannelAdhoc,
+		ChannelPhone, ChannelInstagram, ChannelMessenger, ChannelX:
+		return true
+	}
+	return false
+}
+
 // IsMeeting reports whether the channel is the meeting-bot family: the generic
 // meeting fallback plus the platform-tagged *-meeting channels. Adhoc (uploaded
 // recordings) is not a bot-served meeting channel.
@@ -119,6 +132,13 @@ const (
 	ConnectorKeyTwilioPhone ConnectorKey = "twilio-phone"
 	ConnectorKeyAircall     ConnectorKey = "aircall"
 	ConnectorKeyWebhookCti  ConnectorKey = "webhook-cti"
+	// ConnectorKeySendgrid is the sending-PLATFORM email connector (Twilio
+	// SendGrid): one connection = one sender identity (from address) on an
+	// authenticated domain, receiving through Inbound Parse and reporting
+	// delivery / engagement through the Event Webhook (the channel_event
+	// ledger). Third native connector on the email channel, beside the two
+	// mailbox connectors (gmail, outlook).
+	ConnectorKeySendgrid ConnectorKey = "sendgrid"
 )
 
 // CallStatus is the telephony lifecycle of one phone call, carried in the
@@ -150,6 +170,17 @@ func (status CallStatus) IsTerminal() bool {
 	}
 	return false
 }
+
+// ConversationBriefStatus is the lifecycle of a ConversationBrief: prepared (open — editable,
+// waiting for its call), used (attached to a call conversation; terminal),
+// discarded (declined by a human or agent without a call; terminal).
+type ConversationBriefStatus string
+
+const (
+	ConversationBriefStatusPrepared  ConversationBriefStatus = "prepared"
+	ConversationBriefStatusUsed      ConversationBriefStatus = "used"
+	ConversationBriefStatusDiscarded ConversationBriefStatus = "discarded"
+)
 
 // ConnectorProvider says who operates the integration mechanics behind a
 // connector: Proteos' own hand-coded integration against the provider's API
@@ -484,9 +515,14 @@ const (
 	PermissionEventSourceManual    PermissionEventSource = "manual"
 	PermissionEventSourceImport    PermissionEventSource = "import"
 	PermissionEventSourceLinkClick PermissionEventSource = "link_click"
-	PermissionEventSourceReply     PermissionEventSource = "reply"
-	PermissionEventSourceApi       PermissionEventSource = "api"
-	PermissionEventSourceSystem    PermissionEventSource = "system"
+	// PermissionEventSourceProvider: the sending platform observed the act —
+	// an unsubscribe through the provider's own link, a spam-button
+	// complaint relayed by the mailbox provider, a hard bounce. link_click
+	// stays for OUR unsubscribe links.
+	PermissionEventSourceProvider PermissionEventSource = "provider"
+	PermissionEventSourceReply    PermissionEventSource = "reply"
+	PermissionEventSourceApi      PermissionEventSource = "api"
+	PermissionEventSourceSystem   PermissionEventSource = "system"
 )
 
 // MergeProposalStatus is the review-queue lifecycle of a duplicate-contact
@@ -646,6 +682,11 @@ const (
 	SendingRuleTypeWindow       SendingRuleType = "window"
 	SendingRuleTypeLimit        SendingRuleType = "limit"
 	SendingRuleTypeFrequencyCap SendingRuleType = "frequency_cap"
+	// SendingRuleTypeWarmup is a limit whose max_count RAMPS day by day from a
+	// start date (domain / sender-reputation warmup on a sending platform —
+	// the provider's own warmup only exists for dedicated IPs). Evaluated
+	// exactly like a limit with the day's effective max.
+	SendingRuleTypeWarmup SendingRuleType = "warmup"
 )
 
 // SendingPeriod is the ROLLING lookback a limit or frequency cap counts over
@@ -740,4 +781,79 @@ const (
 	WeekdayFriday    Weekday = "friday"
 	WeekdaySaturday  Weekday = "saturday"
 	WeekdaySunday    Weekday = "sunday"
+)
+
+// ChannelEventType names ONE provider-observed occurrence about an outbound
+// message on a sending platform (the channel_event ledger): the delivery
+// lifecycle (processed → delivered | deferred | bounced | dropped) and the
+// engagement signals (opened, clicked, spam_reported, unsubscribed,
+// resubscribed). Past-tense verbs like MessageStatus; provider vocabularies
+// (SendGrid "spamreport", "group_unsubscribe") map onto these inside the
+// adapter and never leak out.
+type ChannelEventType string
+
+const (
+	ChannelEventTypeProcessed    ChannelEventType = "processed"
+	ChannelEventTypeDelivered    ChannelEventType = "delivered"
+	ChannelEventTypeDeferred     ChannelEventType = "deferred"
+	ChannelEventTypeBounced      ChannelEventType = "bounced"
+	ChannelEventTypeDropped      ChannelEventType = "dropped"
+	ChannelEventTypeOpened       ChannelEventType = "opened"
+	ChannelEventTypeClicked      ChannelEventType = "clicked"
+	ChannelEventTypeSpamReported ChannelEventType = "spam_reported"
+	ChannelEventTypeUnsubscribed ChannelEventType = "unsubscribed"
+	ChannelEventTypeResubscribed ChannelEventType = "resubscribed"
+)
+
+// IsKnownChannelEventType reports whether the token is one of the ledger's
+// event types (validation at ingest and on the list filter).
+func IsKnownChannelEventType(eventType ChannelEventType) bool {
+	switch eventType {
+	case ChannelEventTypeProcessed, ChannelEventTypeDelivered, ChannelEventTypeDeferred,
+		ChannelEventTypeBounced, ChannelEventTypeDropped, ChannelEventTypeOpened,
+		ChannelEventTypeClicked, ChannelEventTypeSpamReported, ChannelEventTypeUnsubscribed,
+		ChannelEventTypeResubscribed:
+		return true
+	}
+	return false
+}
+
+// BounceKind splits a bounced event: hard (permanent — the address is gone,
+// suppress it) vs soft (the receiving server refused THIS attempt — a full
+// mailbox, a policy block; never a permission signal).
+type BounceKind string
+
+const (
+	BounceKindHard BounceKind = "hard"
+	BounceKindSoft BounceKind = "soft"
+)
+
+// BounceClassification is the provider's category of a bounce / block
+// (SendGrid's seven bounce classifications, snake_cased; other providers map
+// onto the same set).
+type BounceClassification string
+
+const (
+	BounceClassificationInvalidAddress     BounceClassification = "invalid_address"
+	BounceClassificationTechnicalFailure   BounceClassification = "technical_failure"
+	BounceClassificationContent            BounceClassification = "content"
+	BounceClassificationReputation         BounceClassification = "reputation"
+	BounceClassificationVolume             BounceClassification = "volume"
+	BounceClassificationMailboxUnavailable BounceClassification = "mailbox_unavailable"
+	BounceClassificationUnclassified       BounceClassification = "unclassified"
+)
+
+// MessageDeliveryStatus is the PROVIDER-side outcome of an outbound message
+// (Message.Delivery.Status), a separate axis from MessageStatus: a message
+// stays status=sent at the platform level once the provider accepted it,
+// while delivery moves sent → delivered | deferred | bounced | dropped as the
+// provider reports. Nil delivery = the channel reports nothing.
+type MessageDeliveryStatus string
+
+const (
+	MessageDeliveryStatusSent      MessageDeliveryStatus = "sent"
+	MessageDeliveryStatusDelivered MessageDeliveryStatus = "delivered"
+	MessageDeliveryStatusDeferred  MessageDeliveryStatus = "deferred"
+	MessageDeliveryStatusBounced   MessageDeliveryStatus = "bounced"
+	MessageDeliveryStatusDropped   MessageDeliveryStatus = "dropped"
 )

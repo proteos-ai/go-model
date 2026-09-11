@@ -15,6 +15,10 @@ type SearchContactAddressesQuery struct {
 	Q     *string                                `json:"q" form:"q"`
 	Kinds []conversationmodel.ContactAddressKind `json:"kinds" form:"kinds"`
 	Scope *string                                `json:"scope" form:"scope"`
+	// Domain narrows email addresses to one domain (value ends with
+	// "@<domain>") — the sender directory of a domain-authenticated email
+	// connection.
+	Domain *string `json:"domain" form:"domain"`
 	common.Pagination
 	common.Sorting
 }
