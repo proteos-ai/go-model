@@ -225,7 +225,13 @@ type ResponsiveSizing struct {
 // for this child). On Row/Column elements it is shadowed by an outer Align
 // field whose semantic is the cross-axis arrangement applied to children.
 type CommonProps struct {
-	ID           string              `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
+	// ExtensionKey is the server-stamped back-reference to the page extension
+	// that contributes this element to its host page (see PageExtension). Set
+	// only when the host's layout is materialized; any client-supplied value is
+	// stripped and re-derived from the extension rows, so a client can neither
+	// forge nor drop a contributed element. Empty for the page's own elements.
+	ExtensionKey string              `json:"extension_key,omitempty"`
 	VisibleWhen  *common.FilterGroup `json:"visible_when,omitempty"`
 	ReadOnlyWhen *common.FilterGroup `json:"read_only_when,omitempty"`
 	Width        *SizeValue          `json:"width,omitempty"`
@@ -397,12 +403,15 @@ func (e *CardElement) UnmarshalJSON(data []byte) error {
 // first visible tab (in document order) whose `DefaultWhen` matches, then
 // `TabsElement.DefaultTabID`, then the first visible tab.
 type LayoutTab struct {
-	ID          string              `json:"id"`
-	Label       string              `json:"label"`
-	Icon        string              `json:"icon,omitempty"`
-	VisibleWhen *common.FilterGroup `json:"visible_when,omitempty"`
-	DefaultWhen *common.FilterGroup `json:"default_when,omitempty"`
-	Content     LayoutElement       `json:"content"`
+	ID string `json:"id"`
+	// ExtensionKey is the page-extension stamp for a contributed tab — the
+	// same contract as CommonProps.ExtensionKey.
+	ExtensionKey string              `json:"extension_key,omitempty"`
+	Label        string              `json:"label"`
+	Icon         string              `json:"icon,omitempty"`
+	VisibleWhen  *common.FilterGroup `json:"visible_when,omitempty"`
+	DefaultWhen  *common.FilterGroup `json:"default_when,omitempty"`
+	Content      LayoutElement       `json:"content"`
 }
 
 func (t *LayoutTab) UnmarshalJSON(data []byte) error {
@@ -756,8 +765,15 @@ func (l *PageLayout) UnmarshalJSON(data []byte) error {
 
 // ─────────────────────────────────────────────── Dispatch helper ──
 
-// unmarshalLayoutElement peeks at the `type` discriminator and unmarshals
+// UnmarshalLayoutElement peeks at the `type` discriminator and unmarshals
 // `data` into the matching concrete element type, returned as LayoutElement.
+// Exported for the structs outside this file that carry elements (page
+// extension placements).
+func UnmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
+	return unmarshalLayoutElement(data)
+}
+
+// unmarshalLayoutElement is the dispatch behind UnmarshalLayoutElement.
 func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 	var disc struct {
 		Type LayoutElementType `json:"type"`

@@ -671,6 +671,19 @@ const (
 	ToneProfileScopeContact ToneProfileScope = "contact"
 )
 
+// ToneProfileSource guards write authority on a tone profile row: manual rows
+// are authored by a human and are authoritative — synthesis never overwrites or
+// deletes them, and deleting the user's setup (the AI opt-in) leaves them
+// standing. model rows are the synthesis sweep's output and it owns them
+// outright. Distinct from ContactGroupSource, which happens to share the
+// vocabulary but guards a different column on a different aggregate.
+type ToneProfileSource string
+
+const (
+	ToneProfileSourceManual ToneProfileSource = "manual"
+	ToneProfileSourceModel  ToneProfileSource = "model"
+)
+
 // SendingRuleType discriminates a sending rule's constraint — the tagged-union
 // key for SendingRuleConfig (see sending-rule-config.go): window (WHEN sending
 // is allowed, recipient-local weekday ranges), limit (HOW MUCH one connection

@@ -47,6 +47,11 @@ type ToneProfile struct {
 	ContactId string `json:"contact_id,omitempty"`
 	// Scope is derived from which scope fields are set — never stored.
 	Scope ToneProfileScope `json:"scope"`
+	// Source is the write-authority guard: manual rows are hand-authored and
+	// synthesis never overwrites or deletes them (a manual row simply wins at
+	// its scope); model rows belong to the sweep. A manual upsert deliberately
+	// overwrites a model row at the same scope — the guard runs one way only.
+	Source ToneProfileSource `json:"source"`
 	// Instructions is the COMPLETE markdown instruction set for this tier,
 	// served verbatim to a drafting model.
 	Instructions string `json:"instructions"`

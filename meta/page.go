@@ -83,6 +83,10 @@ type PageAction struct {
 	Params           map[string]string `json:"params,omitempty"`
 	Inputs           map[string]string `json:"inputs,omitempty"`
 	SkipConfirmation bool              `json:"skip_confirmation,omitempty"`
+	// ExtensionKey is the list-extension stamp for a toolbar action a list
+	// extension appended to its host list — same contract as
+	// Column.ExtensionKey. Never set on a page's own actions.
+	ExtensionKey string `json:"extension_key,omitempty"`
 }
 
 type Page struct {

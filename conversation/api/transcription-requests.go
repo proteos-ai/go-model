@@ -5,14 +5,28 @@ import (
 	conversationmodel "go.proteos.ai/model/conversation"
 )
 
-// CreateTranscriptionRequest transcribes a storage-service file synchronously.
-// IsDiarized defaults to true (the service applies the default when the pointer
-// is nil — exactOptionalPropertyTypes-style tri-state).
+// CreateTranscriptionRequest creates a transcription one of two ways, and
+// EXACTLY one of FileId / Turns must be set (logic.ValidateTranscriptionCreateMode
+// enforces it — struct tags cannot express an either-or).
+//
+//   - FileId  — transcribe a storage-service audio file through the provider.
+//     Asynchronous: the row lands `processing` and the caller polls.
+//   - Turns   — an already-written transcript, supplied verbatim. No provider
+//     runs; the row lands `completed` synchronously. This is how a transcript
+//     (and, via materialize, a conversation) is authored from text with nothing
+//     to upload.
+//
+// IsDiarized defaults to true on the file path (the service applies the default
+// when the pointer is nil — exactOptionalPropertyTypes-style tri-state); on the
+// turns path it is derived from the turns unless given explicitly.
 type CreateTranscriptionRequest struct {
-	FileId     string `json:"file_id" validate:"required"`
-	Language   string `json:"language"`
-	Model      string `json:"model"`
-	IsDiarized *bool  `json:"is_diarized,omitempty"`
+	FileId string `json:"file_id"`
+	// Turns is the authored transcript. Timings are optional — text has none,
+	// and materialization then sequences turns by index instead.
+	Turns      []conversationmodel.TranscriptTurn `json:"turns,omitempty"`
+	Language   string                             `json:"language"`
+	Model      string                             `json:"model"`
+	IsDiarized *bool                              `json:"is_diarized,omitempty"`
 }
 
 // MaterializeTranscriptionRequest turns a completed transcription into a

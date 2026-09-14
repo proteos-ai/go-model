@@ -48,6 +48,14 @@ type Attribute struct {
 	// entities, permissions, etc.).
 	IsPlatformManaged bool `json:"is_platform_managed,omitempty"`
 
+	// ExtensionKey is the server-stamped back-reference to the entity extension
+	// that contributes this attribute to its host entity (see EntityExtension).
+	// Set only when the host's attribute list is materialized; any
+	// client-supplied value is stripped and re-derived from the extension rows,
+	// so a client can neither forge nor drop a contributed attribute. Empty for
+	// the entity's own attributes and for platform attributes.
+	ExtensionKey string `json:"extension_key,omitempty"`
+
 	// Restrictions gates reading and writing this attribute independently of
 	// the record's own access. nil is today's behaviour: unrestricted.
 	//

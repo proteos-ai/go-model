@@ -89,6 +89,12 @@ type Column struct {
 	Attribute string `json:"attribute"`
 	Label     string `json:"label"`
 	Width     int    `json:"width"`
+	// ExtensionKey is the server-stamped back-reference to the list extension
+	// that contributes this column to its host list (see ListExtension). Set
+	// only when the host's column list is materialized; any client-supplied
+	// value is stripped and re-derived from the extension rows. Empty for the
+	// list's own columns.
+	ExtensionKey string `json:"extension_key,omitempty"`
 }
 
 type SortConfig struct {
