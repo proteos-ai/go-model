@@ -37,6 +37,11 @@ const (
 	// a workflow's manual run and shows inline step progress while it runs —
 	// the in-layout counterpart of a `kind: workflow` toolbar action.
 	LayoutElementTypeWorkflowTrigger LayoutElementType = "workflow_trigger"
+	// LayoutElementTypeSchedulingPicker embeds a scheduling link's booking flow
+	// (type → time → details → confirmation) in the layout: the in-page
+	// counterpart of the /s/:orgId/:key page. Allowed on every page type;
+	// public pages book through the unauthenticated surface.
+	LayoutElementTypeSchedulingPicker LayoutElementType = "scheduling_picker"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -55,6 +60,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeRecordFilter,
 	LayoutElementTypeList,
 	LayoutElementTypeWorkflowTrigger,
+	LayoutElementTypeSchedulingPicker,
 }
 
 // UnmarshalJSON validates the wire value against LayoutElementTypes. Mirrors
@@ -669,6 +675,29 @@ type WorkflowTriggerElement struct {
 func (WorkflowTriggerElement) isLayoutElement()              {}
 func (WorkflowTriggerElement) LayoutType() LayoutElementType { return LayoutElementTypeWorkflowTrigger }
 
+// SchedulingPickerElement embeds a scheduling link's booking flow. LinkKey
+// names the link; TypeKey pre-selects one of its types (required on the wire
+// only when the link offers several and none is given here — the picker then
+// shows the choice); HostUserId pins one of its hosts; ContactId is a Liquid
+// template over the page scope ({{ params.contact_id }}, {{ record.contact_id }})
+// that binds the booking to a known contact (no name / email asked).
+type SchedulingPickerElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	LinkKey    string `json:"link_key"`
+	TypeKey    string `json:"type_key,omitempty"`
+	HostUserId string `json:"host_user_id,omitempty"`
+	ContactId  string `json:"contact_id,omitempty"`
+	// IsHeaderHidden drops the link name + hosts header (the page around the
+	// element already says whose time it is).
+	IsHeaderHidden bool `json:"is_header_hidden,omitempty"`
+}
+
+func (SchedulingPickerElement) isLayoutElement() {}
+func (SchedulingPickerElement) LayoutType() LayoutElementType {
+	return LayoutElementTypeSchedulingPicker
+}
+
 // ─────────────────────────────────────────────────────────── Text ──
 
 type TextElement struct {
@@ -859,6 +888,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeWorkflowTrigger:
 		var v WorkflowTriggerElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeSchedulingPicker:
+		var v SchedulingPickerElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

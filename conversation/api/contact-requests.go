@@ -119,3 +119,24 @@ type SearchContactMergeProposalsResponse struct {
 	Meta common.ResponseMeta                      `json:"meta"`
 	Data []conversationmodel.ContactMergeProposal `json:"data"`
 }
+
+// ResolveContactsRequest is the service-to-service resolution door
+// (POST /conversations/v1/contacts/resolve, X-Internal-Token): a batch of
+// sightings another first-party service observed (calendar attendees) that
+// must land on contacts through the ONE resolution algorithm. OrgId rides in
+// the body because the caller holds no user token. Observations are
+// email-keyed: ExternalId is the e-mail address as observed.
+type ResolveContactsRequest struct {
+	// binding (not validate) tags: the route validates through gin's
+	// binding.Validator, which reads only the binding tag.
+	OrgId        string                                 `json:"org_id" binding:"required"`
+	Source       conversationmodel.ContactAddressSource `json:"source" binding:"omitempty,oneof=sync ingest"`
+	Observations []conversationmodel.ContactObservation `json:"observations" binding:"required,min=1,max=200,dive"`
+}
+
+// ResolveContactsResponse is index-aligned with the request's observations;
+// an unresolvable sighting comes back with an empty contact_id (enrichment is
+// a garnish, never a gate).
+type ResolveContactsResponse struct {
+	Data []conversationmodel.ContactRef `json:"data"`
+}

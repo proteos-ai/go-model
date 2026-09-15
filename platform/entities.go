@@ -127,6 +127,16 @@ var platformEntities = []PlatformEntity{
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},
+	// Scheduling (scheduling-service). The calendar mirror and the base
+	// scheduling primitive; business objects (appointments, interviews) live in
+	// modules and link back through calendar_event.record.
+	{Slug: "calendar-connections", Name: "Calendar Connections"},
+	{Slug: "calendars", Name: "Calendars"},
+	{Slug: "calendar-events", Name: "Calendar Events"},
+	{Slug: "calendar-event-types", Name: "Calendar Event Types"},
+	{Slug: "scheduling-links", Name: "Scheduling Links"},
+	{Slug: "scheduling-profiles", Name: "Scheduling Profiles"},
+	{Slug: "availability-constraints", Name: "Availability Constraints"},
 }
 
 // The knowledge entity slugs, named because code keys off them rather than only

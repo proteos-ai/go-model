@@ -41,6 +41,11 @@ type ConnectorManifest struct {
 	// service can validate.
 	ConfigSchema []metamodel.Attribute `json:"config_schema,omitempty"`
 	Methods      []MethodDeclaration   `json:"methods"`
+	// Capabilities are coarse, provider-neutral tags a first-party service
+	// filters the catalog by ("calendar": the connector's grant can drive
+	// scheduling-service's calendar mirror). snake_case, unique; declared by
+	// the manifest, never derived from methods.
+	Capabilities []string `json:"capabilities,omitempty"`
 	// OAuthRedirectUri is COMPUTED on API reads (never stored): the broker's
 	// single per-environment callback the provider app must whitelist. Shown
 	// in the connect wizard so operators can register it without digging
@@ -50,8 +55,8 @@ type ConnectorManifest struct {
 	// when the environment ships platform-default OAuth app credentials for
 	// this connector's variable keys, so the connect wizard can skip
 	// collecting them. Org variables always override the platform default.
-	HasDefaultAppCredentials bool `json:"has_default_app_credentials,omitempty"`
-	Origin           ConnectorOrigin `json:"origin" sortable:""`
+	HasDefaultAppCredentials bool            `json:"has_default_app_credentials,omitempty"`
+	Origin                   ConnectorOrigin `json:"origin" sortable:""`
 	// ModuleSlug names the deploying module when Origin is custom; empty for
 	// pre-built connectors.
 	ModuleSlug string          `json:"module_slug,omitempty"`
@@ -79,6 +84,10 @@ func (manifest ConnectorManifest) HasCredentialKind(kind CredentialKind) bool {
 // ConnectorOrigin distinguishes compiled-in Go connectors from module-deployed
 // wasm connectors. It decides which method executor runs an invocation.
 type ConnectorOrigin string
+
+// CapabilityCalendar tags a connector whose grant can be used for the
+// platform calendar mirror (google-calendar, microsoft-calendar).
+const CapabilityCalendar = "calendar"
 
 const (
 	ConnectorOriginPreBuilt ConnectorOrigin = "pre_built"

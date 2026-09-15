@@ -75,11 +75,14 @@ type UpsertConnectorRequest struct {
 	ServiceAccount           *connectormodel.ServiceAccountConfig `json:"service_account,omitempty"`
 	ConfigSchema             []metamodel.Attribute                `json:"config_schema,omitempty"`
 	Methods                  []connectormodel.MethodDeclaration   `json:"methods,omitempty"`
+	Capabilities             []string                             `json:"capabilities,omitempty"`
 	ModuleSlug               string                               `json:"module_slug,omitempty"`
 }
 
 type GetManyConnectorsQuery struct {
 	Status *string `json:"status" form:"status" db:"status"`
+	// Capability filters to manifests declaring that capability (jsonb containment).
+	Capability *string `json:"capability" form:"capability"`
 	common.Pagination
 	common.Sorting
 }
@@ -100,6 +103,19 @@ type ConnectionTokenResponse struct {
 	Username    string                        `json:"username,omitempty"`
 	Password    string                        `json:"password,omitempty"`
 	BotToken    string                        `json:"bot_token,omitempty"`
+}
+
+// InternalConnectionTokenResponse is the pre-auth service-to-service token
+// release (GET /connectors/v1/internal/connections/:id/token, X-Internal-Token).
+type InternalConnectionTokenResponse struct {
+	ConnectionTokenResponse
+	ConnectionId      string                          `json:"connection_id"`
+	OrgId             string                          `json:"org_id"`
+	ConnectorKey      string                          `json:"connector_key"`
+	Scope             connectormodel.ConnectionScope  `json:"scope"`
+	Owner             *common.UserRef                 `json:"owner,omitempty"`
+	ExternalAccountId string                          `json:"external_account_id,omitempty"`
+	Status            connectormodel.ConnectionStatus `json:"status"`
 }
 
 // InvokeMethodResponse wraps a method invocation result, mirroring
