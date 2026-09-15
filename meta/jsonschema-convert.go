@@ -2,6 +2,8 @@ package metamodel
 
 import (
 	"encoding/json"
+
+	conversationmodel "go.proteos.ai/model/conversation"
 )
 
 // EntityToJSONSchema converts an Entity to a JSON Schema draft-07 document.
@@ -155,6 +157,14 @@ func AttributeToJSONSchema(attr Attribute) *JSONSchema {
 		// enforcement lives in data-service's recordvalidation.
 		schema.Type = "object"
 		applyFileMeta(schema)
+
+	case AttributeTypeContactAddress:
+		// A contact-address value is ONE canonical scalar string (lowercased
+		// email, E.164 phone, LinkedIn public identifier). The JSON Schema is a
+		// backwards-compat export only — canonicalization and kind-specific
+		// validation live in data-service's recordvalidation.
+		schema.Type = "string"
+		applyContactAddressMeta(schema, attr.Meta)
 	}
 
 	// Handle nullable by wrapping type
@@ -169,6 +179,10 @@ func AttributeToJSONSchema(attr Attribute) *JSONSchema {
 const (
 	// UUIDPattern matches UUID v1-5 format (8-4-4-4-12 hex digits)
 	UUIDPattern = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+	// E164Pattern matches a canonical international phone number: + followed
+	// by 5–15 digits (the shape conversationmodel.CanonicalizePhone produces).
+	E164Pattern = `^\+[0-9]{5,15}$`
 
 	// DurationPattern matches ISO 8601 duration format (e.g., P1Y2M3DT4H5M6S)
 	// At least one component must be present. Uses alternation to avoid lookahead.
@@ -385,6 +399,23 @@ func applyKnowledgeTextMeta(schema *JSONSchema) {
 		"content": {Type: "string"},
 	}
 	schema.Required = []string{"id"}
+}
+
+// applyContactAddressMeta narrows the string schema of a `contact-address`
+// value by kind: `format: email` (native draft-07) for email, the E.164
+// pattern for phone, nothing for linkedin (a public identifier has no
+// standard format). Unknown or missing kind leaves the plain string.
+func applyContactAddressMeta(schema *JSONSchema, meta any) {
+	parsed := ParseMetaAs[ContactAddressAttributeMeta](meta)
+	if parsed == nil {
+		return
+	}
+	switch parsed.Kind {
+	case conversationmodel.ContactAddressKindEmail:
+		schema.Format = "email"
+	case conversationmodel.ContactAddressKindPhone:
+		schema.Pattern = E164Pattern
+	}
 }
 
 // applyFileMeta shapes the JSON Schema for a `file` value — the composite

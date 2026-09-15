@@ -13,21 +13,27 @@ type CreateEntityRequest struct {
 	// access (see metamodel.Entity.PublicRecordAccess; only ["read"] honored
 	// today). Manifest-driven full-replacement on upsert: an upsert without
 	// the field resets it to private.
-	PublicRecordAccess common.PublicAccess   `json:"public_record_access"`
-	ModuleSlug         string                `json:"module_slug"`
-	Description        string                `json:"description"`
-	TitleTemplate      string                `json:"title_template"`
-	Attributes         []metamodel.Attribute `json:"attributes"`
+	PublicRecordAccess common.PublicAccess `json:"public_record_access"`
+	// ContactBinding is the entity's contact-binding setting
+	// (duplicate_policy reject | flag). Value semantics like
+	// PublicRecordAccess: an upsert without the field resets it to the
+	// default (flag).
+	ContactBinding metamodel.ContactBinding `json:"contact_binding"`
+	ModuleSlug     string                   `json:"module_slug"`
+	Description    string                   `json:"description"`
+	TitleTemplate  string                   `json:"title_template"`
+	Attributes     []metamodel.Attribute    `json:"attributes"`
 }
 
 type UpdateEntityRequest struct {
-	Name               *string                `json:"name,omitempty"`
-	IsRemote           *bool                  `json:"is_remote,omitempty"`
-	PublicRecordAccess *common.PublicAccess   `json:"public_record_access,omitempty"`
-	ModuleSlug         *string                `json:"module_slug,omitempty"`
-	Description        *string                `json:"description,omitempty"`
-	TitleTemplate      *string                `json:"title_template,omitempty"`
-	Attributes         *[]metamodel.Attribute `json:"attributes,omitempty"`
+	Name               *string                   `json:"name,omitempty"`
+	IsRemote           *bool                     `json:"is_remote,omitempty"`
+	PublicRecordAccess *common.PublicAccess      `json:"public_record_access,omitempty"`
+	ContactBinding     *metamodel.ContactBinding `json:"contact_binding,omitempty"`
+	ModuleSlug         *string                   `json:"module_slug,omitempty"`
+	Description        *string                   `json:"description,omitempty"`
+	TitleTemplate      *string                   `json:"title_template,omitempty"`
+	Attributes         *[]metamodel.Attribute    `json:"attributes,omitempty"`
 }
 
 // GetOneEntityQuery contains query parameters for GetOne endpoint

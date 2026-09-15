@@ -427,9 +427,23 @@ const (
 type ContactAddressKind string
 
 const (
-	ContactAddressKindEmail     ContactAddressKind = "email"
-	ContactAddressKindPhone     ContactAddressKind = "phone"
-	ContactAddressKindSlack     ContactAddressKind = "slack"
+	ContactAddressKindEmail ContactAddressKind = "email"
+	ContactAddressKindPhone ContactAddressKind = "phone"
+	ContactAddressKindSlack ContactAddressKind = "slack"
+	// ContactAddressKindLinkedinId is LinkedIn's stable profile id (ACoAA… on a
+	// classic account, ACwAA… on Sales Navigator, AE… on Recruiter — Unipile
+	// relays it as provider_id): the key connectors mint and the ONLY form
+	// invitations and chats accept. Verbatim, case-sensitive.
+	ContactAddressKindLinkedinId ContactAddressKind = "linkedin_id"
+	// ContactAddressKindLinkedinPublicIdentifier is the `/in/<slug>` of a
+	// profile URL (LinkedIn's publicIdentifier): what humans and records hold,
+	// user-changeable, lowercased. Useless for sending on its own — a
+	// profile_lookup act bridges it to the profile id.
+	ContactAddressKindLinkedinPublicIdentifier ContactAddressKind = "linkedin_public_identifier"
+	// ContactAddressKindLinkedin is the LEGACY alias of linkedin_id: rows written
+	// before the LinkedIn kind split. Read-side only — repositories report such
+	// rows as linkedin_id and nothing writes the alias again. Remove once the
+	// data migration has run.
 	ContactAddressKindLinkedin  ContactAddressKind = "linkedin"
 	ContactAddressKindTelegram  ContactAddressKind = "telegram"
 	ContactAddressKindInstagram ContactAddressKind = "instagram"
@@ -438,11 +452,33 @@ const (
 	ContactAddressKindWhatsapp  ContactAddressKind = "whatsapp"
 )
 
+// Canonical maps a legacy alias onto the kind it now means (`linkedin` →
+// `linkedin_id`); every other kind is itself. Applied wherever a stored kind
+// enters the domain (repository row mappers, stored filter configs).
+func (kind ContactAddressKind) Canonical() ContactAddressKind {
+	if kind == ContactAddressKindLinkedin {
+		return ContactAddressKindLinkedinId
+	}
+	return kind
+}
+
+// LegacyContactAddressKinds lists the alias kinds a canonical kind's rows may
+// still be stored under — the read-side probe set a repository ORs into a
+// lookup by key. nil when the kind has no aliases.
+func LegacyContactAddressKinds(kind ContactAddressKind) []ContactAddressKind {
+	if kind == ContactAddressKindLinkedinId {
+		return []ContactAddressKind{ContactAddressKindLinkedin}
+	}
+	return nil
+}
+
 // ContactAddressSource records how a contact address row was established:
 // provider directory sweep (sync), derived from ingested messages (ingest),
-// attached by a user via the API (manual), or repointed during a contact merge
-// (merge). Provenance only — it drives no prune or lifecycle (addresses are
-// permanent identity).
+// attached by a user via the API (manual), repointed during a contact merge
+// (merge), or copied from a business record's contact-address attributes
+// (record — the row the record binding contributed, and the only kind the
+// binding may detach again when the record drops the value). Provenance only
+// — it drives no prune or lifecycle (addresses are permanent identity).
 type ContactAddressSource string
 
 const (
@@ -450,15 +486,18 @@ const (
 	ContactAddressSourceIngest ContactAddressSource = "ingest"
 	ContactAddressSourceManual ContactAddressSource = "manual"
 	ContactAddressSourceMerge  ContactAddressSource = "merge"
+	ContactAddressSourceRecord ContactAddressSource = "record"
 )
 
 // ContactSource records how a contact row was minted — the same provenance
 // axis (and value set) as ContactAddressSource, so the mint path stays
 // visible: a provider directory sweep (sync), derived from corresponded
 // messages (ingest — we actually talked), created by a user via the API
-// (manual), or as the surviving side of a merge (merge). Provenance only;
-// sync/ingest + no manual edits = the "thin" contact that deterministic
-// auto-merge may fold away.
+// (manual), as the surviving side of a merge (merge), or minted from a
+// business record's contact-address attributes (record). Provenance only;
+// sync/ingest/record + no manual edits = the "thin" contact that deterministic
+// auto-merge may fold away (a record-minted contact owns nothing the record
+// does not still hold).
 type ContactSource string
 
 const (
@@ -466,6 +505,52 @@ const (
 	ContactSourceIngest ContactSource = "ingest"
 	ContactSourceManual ContactSource = "manual"
 	ContactSourceMerge  ContactSource = "merge"
+	ContactSourceRecord ContactSource = "record"
+)
+
+// ContactRecordLinkSource records how a contact ↔ record edge came to be: a
+// user's explicit link (manual — POST /contact-record-links), or the binding
+// conversation-service maintains from the record's contact-address attributes
+// (record — exactly ONE per record, repointed and refreshed as the record's
+// addresses change, never unlinked by hand).
+type ContactRecordLinkSource string
+
+const (
+	ContactRecordLinkSourceManual ContactRecordLinkSource = "manual"
+	ContactRecordLinkSourceRecord ContactRecordLinkSource = "record"
+)
+
+// RecordDuplicatePolicy is an entity's contact_binding.duplicate_policy: what
+// happens when a record's contact-address values resolve to a contact that
+// ANOTHER record of the same entity is already linked to. reject fails the
+// write (409 record_duplicate); flag accepts it and raises a record_duplicate
+// for review. data-service owns the setting; conversation-service applies the
+// value each observation carries.
+type RecordDuplicatePolicy string
+
+const (
+	RecordDuplicatePolicyReject RecordDuplicatePolicy = "reject"
+	RecordDuplicatePolicyFlag   RecordDuplicatePolicy = "flag"
+)
+
+// IsValid reports whether the policy is a known value.
+func (policy RecordDuplicatePolicy) IsValid() bool {
+	return policy == RecordDuplicatePolicyReject || policy == RecordDuplicatePolicyFlag
+}
+
+// ContactRecordLinkOutcome is what a record-binding resolution did for one
+// record: minted a new contact and linked it (created), linked or re-linked an
+// existing contact (bound), removed the binding because the record carries no
+// address (unbound), refused because of a same-entity duplicate under the
+// reject policy (rejected), or could not complete (failed — see error_code).
+type ContactRecordLinkOutcome string
+
+const (
+	ContactRecordLinkOutcomeCreated  ContactRecordLinkOutcome = "created"
+	ContactRecordLinkOutcomeBound    ContactRecordLinkOutcome = "bound"
+	ContactRecordLinkOutcomeUnbound  ContactRecordLinkOutcome = "unbound"
+	ContactRecordLinkOutcomeRejected ContactRecordLinkOutcome = "rejected"
+	ContactRecordLinkOutcomeFailed   ContactRecordLinkOutcome = "failed"
 )
 
 // ContactStatus is the lifecycle of a contact. merged rows are tombstones
@@ -728,13 +813,22 @@ const (
 	ChannelActionTypeInvitation   ChannelActionType = "invitation"
 	ChannelActionTypeInmail       ChannelActionType = "inmail"
 	ChannelActionTypeProfileVisit ChannelActionType = "profile_visit"
+	// ChannelActionTypeProfileLookup is the SILENT twin of profile_visit: one
+	// provider profile read the viewee is never notified of, performed to learn
+	// a person's full provider identity (LinkedIn: profile id + public
+	// identifier). It counts against the same ledger and limit rules as every
+	// other act; the platform performs it on the caller's behalf when an act or
+	// a send targets a public identifier — never on its own initiative.
+	// Metadata: provider_id, public_identifier, name, is_found (false = the
+	// provider knows no such profile; still a performed act).
+	ChannelActionTypeProfileLookup ChannelActionType = "profile_lookup"
 )
 
 // IsChannelActionRowType reports whether the type names an act that is
 // recorded as a channel_action row (everything but the plain message send).
 func (actionType ChannelActionType) IsChannelActionRowType() bool {
 	switch actionType {
-	case ChannelActionTypeInvitation, ChannelActionTypeInmail, ChannelActionTypeProfileVisit:
+	case ChannelActionTypeInvitation, ChannelActionTypeInmail, ChannelActionTypeProfileVisit, ChannelActionTypeProfileLookup:
 		return true
 	}
 	return false

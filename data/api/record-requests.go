@@ -39,10 +39,15 @@ const (
 	BatchTransactionStatusError   BatchTransactionStatus = "error"
 )
 
-// BatchTransactionError represents an error in a batch transaction
+// BatchTransactionError represents an error in a batch transaction. Code,
+// Status and Details are the SAME facts the single-record endpoint would have
+// answered with (e.g. 409 record_duplicate + details), so a batch row's
+// failure is as actionable as a standalone write's.
 type BatchTransactionError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string         `json:"code"`
+	Message string         `json:"message"`
+	Status  int            `json:"status,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 // --- Batch Upsert ---

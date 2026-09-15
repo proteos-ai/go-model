@@ -14,12 +14,13 @@ const (
 	AttributeTypeArray    AttributeType = "array"    // Array of items
 	AttributeTypeObject   AttributeType = "object"   // Nested object
 
-	AttributeTypeRelation      AttributeType = "relation"       // Foreign-key reference to another entity
-	AttributeTypeUser          AttributeType = "user"           // Reference to a platform user (account-service)
-	AttributeTypePrincipal     AttributeType = "principal"      // Reference to anything that can hold access: user | team | org
-	AttributeTypeCurrency      AttributeType = "currency"       // Monetary amount in a currency: {amount, currency_code}
-	AttributeTypeKnowledgeText AttributeType = "knowledge-text" // Long text stored as a knowledge node; record holds {id}
-	AttributeTypeFile          AttributeType = "file"           // Reference to a stored file (storage-service); record holds {id, name}
+	AttributeTypeRelation       AttributeType = "relation"        // Foreign-key reference to another entity
+	AttributeTypeUser           AttributeType = "user"            // Reference to a platform user (account-service)
+	AttributeTypePrincipal      AttributeType = "principal"       // Reference to anything that can hold access: user | team | org
+	AttributeTypeCurrency       AttributeType = "currency"        // Monetary amount in a currency: {amount, currency_code}
+	AttributeTypeKnowledgeText  AttributeType = "knowledge-text"  // Long text stored as a knowledge node; record holds {id}
+	AttributeTypeFile           AttributeType = "file"            // Reference to a stored file (storage-service); record holds {id, name}
+	AttributeTypeContactAddress AttributeType = "contact-address" // Canonical digital endpoint (email | phone | linkedin); scalar string, binds the record to a conversation contact
 )
 
 // Attribute represents a typed property of an entity. Mirrors the JSON

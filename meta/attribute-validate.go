@@ -12,20 +12,21 @@ var attributeNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 // validAttributeTypes is the closed set of attribute types a bare schema
 // definition may use.
 var validAttributeTypes = map[AttributeType]bool{
-	AttributeTypeString:        true,
-	AttributeTypeNumber:        true,
-	AttributeTypeInteger:       true,
-	AttributeTypeBoolean:       true,
-	AttributeTypeDatetime:      true,
-	AttributeTypeEnum:          true,
-	AttributeTypeArray:         true,
-	AttributeTypeObject:        true,
-	AttributeTypeRelation:      true,
-	AttributeTypeUser:          true,
-	AttributeTypePrincipal:     true,
-	AttributeTypeCurrency:      true,
-	AttributeTypeKnowledgeText: true,
-	AttributeTypeFile:          true,
+	AttributeTypeString:         true,
+	AttributeTypeNumber:         true,
+	AttributeTypeInteger:        true,
+	AttributeTypeBoolean:        true,
+	AttributeTypeDatetime:       true,
+	AttributeTypeEnum:           true,
+	AttributeTypeArray:          true,
+	AttributeTypeObject:         true,
+	AttributeTypeRelation:       true,
+	AttributeTypeUser:           true,
+	AttributeTypePrincipal:      true,
+	AttributeTypeCurrency:       true,
+	AttributeTypeKnowledgeText:  true,
+	AttributeTypeFile:           true,
+	AttributeTypeContactAddress: true,
 }
 
 // ValidateAttributeDefinitions checks that a bare attribute list is a

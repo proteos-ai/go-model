@@ -155,6 +155,9 @@ func DecodeFilterConfig(filterType ConversationFilterType, raw []byte) (Conversa
 		if err := unmarshalConfig(raw, &config); err != nil {
 			return nil, err
 		}
+		// Stored configs may still carry a legacy alias kind (linkedin); the
+		// evaluator compares canonical kinds.
+		config.Kind = config.Kind.Canonical()
 		return config, nil
 	case FilterTypeDomain:
 		config := DomainFilterConfig{}

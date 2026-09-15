@@ -31,6 +31,12 @@ type ProfileVisitParams struct{}
 func (ProfileVisitParams) isChannelActionParams()        {}
 func (ProfileVisitParams) ActionType() ChannelActionType { return ChannelActionTypeProfileVisit }
 
+// ProfileLookupParams — a silent profile read. No parameters.
+type ProfileLookupParams struct{}
+
+func (ProfileLookupParams) isChannelActionParams()        {}
+func (ProfileLookupParams) ActionType() ChannelActionType { return ChannelActionTypeProfileLookup }
+
 // InmailParams — a paid / open-profile direct message to someone outside the
 // network. Content is the message body (the same blocks a Send carries);
 // Subject is the provider's message subject.
@@ -63,6 +69,8 @@ func DecodeChannelActionParams(actionType ChannelActionType, raw []byte) (Channe
 		return params, nil
 	case ChannelActionTypeProfileVisit:
 		return ProfileVisitParams{}, nil
+	case ChannelActionTypeProfileLookup:
+		return ProfileLookupParams{}, nil
 	case ChannelActionTypeInmail:
 		params := InmailParams{}
 		if err := unmarshalConfig(raw, &params); err != nil {

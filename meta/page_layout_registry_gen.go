@@ -8,6 +8,7 @@ package metamodel
 var BuiltInControls = []string{
 	"checkbox",
 	"chip-group",
+	"contact-address",
 	"currency",
 	"date-picker",
 	"datetime-picker",
@@ -53,20 +54,21 @@ type ControlBucket struct {
 
 // ControlsByAttributeType maps a Go-canonical attribute type to its bucket.
 var ControlsByAttributeType = map[string]ControlBucket{
-	"array":          {Primary: stringPtr("tag-input"), Compatible: []string{"tag-input"}},
-	"boolean":        {Primary: stringPtr("switch"), Compatible: []string{"switch", "checkbox"}},
-	"currency":       {Primary: stringPtr("currency"), Compatible: []string{"currency"}},
-	"datetime":       {Primary: nil, Compatible: []string{}},
-	"enum":           {Primary: stringPtr("select"), Compatible: []string{"select", "radio-group", "chip-group"}},
-	"file":           {Primary: stringPtr("file"), Compatible: []string{"file", "file-viewer"}},
-	"integer":        {Primary: stringPtr("number"), Compatible: []string{"number"}},
-	"knowledge-text": {Primary: stringPtr("knowledge-text"), Compatible: []string{"knowledge-text"}},
-	"number":         {Primary: stringPtr("number"), Compatible: []string{"number"}},
-	"object":         {Primary: nil, Compatible: []string{}},
-	"principal":      {Primary: stringPtr("principal-picker"), Compatible: []string{"principal-picker"}},
-	"relation":       {Primary: stringPtr("entity-picker"), Compatible: []string{"entity-picker"}},
-	"string":         {Primary: stringPtr("text"), Compatible: []string{"text", "textarea", "password", "record-filter"}},
-	"user":           {Primary: stringPtr("user-picker"), Compatible: []string{"user-picker"}},
+	"array":           {Primary: stringPtr("tag-input"), Compatible: []string{"tag-input"}},
+	"boolean":         {Primary: stringPtr("switch"), Compatible: []string{"switch", "checkbox"}},
+	"contact-address": {Primary: stringPtr("contact-address"), Compatible: []string{"contact-address", "text"}},
+	"currency":        {Primary: stringPtr("currency"), Compatible: []string{"currency"}},
+	"datetime":        {Primary: nil, Compatible: []string{}},
+	"enum":            {Primary: stringPtr("select"), Compatible: []string{"select", "radio-group", "chip-group"}},
+	"file":            {Primary: stringPtr("file"), Compatible: []string{"file", "file-viewer"}},
+	"integer":         {Primary: stringPtr("number"), Compatible: []string{"number"}},
+	"knowledge-text":  {Primary: stringPtr("knowledge-text"), Compatible: []string{"knowledge-text"}},
+	"number":          {Primary: stringPtr("number"), Compatible: []string{"number"}},
+	"object":          {Primary: nil, Compatible: []string{}},
+	"principal":       {Primary: stringPtr("principal-picker"), Compatible: []string{"principal-picker"}},
+	"relation":        {Primary: stringPtr("entity-picker"), Compatible: []string{"entity-picker"}},
+	"string":          {Primary: stringPtr("text"), Compatible: []string{"text", "textarea", "password", "record-filter"}},
+	"user":            {Primary: stringPtr("user-picker"), Compatible: []string{"user-picker"}},
 }
 
 // ControlsByStringFormat maps StringFormat values to their bucket.
