@@ -22,16 +22,19 @@ type Entity struct {
 	// ContactBinding governs how records bind to conversation-service
 	// contacts through their contact-address attributes (duplicate_policy
 	// reject | flag). Meaningful only when the entity declares >= 1
-	// contact-address attribute; stored for every entity (default flag).
-	ContactBinding ContactBinding `json:"contact_binding"`
-	ModuleSlug     string         `json:"module_slug" sortable:""`
-	Description    string         `json:"description" sortable:""`
-	TitleTemplate  string         `json:"title_template" sortable:""`
-	Attributes     []Attribute    `json:"attributes"`
-	CreatedAt      time.Time      `json:"created_at" sortable:""`
-	CreatedBy      common.UserRef `json:"created_by" sortable:""`
-	UpdatedAt      time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy      common.UserRef `json:"updated_by" sortable:""`
+	// contact-address attribute, and stored only when explicitly declared —
+	// nil (the common case) means no binding was configured and writes apply
+	// the effective default, flag. Read it via
+	// metamodel.EffectiveDuplicatePolicy, never off the pointer directly.
+	ContactBinding *ContactBinding `json:"contact_binding,omitempty"`
+	ModuleSlug     string          `json:"module_slug" sortable:""`
+	Description    string          `json:"description" sortable:""`
+	TitleTemplate  string          `json:"title_template" sortable:""`
+	Attributes     []Attribute     `json:"attributes"`
+	CreatedAt      time.Time       `json:"created_at" sortable:""`
+	CreatedBy      common.UserRef  `json:"created_by" sortable:""`
+	UpdatedAt      time.Time       `json:"updated_at" sortable:""`
+	UpdatedBy      common.UserRef  `json:"updated_by" sortable:""`
 }
 
 type EntityWithSchema struct {

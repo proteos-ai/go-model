@@ -140,11 +140,12 @@ const (
 	TextVariantBody       TextVariant = "body"
 	TextVariantCaption    TextVariant = "caption"
 	TextVariantCallout    TextVariant = "callout"
+	TextVariantBlockTitle TextVariant = "block-title"
 )
 
 var TextVariants = []TextVariant{
 	TextVariantHeading, TextVariantSubheading, TextVariantBody,
-	TextVariantCaption, TextVariantCallout,
+	TextVariantCaption, TextVariantCallout, TextVariantBlockTitle,
 }
 
 func (v *TextVariant) UnmarshalJSON(b []byte) error {
