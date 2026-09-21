@@ -30,6 +30,10 @@ const (
 	// the other catalog nodes) because workflow-service validates its parameters
 	// at save time.
 	NodeTypeModelCall NodeType = "proteos-nodes-core.model-call"
+	// NodeTypeModelDecide is the host-executed model-decide node — typed here for
+	// the same reason: its question map is validated at save time so a half-built
+	// question cannot be saved and fail at execution.
+	NodeTypeModelDecide NodeType = "proteos-nodes-core.model-decide"
 )
 
 // Interpreter intrinsics — catalog-registered node types the interpreter
@@ -388,6 +392,30 @@ func DecodeModelCallActionParams(raw json.RawMessage) (ModelCallActionParams, er
 	var params ModelCallActionParams
 	if err := json.Unmarshal(raw, &params); err != nil {
 		return ModelCallActionParams{}, err
+	}
+	return params, nil
+}
+
+// ModelDecideActionParams are the model-decide node's parameters: the text-only
+// state under judgment (a JSON string | object | array, or a Liquid expression
+// string) and the caller-keyed question map (or a whole-value Liquid expression
+// string). Both stay raw here — questions decode into the typed
+// agentmodel.DecisionQuestions union when validated or executed.
+type ModelDecideActionParams struct {
+	ModelId   string          `json:"model_id,omitempty"` // empty = service default decision model
+	State     json.RawMessage `json:"state,omitempty"`
+	Questions json.RawMessage `json:"questions,omitempty"`
+}
+
+// DecodeModelDecideActionParams decodes a model-decide node's raw parameters.
+// Empty parameters decode to the zero value.
+func DecodeModelDecideActionParams(raw json.RawMessage) (ModelDecideActionParams, error) {
+	if len(raw) == 0 {
+		return ModelDecideActionParams{}, nil
+	}
+	var params ModelDecideActionParams
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return ModelDecideActionParams{}, err
 	}
 	return params, nil
 }

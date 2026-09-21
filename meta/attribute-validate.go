@@ -53,6 +53,10 @@ func validateAttributeDefinitions(attrs []Attribute, path string) error {
 		if !attributeNamePattern.MatchString(attr.Name) {
 			return fmt.Errorf("attribute name %q must be snake_case (^[a-z][a-z0-9_]*$)", location)
 		}
+		// Virtual columns own their names at the top level (see record-title.go).
+		if path == "" && IsReservedAttributeName(attr.Name) {
+			return fmt.Errorf("attribute name %q is reserved for the record title column", attr.Name)
+		}
 		if seen[attr.Name] {
 			return fmt.Errorf("duplicate attribute name %q", location)
 		}

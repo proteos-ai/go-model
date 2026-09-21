@@ -54,6 +54,11 @@ const (
 	// builder. Used for declared structured outputs (agent node) and reusable by
 	// any node that authors a schema.
 	PropertyTypeAttributeSchema PropertyType = "attribute_schema"
+	// PropertyTypeDecisionQuestions edits a decision-question map
+	// ({key: {type: boolean | choice | score, instructions, criteria}}) — the editor
+	// renders a questions builder with a raw-JSON escape hatch. Used by the
+	// model-decide node.
+	PropertyTypeDecisionQuestions PropertyType = "decision_questions"
 	// Wave 2 (editor support lands with Phase 3):
 	PropertyTypeResourceLocator      PropertyType = "resource_locator"
 	PropertyTypeResourceMapper       PropertyType = "resource_mapper"
