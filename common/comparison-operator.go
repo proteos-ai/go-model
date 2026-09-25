@@ -19,6 +19,8 @@ const (
 	ComparisonOperatorIn                 ComparisonOperator = "in"
 	ComparisonOperatorNotIn              ComparisonOperator = "not_in"
 	ComparisonOperatorContains           ComparisonOperator = "contains"
+	ComparisonOperatorNotContains        ComparisonOperator = "not_contains"
+	ComparisonOperatorContainsAll        ComparisonOperator = "contains_all"
 	ComparisonOperatorStartsWith         ComparisonOperator = "starts_with"
 	ComparisonOperatorEndsWith           ComparisonOperator = "ends_with"
 	ComparisonOperatorEmpty              ComparisonOperator = "empty"
@@ -35,10 +37,25 @@ var ComparisonOperators = []ComparisonOperator{
 	ComparisonOperatorIn,
 	ComparisonOperatorNotIn,
 	ComparisonOperatorContains,
+	ComparisonOperatorNotContains,
+	ComparisonOperatorContainsAll,
 	ComparisonOperatorStartsWith,
 	ComparisonOperatorEndsWith,
 	ComparisonOperatorEmpty,
 	ComparisonOperatorNotEmpty,
+}
+
+// IsMultiValue reports whether the operator compares against a LIST of values.
+// On the wire such a value travels as one pipe-joined string ("a|b|c"); every
+// parser splits on this predicate rather than on a hand-kept operator list, so
+// a new list operator cannot be split in one place and missed in another.
+func (comparisonOperator ComparisonOperator) IsMultiValue() bool {
+	switch comparisonOperator {
+	case ComparisonOperatorIn, ComparisonOperatorNotIn, ComparisonOperatorContainsAll:
+		return true
+	default:
+		return false
+	}
 }
 
 func (ComparisonOperator) Enum() []interface{} {
