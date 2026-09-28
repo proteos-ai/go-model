@@ -12,6 +12,11 @@ package metamodel
 // value (the client sends bare ids), so `"current_user"` could not be told
 // apart from a user whose id happens to be that string. The object shape
 // mirrors the ref values these attributes store, minus an id.
+//
+// The read-time twin is the value sentinel common.CurrentUser (`$current_user`
+// in a filter value, a page binding or a SQL literal); this default keeps its
+// own object shape because the slot is typed already and predates the `$`
+// convention.
 const DefaultValueCurrentUser = "current_user"
 
 // CurrentUserDefault renders the sentinel in its wire shape.

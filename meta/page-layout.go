@@ -42,6 +42,12 @@ const (
 	// counterpart of the /s/:orgId/:key page. Allowed on every page type;
 	// public pages book through the unauthenticated surface.
 	LayoutElementTypeSchedulingPicker LayoutElementType = "scheduling_picker"
+	// LayoutElementTypeCalendar embeds one user's calendar (scheduling-service
+	// events) in the layout — the in-page counterpart of the calendar view.
+	// Whose calendar is `user_id`: the viewer (`current_user`), a Liquid
+	// template over the page scope, or a literal user id. Record and platform
+	// pages only: the element reads and writes as the signed-in viewer.
+	LayoutElementTypeCalendar LayoutElementType = "calendar"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -61,6 +67,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeList,
 	LayoutElementTypeWorkflowTrigger,
 	LayoutElementTypeSchedulingPicker,
+	LayoutElementTypeCalendar,
 }
 
 // UnmarshalJSON validates the wire value against LayoutElementTypes. Mirrors
@@ -208,11 +215,12 @@ func (s *SizeValue) UnmarshalJSON(data []byte) error {
 
 // SizingProps is the partial set of sizing knobs used by responsive overrides.
 type SizingProps struct {
-	Width  *SizeValue  `json:"width,omitempty"`
-	Height *SizeValue  `json:"height,omitempty"`
-	Grow   *float64    `json:"grow,omitempty"`
-	Shrink *float64    `json:"shrink,omitempty"`
-	Align  LayoutAlign `json:"align,omitempty"`
+	Width     *SizeValue  `json:"width,omitempty"`
+	Height    *SizeValue  `json:"height,omitempty"`
+	MinHeight *SizeValue  `json:"min_height,omitempty"`
+	Grow      *float64    `json:"grow,omitempty"`
+	Shrink    *float64    `json:"shrink,omitempty"`
+	Align     LayoutAlign `json:"align,omitempty"`
 }
 
 // ResponsiveSizing carries breakpoint-specific sizing overrides.
@@ -242,11 +250,16 @@ type CommonProps struct {
 	VisibleWhen  *common.FilterGroup `json:"visible_when,omitempty"`
 	ReadOnlyWhen *common.FilterGroup `json:"read_only_when,omitempty"`
 	Width        *SizeValue          `json:"width,omitempty"`
-	Height       *SizeValue          `json:"height,omitempty"`
-	Grow         *float64            `json:"grow,omitempty"`
-	Shrink       *float64            `json:"shrink,omitempty"`
-	Align        LayoutAlign         `json:"align,omitempty"`
-	Responsive   *ResponsiveSizing   `json:"responsive,omitempty"`
+	// Height "fill" takes the remaining space in the parent: along a column it
+	// grows (floored by MinHeight, default 320px); in a row it stretches to the
+	// row's height. The layout root always fills the page body.
+	Height *SizeValue `json:"height,omitempty"`
+	// MinHeight is a floor under Height — "Npx" or "N%" only.
+	MinHeight  *SizeValue        `json:"min_height,omitempty"`
+	Grow       *float64          `json:"grow,omitempty"`
+	Shrink     *float64          `json:"shrink,omitempty"`
+	Align      LayoutAlign       `json:"align,omitempty"`
+	Responsive *ResponsiveSizing `json:"responsive,omitempty"`
 }
 
 // LayoutElement is the discriminated-union interface implemented by every
@@ -699,6 +712,75 @@ func (SchedulingPickerElement) LayoutType() LayoutElementType {
 	return LayoutElementTypeSchedulingPicker
 }
 
+// ─────────────────────────────────────────────────────── Calendar ──
+
+// CalendarViewKind is one of the presentations a CalendarElement can open in
+// and switch between.
+type CalendarViewKind string
+
+const (
+	CalendarViewKindDay    CalendarViewKind = "day"
+	CalendarViewKindWeek   CalendarViewKind = "week"
+	CalendarViewKindMonth  CalendarViewKind = "month"
+	CalendarViewKindAgenda CalendarViewKind = "agenda"
+)
+
+// CalendarViewKinds enumerates every valid view.
+var CalendarViewKinds = []CalendarViewKind{
+	CalendarViewKindDay,
+	CalendarViewKindWeek,
+	CalendarViewKindMonth,
+	CalendarViewKindAgenda,
+}
+
+// IsValid reports whether the kind is one of CalendarViewKinds. Deliberately
+// NOT enforced at decode time (unlike LayoutElementType): an unknown view is
+// a validation error the metadata-service reports with a path, not a decode
+// failure that rejects the whole layout opaquely.
+func (kind CalendarViewKind) IsValid() bool {
+	return slices.Contains(CalendarViewKinds, kind)
+}
+
+// CalendarMaxOverlayUsers caps CalendarElement.OverlayUserIds: the grid keeps
+// one distinguishable team colour per overlaid user, and past eight the
+// overlays stop being readable. Mirrored by CALENDAR_MAX_OVERLAY_USERS in the
+// TS SDK and maxItems in the platform schema.
+const CalendarMaxOverlayUsers = 8
+
+// CalendarElement embeds a user's calendar in a page. UserId says whose and is
+// required: `current_user` (the viewer), a Liquid template over the page scope
+// ({{ record.owner.id }}) or a literal user id — its shape is not validated,
+// the renderer resolves it. DefaultView is the view the element opens in (day
+// when unset); Views is the set the viewer may switch between and must contain
+// the effective default (unset ⇒ just the default view). Date is an optional
+// Liquid template for the day the calendar opens on ({{ record.start_at }});
+// unset ⇒ today. The element writes (create, move, respond) only when UserId
+// resolves to the viewer; anyone else's calendar is read-only.
+//
+// IsRecordScoped (record pages only) narrows the events shown to those linked
+// to the page's record (record_entity_slug + record_id) — the "meetings with
+// this account" view rather than the user's whole calendar. OverlayUserIds
+// draws up to CalendarMaxOverlayUsers further users on the same grid, each in
+// its own team colour and read-only; every entry resolves like UserId
+// (`current_user`, Liquid or a literal id). IsHostedCreateAllowed applies when
+// the calendar shows someone else: "New event" and drag-select create THROUGH
+// that user — the viewer hosts the request and the event lands on the
+// displayed user's calendar — while edit and move stay owner-only.
+type CalendarElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	UserId                string             `json:"user_id"`
+	DefaultView           CalendarViewKind   `json:"default_view,omitempty"`
+	Views                 []CalendarViewKind `json:"views,omitempty"`
+	Date                  string             `json:"date,omitempty"`
+	IsRecordScoped        bool               `json:"is_record_scoped,omitempty"`
+	OverlayUserIds        []string           `json:"overlay_user_ids,omitempty"`
+	IsHostedCreateAllowed bool               `json:"is_hosted_create_allowed,omitempty"`
+}
+
+func (CalendarElement) isLayoutElement()              {}
+func (CalendarElement) LayoutType() LayoutElementType { return LayoutElementTypeCalendar }
+
 // ─────────────────────────────────────────────────────────── Text ──
 
 type TextElement struct {
@@ -895,6 +977,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeSchedulingPicker:
 		var v SchedulingPickerElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeCalendar:
+		var v CalendarElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

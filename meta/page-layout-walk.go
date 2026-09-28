@@ -89,6 +89,10 @@ func LayoutElementCommonProps(element LayoutElement) CommonProps {
 		return typed.CommonProps
 	case *TextElement:
 		return typed.CommonProps
+	case *SchedulingPickerElement:
+		return typed.CommonProps
+	case *CalendarElement:
+		return typed.CommonProps
 	}
 	return CommonProps{}
 }
@@ -128,6 +132,10 @@ func SetLayoutElementExtensionKey(element LayoutElement, key string) {
 	case *WorkflowTriggerElement:
 		typed.ExtensionKey = key
 	case *TextElement:
+		typed.ExtensionKey = key
+	case *SchedulingPickerElement:
+		typed.ExtensionKey = key
+	case *CalendarElement:
 		typed.ExtensionKey = key
 	}
 }

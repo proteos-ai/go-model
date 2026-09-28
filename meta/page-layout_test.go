@@ -279,3 +279,161 @@ func TestSizeValue_PreservesWireForm(t *testing.T) {
 		}
 	}
 }
+
+func TestCalendarElement_RoundTrip(t *testing.T) {
+	src := `{"version":1,"main":{"type":"calendar","id":"cal","user_id":"$current_user",` +
+		`"default_view":"week","views":["day","week"],"date":"{{ record.start_at }}"}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	calendar, ok := layout.Main.(*CalendarElement)
+	if !ok {
+		t.Fatalf("main: want *CalendarElement, got %T", layout.Main)
+	}
+	if calendar.LayoutType() != LayoutElementTypeCalendar {
+		t.Errorf("layout type: want calendar, got %q", calendar.LayoutType())
+	}
+	if calendar.UserId != "$current_user" {
+		t.Errorf("user_id: want current_user, got %q", calendar.UserId)
+	}
+	if calendar.DefaultView != CalendarViewKindWeek {
+		t.Errorf("default_view: want week, got %q", calendar.DefaultView)
+	}
+	if len(calendar.Views) != 2 || calendar.Views[0] != CalendarViewKindDay || calendar.Views[1] != CalendarViewKindWeek {
+		t.Errorf("views: want [day week], got %v", calendar.Views)
+	}
+	if calendar.Date != "{{ record.start_at }}" {
+		t.Errorf("date: got %q", calendar.Date)
+	}
+
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var roundTripped PageLayout
+	if err := json.Unmarshal(out, &roundTripped); err != nil {
+		t.Fatalf("re-unmarshal: %v", err)
+	}
+	again, ok := roundTripped.Main.(*CalendarElement)
+	if !ok {
+		t.Fatalf("re-unmarshal main: want *CalendarElement, got %T", roundTripped.Main)
+	}
+	if again.UserId != calendar.UserId || again.DefaultView != calendar.DefaultView || again.Date != calendar.Date || len(again.Views) != 2 {
+		t.Errorf("round trip drifted: %+v vs %+v", again, calendar)
+	}
+}
+
+func TestCalendarElement_OmitsUnsetOptionals(t *testing.T) {
+	src := `{"version":1,"main":{"type":"calendar","user_id":"$current_user"}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{"default_view", "views", "date", "is_record_scoped", "overlay_user_ids", "is_hosted_create_allowed"} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("%s: want omitted, got %s", key, string(out))
+		}
+	}
+}
+
+func TestCalendarElement_RoundTripsScopeOverlaysAndHostedCreate(t *testing.T) {
+	src := `{"version":1,"main":{"type":"calendar","id":"cal","user_id":"{{ record.owner.id }}",` +
+		`"is_record_scoped":true,"overlay_user_ids":["$current_user","{{ record.assistant.id }}"],"is_hosted_create_allowed":true}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	calendar, ok := layout.Main.(*CalendarElement)
+	if !ok {
+		t.Fatalf("main: want *CalendarElement, got %T", layout.Main)
+	}
+	if !calendar.IsRecordScoped {
+		t.Error("is_record_scoped: want true")
+	}
+	if !calendar.IsHostedCreateAllowed {
+		t.Error("is_hosted_create_allowed: want true")
+	}
+	if len(calendar.OverlayUserIds) != 2 || calendar.OverlayUserIds[0] != "$current_user" || calendar.OverlayUserIds[1] != "{{ record.assistant.id }}" {
+		t.Errorf("overlay_user_ids: want [current_user {{ record.assistant.id }}], got %v", calendar.OverlayUserIds)
+	}
+	if len(calendar.OverlayUserIds) > CalendarMaxOverlayUsers {
+		t.Errorf("fixture exceeds CalendarMaxOverlayUsers (%d)", CalendarMaxOverlayUsers)
+	}
+
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{`"is_record_scoped":true`, `"overlay_user_ids":["$current_user","{{ record.assistant.id }}"]`, `"is_hosted_create_allowed":true`} {
+		if !strings.Contains(string(out), key) {
+			t.Errorf("marshal: want %s in %s", key, string(out))
+		}
+	}
+	var roundTripped PageLayout
+	if err := json.Unmarshal(out, &roundTripped); err != nil {
+		t.Fatalf("re-unmarshal: %v", err)
+	}
+	again, ok := roundTripped.Main.(*CalendarElement)
+	if !ok {
+		t.Fatalf("re-unmarshal main: want *CalendarElement, got %T", roundTripped.Main)
+	}
+	if again.IsRecordScoped != calendar.IsRecordScoped || again.IsHostedCreateAllowed != calendar.IsHostedCreateAllowed || len(again.OverlayUserIds) != 2 {
+		t.Errorf("round trip drifted: %+v vs %+v", again, calendar)
+	}
+}
+
+// An unknown view is the metadata-service validator's problem (it reports a
+// path), not a decode failure: the layout still unmarshals.
+func TestCalendarElement_UnknownViewStillDecodes(t *testing.T) {
+	src := `{"version":1,"main":{"type":"calendar","user_id":"$current_user","default_view":"fortnight","views":["fortnight"]}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	calendar, ok := layout.Main.(*CalendarElement)
+	if !ok {
+		t.Fatalf("main: want *CalendarElement, got %T", layout.Main)
+	}
+	if calendar.DefaultView != "fortnight" || calendar.DefaultView.IsValid() {
+		t.Errorf("default_view: want the raw unknown value, got %q (valid=%v)", calendar.DefaultView, calendar.DefaultView.IsValid())
+	}
+	for _, kind := range CalendarViewKinds {
+		if !kind.IsValid() {
+			t.Errorf("%q: want valid", kind)
+		}
+	}
+}
+
+// Every concrete element must be known to the per-kind walkers, or a page
+// extension can neither anchor on it nor stamp it. scheduling_picker once fell
+// through both switches; this pins each leaf kind that carries no children.
+func TestLayoutElementWalkers_KnowEveryLeafKind(t *testing.T) {
+	leaves := []LayoutElement{
+		&SchedulingPickerElement{Type: LayoutElementTypeSchedulingPicker, CommonProps: CommonProps{ID: "picker"}, LinkKey: "intro"},
+		&CalendarElement{Type: LayoutElementTypeCalendar, CommonProps: CommonProps{ID: "calendar"}, UserId: "$current_user"},
+		&WorkflowTriggerElement{Type: LayoutElementTypeWorkflowTrigger, CommonProps: CommonProps{ID: "trigger"}},
+		&TextElement{Type: LayoutElementTypeText, CommonProps: CommonProps{ID: "text"}},
+		&DividerElement{Type: LayoutElementTypeDivider, CommonProps: CommonProps{ID: "divider"}},
+		&FieldElement{Type: LayoutElementTypeField, CommonProps: CommonProps{ID: "field"}},
+		&ComponentElement{Type: LayoutElementTypeComponent, CommonProps: CommonProps{ID: "component"}},
+		&RecordFilterElement{Type: LayoutElementTypeRecordFilter, CommonProps: CommonProps{ID: "filter"}},
+		&ListElement{Type: LayoutElementTypeList, CommonProps: CommonProps{ID: "list"}},
+		&RelatedListElement{Type: LayoutElementTypeRelatedList, CommonProps: CommonProps{ID: "related-list"}},
+		&RelatedRecordElement{Type: LayoutElementTypeRelatedRecord, CommonProps: CommonProps{ID: "related-record"}},
+	}
+	for _, leaf := range leaves {
+		kind := string(leaf.LayoutType())
+		if got := LayoutElementID(leaf); got == "" {
+			t.Errorf("%s: LayoutElementCommonProps lost the id", kind)
+		}
+		SetLayoutElementExtensionKey(leaf, "ext")
+		if got := LayoutElementCommonProps(leaf).ExtensionKey; got != "ext" {
+			t.Errorf("%s: SetLayoutElementExtensionKey did not stamp (got %q)", kind, got)
+		}
+	}
+}
