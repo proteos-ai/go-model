@@ -44,6 +44,12 @@ type GetManyConversationsQuery struct {
 	// "messages_summary" (root/latest message, totals, repliers). No db tag —
 	// handled by the repository, not the generic filter mapper.
 	Include *string `json:"include" form:"include"`
+	// TagKey / TagValue filter to conversations carrying an ACTIVE conversation
+	// tag of that definition (and, when TagValue is set, that value) — the
+	// "which conversations talk about billing" stream. No db tag (EXISTS on
+	// conversation_tag, repository-applied).
+	TagKey   *string `json:"tag_key" form:"tag_key"`
+	TagValue *string `json:"tag_value" form:"tag_value"`
 	common.Pagination
 	common.Sorting
 }

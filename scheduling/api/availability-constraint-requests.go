@@ -6,7 +6,7 @@ import (
 )
 
 // CreateAvailabilityConstraintRequest adds one rule about a user's time.
-// RecurrenceRule is the audibene form "DTSTART;TZID=<zone>:<local
+// RecurrenceRule is the two-line form "DTSTART;TZID=<zone>:<local
 // time>\nRRULE:<rule>" — the DTSTART minute must sit on the quarter-hour
 // grid. DurationMinutes is the window's length after each occurrence (0 only
 // with IsAllDay, which opens / blocks the whole occurrence day in the rule's

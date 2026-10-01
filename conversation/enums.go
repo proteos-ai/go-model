@@ -964,3 +964,119 @@ const (
 	MessageDeliveryStatusBounced   MessageDeliveryStatus = "bounced"
 	MessageDeliveryStatusDropped   MessageDeliveryStatus = "dropped"
 )
+
+// ConversationTagQuestionType discriminates a tag definition's question and
+// is 1:1 with agentmodel.DecisionQuestionType: boolean ("is this present?"),
+// choice ("which one?"), score ("where on this ordered scale?").
+type ConversationTagQuestionType string
+
+const (
+	ConversationTagQuestionTypeBoolean ConversationTagQuestionType = "boolean"
+	ConversationTagQuestionTypeChoice  ConversationTagQuestionType = "choice"
+	ConversationTagQuestionTypeScore   ConversationTagQuestionType = "score"
+)
+
+// IsKnownConversationTagQuestionType reports whether the token is one of the
+// three question types.
+func IsKnownConversationTagQuestionType(questionType ConversationTagQuestionType) bool {
+	switch questionType {
+	case ConversationTagQuestionTypeBoolean, ConversationTagQuestionTypeChoice, ConversationTagQuestionTypeScore:
+		return true
+	}
+	return false
+}
+
+// ConversationTagScope is what a tag anchors to: the whole conversation (one
+// value per conversation), one message (a verdict per message), or a span
+// (character ranges inside a message, or message-to-message ranges).
+type ConversationTagScope string
+
+const (
+	ConversationTagScopeConversation ConversationTagScope = "conversation"
+	ConversationTagScopeMessage      ConversationTagScope = "message"
+	ConversationTagScopeSpan         ConversationTagScope = "span"
+)
+
+func IsKnownConversationTagScope(scope ConversationTagScope) bool {
+	switch scope {
+	case ConversationTagScopeConversation, ConversationTagScopeMessage, ConversationTagScopeSpan:
+		return true
+	}
+	return false
+}
+
+// ConversationTagEvaluatorKind selects the model path a definition is judged
+// by: decide (agent-service's calibrated typed decision — probabilities, no
+// prose, no localisation) or reason (a schema-constrained generation that
+// returns rationale + verbatim anchors; required for span scope).
+type ConversationTagEvaluatorKind string
+
+const (
+	ConversationTagEvaluatorDecide ConversationTagEvaluatorKind = "decide"
+	ConversationTagEvaluatorReason ConversationTagEvaluatorKind = "reason"
+)
+
+func IsKnownConversationTagEvaluatorKind(kind ConversationTagEvaluatorKind) bool {
+	return kind == ConversationTagEvaluatorDecide || kind == ConversationTagEvaluatorReason
+}
+
+// ConversationTagTrigger is WHY an evaluation ran: realtime (the debounced
+// window after new messages), completion (the conversation completed — final
+// transcript + summary for spoken media, End for the rest) or manual (POST
+// /conversations/:id/tags/evaluate). A tag set's evaluate_on lists the
+// automatic ones it subscribes to; manual ignores it.
+type ConversationTagTrigger string
+
+const (
+	ConversationTagTriggerRealtime   ConversationTagTrigger = "realtime"
+	ConversationTagTriggerCompletion ConversationTagTrigger = "completion"
+	ConversationTagTriggerManual     ConversationTagTrigger = "manual"
+)
+
+func IsKnownConversationTagTrigger(trigger ConversationTagTrigger) bool {
+	switch trigger {
+	case ConversationTagTriggerRealtime, ConversationTagTriggerCompletion, ConversationTagTriggerManual:
+		return true
+	}
+	return false
+}
+
+// ConversationTagSource is who produced a tag: the evaluator (model) or a
+// person (user).
+type ConversationTagSource string
+
+const (
+	ConversationTagSourceModel ConversationTagSource = "model"
+	ConversationTagSourceUser  ConversationTagSource = "user"
+)
+
+// ConversationTagStatus: pending = a provisional realtime observation on a
+// spoken-medium conversation that is still live (a completion evaluation will
+// replace it); active = current; dismissed = a person rejected it — kept as
+// feedback and never re-created by a later evaluation.
+type ConversationTagStatus string
+
+const (
+	ConversationTagStatusPending   ConversationTagStatus = "pending"
+	ConversationTagStatusActive    ConversationTagStatus = "active"
+	ConversationTagStatusDismissed ConversationTagStatus = "dismissed"
+)
+
+func IsKnownConversationTagStatus(status ConversationTagStatus) bool {
+	switch status {
+	case ConversationTagStatusPending, ConversationTagStatusActive, ConversationTagStatusDismissed:
+		return true
+	}
+	return false
+}
+
+// ConversationTagEvaluationStatus is one evaluation's lifecycle: pending (a
+// manual evaluation was accepted and not yet started), running, done, failed.
+type ConversationTagEvaluationStatus string
+
+const (
+	ConversationTagEvaluationStatusPending ConversationTagEvaluationStatus = "pending"
+	ConversationTagEvaluationStatusRunning ConversationTagEvaluationStatus = "running"
+	ConversationTagEvaluationStatusDone    ConversationTagEvaluationStatus = "done"
+	ConversationTagEvaluationStatusFailed  ConversationTagEvaluationStatus = "failed"
+)

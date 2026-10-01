@@ -67,8 +67,13 @@ type AppConfiguration struct {
 	// that entity opens in from this app. Each must be a record page over that
 	// entity. Entities absent here fall back to the first page for the entity.
 	RecordPages map[string]string `json:"record_pages,omitempty"`
-	CreatedAt   time.Time         `json:"created_at" sortable:""`
-	CreatedBy   common.UserRef    `json:"created_by" sortable:""`
-	UpdatedAt   time.Time         `json:"updated_at" sortable:""`
-	UpdatedBy   common.UserRef    `json:"updated_by" sortable:""`
+	// SearchableEntities lists the entity slugs whose records the command
+	// palette searches (by record_title) while inside this app. Empty = no
+	// record search. Each must name an existing entity (validated at save);
+	// only entities with a simple title_template return results at runtime.
+	SearchableEntities []string       `json:"searchable_entities,omitempty"`
+	CreatedAt          time.Time      `json:"created_at" sortable:""`
+	CreatedBy          common.UserRef `json:"created_by" sortable:""`
+	UpdatedAt          time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy          common.UserRef `json:"updated_by" sortable:""`
 }

@@ -124,6 +124,12 @@ var platformEntities = []PlatformEntity{
 	// Conversation briefs: guidance prepared ahead of a conversation (a call, a
 	// meeting) with a contact (prepare, revise, discard; binds automatically).
 	{Slug: "conversation-briefs", Name: "Conversation Briefs"},
+	// Conversation intelligence: the typed questions asked of conversations
+	// (definitions), where/when they are evaluated (sets), and the observations
+	// they produce incl. their evaluation history (tags).
+	{Slug: "conversation-tag-definitions", Name: "Conversation Tag Definitions"},
+	{Slug: "conversation-tag-sets", Name: "Conversation Tag Sets"},
+	{Slug: "conversation-tags", Name: "Conversation Tags"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},

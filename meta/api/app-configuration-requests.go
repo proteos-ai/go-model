@@ -15,6 +15,9 @@ type CreateAppConfigurationRequest struct {
 	DefaultAgentKey string             `json:"default_agent_key,omitempty"`
 	AgentKeys       []string           `json:"agent_keys,omitempty"`
 	RecordPages     map[string]string  `json:"record_pages,omitempty"`
+	// SearchableEntities: entity slugs the command palette searches inside
+	// this app. Each must name an existing entity.
+	SearchableEntities []string `json:"searchable_entities,omitempty"`
 }
 
 // UpdateAppConfigurationRequest is a partial update. app_slug and profile_slug
@@ -22,12 +25,13 @@ type CreateAppConfigurationRequest struct {
 // recreate to rebind. Home / AgentKeys / RecordPages are tri-state via
 // common.Optional so a caller can clear them (null) as well as set them.
 type UpdateAppConfigurationRequest struct {
-	ModuleSlug      *string                            `json:"module_slug,omitempty"`
-	Home            common.Optional[metamodel.AppHome] `json:"home" bun:"-"`
-	MenuSlug        *string                            `json:"menu_slug,omitempty"`
-	DefaultAgentKey *string                            `json:"default_agent_key,omitempty"`
-	AgentKeys       *[]string                          `json:"agent_keys,omitempty"`
-	RecordPages     *map[string]string                 `json:"record_pages,omitempty"`
+	ModuleSlug         *string                            `json:"module_slug,omitempty"`
+	Home               common.Optional[metamodel.AppHome] `json:"home" bun:"-"`
+	MenuSlug           *string                            `json:"menu_slug,omitempty"`
+	DefaultAgentKey    *string                            `json:"default_agent_key,omitempty"`
+	AgentKeys          *[]string                          `json:"agent_keys,omitempty"`
+	RecordPages        *map[string]string                 `json:"record_pages,omitempty"`
+	SearchableEntities *[]string                          `json:"searchable_entities,omitempty"`
 }
 
 type GetManyAppConfigurationsQuery struct {
