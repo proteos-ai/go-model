@@ -15,6 +15,9 @@ type ConversationFilterEvent struct {
 	OrgId                string                 `json:"org_id"`
 	ConnectionId         string                 `json:"connection_id"`
 	ConversationFilterId string                 `json:"conversation_filter_id"`
+	// ConversationId is the thread a `restrict` / `share` match applied to;
+	// empty on a drop (nothing was stored).
+	ConversationId string `json:"conversation_id,omitempty"`
 	FilterType           ConversationFilterType `json:"filter_type"`
 	// Reason is the matched class + action, e.g. domain_block,
 	// internal_conversations, automated_block — the drop explanation.

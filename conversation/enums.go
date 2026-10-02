@@ -226,7 +226,8 @@ const (
 
 // ConnectionScope says who a connection belongs to: an org-wide integration
 // (a Slack workspace, a shared mailbox) or a single user's grant (their personal
-// Gmail). scope=user connections carry owner_user_id.
+// Gmail). scope=user connections carry `owner` (a UserRef); scope=org ones are
+// open to the org through an org:<orgId> share row written at create.
 type ConnectionScope string
 
 const (
@@ -692,6 +693,15 @@ type ConversationFilterAction string
 const (
 	FilterActionBlock ConversationFilterAction = "block"
 	FilterActionAllow ConversationFilterAction = "allow"
+	// FilterActionRestrict and FilterActionShare keep the message like allow
+	// (they rank as allow in the class walk) and additionally decide who may
+	// see the thread the message CREATES: `restrict` writes only the rule's
+	// principals (the thread inherits nothing from its connection or parent),
+	// `share` adds the rule's principals on top of the inherited rows. Applied
+	// once, at thread creation; a later match on an existing thread changes
+	// nothing.
+	FilterActionRestrict ConversationFilterAction = "restrict"
+	FilterActionShare    ConversationFilterAction = "share"
 )
 
 // FilterMatchOn says which side of the message an address/domain filter tests:

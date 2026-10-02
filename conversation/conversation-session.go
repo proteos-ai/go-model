@@ -1,6 +1,10 @@
 package conversationmodel
 
-import "time"
+import (
+	"time"
+
+	"go.proteos.ai/model/common"
+)
 
 // ConversationSession is the dispatcher's conversation↔agent-session map: the
 // first dispatched message of a conversation creates an agent-service session
@@ -8,10 +12,13 @@ import "time"
 // session, so the agent keeps its context. Keyed (org_id, conversation_id);
 // concurrent dispatchers race-safely upsert ON CONFLICT DO NOTHING and re-read.
 type ConversationSession struct {
-	OrgId          string    `json:"org_id"`
-	ConversationId string    `json:"conversation_id"`
-	SessionId      string    `json:"session_id"`
-	AgentKey       string    `json:"agent_key"`
-	ListenerId     string    `json:"listener_id"`
-	CreatedAt      time.Time `json:"created_at"`
+	OrgId          string `json:"org_id"`
+	ConversationId string `json:"conversation_id"`
+	SessionId      string `json:"session_id"`
+	AgentKey       string `json:"agent_key"`
+	ListenerId     string `json:"listener_id"`
+	// CreatedBy is the acting user who started the agent session — its owner on
+	// the agent-service side. Zero for sessions started before it was recorded.
+	CreatedBy common.UserRef `json:"created_by"`
+	CreatedAt time.Time      `json:"created_at"`
 }

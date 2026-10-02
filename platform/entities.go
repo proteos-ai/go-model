@@ -69,13 +69,13 @@ var platformEntities = []PlatformEntity{
 	{Slug: EntitySlugKnowledgeLabels, Name: "Knowledge Labels"},
 	{Slug: EntitySlugKnowledgeSpaces, Name: "Knowledge Spaces"},
 	// Agent suite (agent-service)
-	{Slug: "agents", Name: "Agents"},
-	{Slug: "prompts", Name: "Prompts"},
-	{Slug: "skills", Name: "Skills"},
-	{Slug: "tools", Name: "Tools"},
-	{Slug: "toolsets", Name: "Toolsets"},
-	{Slug: "mcp-servers", Name: "MCP Servers"},
-	{Slug: "agent-sessions", Name: "Agent Sessions"},
+	{Slug: EntitySlugAgents, Name: "Agents"},
+	{Slug: EntitySlugPrompts, Name: "Prompts"},
+	{Slug: EntitySlugSkills, Name: "Skills"},
+	{Slug: EntitySlugTools, Name: "Tools"},
+	{Slug: EntitySlugToolsets, Name: "Toolsets"},
+	{Slug: EntitySlugMcpServers, Name: "MCP Servers"},
+	{Slug: EntitySlugAgentSessions, Name: "Agent Sessions"},
 	// Messaging bus (event-service)
 	{Slug: "topics", Name: "Topics"},
 	{Slug: "events", Name: "Events"},
@@ -94,6 +94,8 @@ var platformEntities = []PlatformEntity{
 	// Mistranscribed terms proposed by the post-transcription review pass,
 	// awaiting human accept/reject.
 	{Slug: "mistranscribed-terms", Name: "Mistranscribed Terms"},
+	// Live speech-to-text (the dictation stream) — `read` opens a stream.
+	{Slug: "voice", Name: "Voice"},
 	// The person-level identity layer (contacts + contact addresses + merges +
 	// permission ledger + erasure requests) — one grant governs the whole
 	// aggregate.
@@ -154,6 +156,35 @@ const (
 	EntitySlugKnowledgeLinks  = "knowledge-links"
 	EntitySlugKnowledgeLabels = "knowledge-labels"
 	EntitySlugKnowledgeSpaces = "knowledge-spaces"
+)
+
+// Agent suite slugs, declared once for the same reason: agent-service registers
+// them as share targets and gates its routes on them.
+const (
+	EntitySlugAgents        = "agents"
+	EntitySlugPrompts       = "prompts"
+	EntitySlugSkills        = "skills"
+	EntitySlugTools         = "tools"
+	EntitySlugToolsets      = "toolsets"
+	EntitySlugMcpServers    = "mcp-servers"
+	EntitySlugAgentSessions = "agent-sessions"
+)
+
+// conversation-service's scoped slugs: the three entity types whose
+// `*_scoped` twins are enforced there (connections and conversations are
+// share targets; messages inherit their conversation's visibility). Shared by
+// its repositories and middlewares, which must not import each other.
+const (
+	EntitySlugConnections   = "connections"
+	EntitySlugConversations = "conversations"
+	EntitySlugMessages      = "messages"
+	// The conversation-linked entities: as visible as the conversation they
+	// point at, or (unlinked) as their own owner / connection.
+	EntitySlugTranscriptions     = "transcriptions"
+	EntitySlugConversationBriefs = "conversation-briefs"
+	EntitySlugChannelActions     = "channel-actions"
+	EntitySlugChannelEvents      = "channel-events"
+	EntitySlugConversationTags   = "conversation-tags"
 )
 
 // reservedSlugs is the membership set behind IsReserved.

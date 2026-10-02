@@ -32,6 +32,11 @@ type ConversationFilter struct {
 	// variant; FilterType discriminates.
 	FilterConfig ConversationFilterConfig `json:"filter_config,omitempty"`
 	IsEnabled    bool                     `json:"is_enabled" sortable:""`
+	// Principals and Permission are what a `restrict` / `share` rule grants on
+	// the threads it creates — the same words as the share API. Permission is
+	// read or write (write implies read; the default). Empty on block/allow.
+	Principals []common.PrincipalRef `json:"principals,omitempty"`
+	Permission string                `json:"permission,omitempty"`
 	// RecentEventCount is a read-only projection: how many messages this rule
 	// dropped in the last 30 days (logic.RecentEventWindow), rolled up from the
 	// conversation_filter_event audit table on CRUD reads only — never persisted

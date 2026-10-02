@@ -22,6 +22,11 @@ type CreateConversationFilterRequest struct {
 	Action       conversationmodel.ConversationFilterAction `json:"action" validate:"required"`
 	FilterConfig map[string]any                             `json:"filter_config"`
 	IsEnabled    *bool                                      `json:"is_enabled,omitempty"`
+	// Principals + Permission are required for restrict / share (who the
+	// created thread is opened to, and with which verb — write by default) and
+	// must be empty for block / allow.
+	Principals []common.PrincipalRef `json:"principals,omitempty"`
+	Permission string                `json:"permission,omitempty" validate:"omitempty,oneof=read write"`
 
 	IsSelfDomainAcknowledged *bool `json:"is_self_domain_acknowledged,omitempty"`
 }
@@ -35,6 +40,8 @@ type UpdateConversationFilterRequest struct {
 	Action       *conversationmodel.ConversationFilterAction `json:"action,omitempty"`
 	FilterConfig *map[string]any                             `json:"filter_config,omitempty"`
 	IsEnabled    *bool                                       `json:"is_enabled,omitempty"`
+	Principals   *[]common.PrincipalRef                      `json:"principals,omitempty"`
+	Permission   *string                                     `json:"permission,omitempty" validate:"omitempty,oneof=read write"`
 
 	IsSelfDomainAcknowledged *bool `json:"is_self_domain_acknowledged,omitempty"`
 }

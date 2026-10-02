@@ -77,6 +77,11 @@ type GetManyConnectionsQuery struct {
 	// no owner and never match.
 	OwnerId *string `json:"owner_id" form:"owner_id" db:"owner->>'id'"`
 	Status  *string `json:"status" form:"status" db:"status"`
+	// Permission is the caller's INTENT for the list: `read` (default) lists
+	// every connection they reach; `write` only those they may send through —
+	// the compose picker's question. No db tag: it is not a column filter but
+	// the verb the visibility predicate matches share rows against.
+	Permission string `json:"permission" form:"permission" validate:"omitempty,oneof=read write"`
 	common.Pagination
 	common.Sorting
 }
