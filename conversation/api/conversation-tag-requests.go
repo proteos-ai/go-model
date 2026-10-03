@@ -23,11 +23,25 @@ type CreateConversationTagRequest struct {
 	EndOffset      *int   `json:"end_offset,omitempty"`
 }
 
-// UpdateConversationTagRequest flips a tag between active and dismissed (the
-// feedback loop) and lets a person annotate why.
+// UpdateConversationTagRequest patches a tag: Status flips it between active
+// and dismissed (the feedback loop), Why annotates it, and Value / the anchors
+// correct it — absent fields keep the stored value, and the merged tag is
+// validated against its definition exactly like a manual tag. DefinitionKey
+// is immutable. A value or anchor change is a human correction: the tag
+// becomes source=user (confidence 1, no probabilities, no evaluation) so a
+// later evaluation no longer replaces it; a corrected pending tag becomes
+// active unless Status says otherwise. The anchors are tri-state
+// (common.Optional): absent keeps the stored anchor, JSON null clears it — so
+// a tag whose definition's scope changed (span → message → conversation) can
+// shed its offsets / message ids.
 type UpdateConversationTagRequest struct {
-	Status *conversationmodel.ConversationTagStatus `json:"status,omitempty"`
-	Why    *string                                  `json:"why,omitempty" validate:"omitempty,max=1024"`
+	Status         *conversationmodel.ConversationTagStatus `json:"status,omitempty"`
+	Why            *string                                  `json:"why,omitempty" validate:"omitempty,max=1024"`
+	Value          *string                                  `json:"value,omitempty" validate:"omitempty,min=1,max=255"`
+	StartMessageId common.Optional[string]                  `json:"start_message_id"`
+	StartOffset    common.Optional[int]                     `json:"start_offset"`
+	EndMessageId   common.Optional[string]                  `json:"end_message_id"`
+	EndOffset      common.Optional[int]                     `json:"end_offset"`
 }
 
 // EvaluateConversationTagsRequest starts a manual evaluation (POST
