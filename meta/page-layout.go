@@ -48,6 +48,13 @@ const (
 	// template over the page scope, or a literal user id. Record and platform
 	// pages only: the element reads and writes as the signed-in viewer.
 	LayoutElementTypeCalendar LayoutElementType = "calendar"
+	// LayoutElementTypeStepper is tabs for a record that walks through stages:
+	// ordered steps bound to one enum attribute of the page record, the step
+	// whose value the record holds marked current, one content tree per step,
+	// and Continue / Back buttons that write the attribute through the normal
+	// record update (so before_update hooks stay the authority on readiness).
+	// Record pages only.
+	LayoutElementTypeStepper LayoutElementType = "stepper"
 )
 
 // LayoutElementTypes enumerates every valid type discriminator.
@@ -68,6 +75,7 @@ var LayoutElementTypes = []LayoutElementType{
 	LayoutElementTypeWorkflowTrigger,
 	LayoutElementTypeSchedulingPicker,
 	LayoutElementTypeCalendar,
+	LayoutElementTypeStepper,
 }
 
 // UnmarshalJSON validates the wire value against LayoutElementTypes. Mirrors
@@ -463,6 +471,59 @@ type TabsElement struct {
 
 func (TabsElement) isLayoutElement()              {}
 func (TabsElement) LayoutType() LayoutElementType { return LayoutElementTypeTabs }
+
+// ──────────────────────────────────────────────────────── Stepper ──
+
+// LayoutStep is one stage inside a StepperElement, bound to one value of the
+// stepper's enum attribute. Steps are ordered: the step whose `Value` the
+// record holds is current, the ones before it completed, the ones after it
+// upcoming. `VisibleWhen` hides a step from the rail without changing the
+// order; `ContinueLabel` overrides the Continue button while this step is the
+// current one. Step ids share the page-wide id namespace with element ids.
+type LayoutStep struct {
+	ID            string              `json:"id"`
+	Value         string              `json:"value"`
+	Label         string              `json:"label"`
+	Icon          string              `json:"icon,omitempty"`
+	ContinueLabel string              `json:"continue_label,omitempty"`
+	VisibleWhen   *common.FilterGroup `json:"visible_when,omitempty"`
+	Content       LayoutElement       `json:"content"`
+}
+
+func (s *LayoutStep) UnmarshalJSON(data []byte) error {
+	type wireStep LayoutStep
+	var wire struct {
+		wireStep
+		Content json.RawMessage `json:"content"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	*s = LayoutStep(wire.wireStep)
+	if len(wire.Content) > 0 && string(wire.Content) != "null" {
+		content, err := unmarshalLayoutElement(wire.Content)
+		if err != nil {
+			return fmt.Errorf("content: %w", err)
+		}
+		s.Content = content
+	}
+	return nil
+}
+
+// StepperElement — see LayoutElementTypeStepper. `Attribute` names the enum
+// attribute of the page record the steps are bound to; `Steps` is an ordered
+// subset of that enum's values, one value per step.
+type StepperElement struct {
+	Type LayoutElementType `json:"type"`
+	CommonProps
+	Attribute     string       `json:"attribute"`
+	ContinueLabel string       `json:"continue_label,omitempty"`
+	BackLabel     string       `json:"back_label,omitempty"`
+	Steps         []LayoutStep `json:"steps"`
+}
+
+func (StepperElement) isLayoutElement()              {}
+func (StepperElement) LayoutType() LayoutElementType { return LayoutElementTypeStepper }
 
 // ────────────────────────────────────────────────────────── Field ──
 
@@ -923,6 +984,12 @@ func unmarshalLayoutElement(data json.RawMessage) (LayoutElement, error) {
 		return &v, nil
 	case LayoutElementTypeTabs:
 		var v TabsElement
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case LayoutElementTypeStepper:
+		var v StepperElement
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}

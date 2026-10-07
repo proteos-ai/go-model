@@ -437,3 +437,81 @@ func TestLayoutElementWalkers_KnowEveryLeafKind(t *testing.T) {
 		}
 	}
 }
+
+func TestStepperElement_RoundTrip(t *testing.T) {
+	src := `{"version":1,"main":{"type":"stepper","id":"stepper","attribute":"stage",` +
+		`"continue_label":"Next","back_label":"Previous","steps":[` +
+		`{"id":"step-definition","value":"definition","label":"Definition","icon":"FilePenLine",` +
+		`"continue_label":"Continue to sourcing","content":{"type":"column","id":"col-definition","children":[` +
+		`{"type":"field","id":"f-name","attribute":"name"}]}},` +
+		`{"id":"step-running","value":"running","label":"Running",` +
+		`"visible_when":{"logical_operator":"and","elements":[{"field":"kind","operator":"eq","value":"internal"}]},` +
+		`"content":{"type":"divider","id":"d-running"}}]}}`
+	var layout PageLayout
+	if err := json.Unmarshal([]byte(src), &layout); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	stepper, ok := layout.Main.(*StepperElement)
+	if !ok {
+		t.Fatalf("main: want *StepperElement, got %T", layout.Main)
+	}
+	if stepper.LayoutType() != LayoutElementTypeStepper || stepper.Attribute != "stage" {
+		t.Errorf("stepper: got type %q attribute %q", stepper.LayoutType(), stepper.Attribute)
+	}
+	if stepper.ContinueLabel != "Next" || stepper.BackLabel != "Previous" {
+		t.Errorf("labels: got %q / %q", stepper.ContinueLabel, stepper.BackLabel)
+	}
+	if len(stepper.Steps) != 2 {
+		t.Fatalf("steps: want 2, got %d", len(stepper.Steps))
+	}
+	first := stepper.Steps[0]
+	if first.ID != "step-definition" || first.Value != "definition" || first.Label != "Definition" ||
+		first.Icon != "FilePenLine" || first.ContinueLabel != "Continue to sourcing" {
+		t.Errorf("steps[0] drifted: %+v", first)
+	}
+	column, ok := first.Content.(*ColumnElement)
+	if !ok || len(column.Children) != 1 {
+		t.Fatalf("steps[0].content: want a column with one child, got %T", first.Content)
+	}
+	if stepper.Steps[1].VisibleWhen == nil || stepper.Steps[1].VisibleWhen.Elements[0].Field != "kind" {
+		t.Errorf("steps[1].visible_when lost: %+v", stepper.Steps[1].VisibleWhen)
+	}
+
+	// The walkers see the step contents like tab contents.
+	var ids []string
+	WalkLayoutElement(stepper, func(visit LayoutVisit) { ids = append(ids, LayoutElementID(visit.Element)) })
+	want := []string{"stepper", "col-definition", "f-name", "d-running"}
+	if len(ids) != len(want) {
+		t.Fatalf("walk: want %v, got %v", want, ids)
+	}
+	for i := range want {
+		if ids[i] != want[i] {
+			t.Fatalf("walk: want %v, got %v", want, ids)
+		}
+	}
+	SetLayoutElementExtensionKey(stepper, "ext")
+	if LayoutElementCommonProps(stepper).ExtensionKey != "ext" {
+		t.Errorf("SetLayoutElementExtensionKey did not stamp the stepper")
+	}
+	stepper.ExtensionKey = ""
+
+	out, err := json.Marshal(&layout)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var roundTripped PageLayout
+	if err := json.Unmarshal(out, &roundTripped); err != nil {
+		t.Fatalf("re-unmarshal: %v", err)
+	}
+	again, ok := roundTripped.Main.(*StepperElement)
+	if !ok {
+		t.Fatalf("re-unmarshal main: want *StepperElement, got %T", roundTripped.Main)
+	}
+	if again.Attribute != stepper.Attribute || len(again.Steps) != 2 ||
+		again.Steps[0].ContinueLabel != first.ContinueLabel || again.Steps[1].VisibleWhen == nil {
+		t.Errorf("round trip drifted: %+v vs %+v", again, stepper)
+	}
+	if _, ok := again.Steps[0].Content.(*ColumnElement); !ok {
+		t.Errorf("round trip lost the step content: %T", again.Steps[0].Content)
+	}
+}

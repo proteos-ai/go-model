@@ -87,6 +87,11 @@ type NodeDescriptor struct {
 	Routing          json.RawMessage  `json:"routing,omitempty"` // declarative spec (Phase 4)
 	DocumentationUrl string           `json:"documentation_url,omitempty"`
 	Subtitle         string           `json:"subtitle,omitempty"` // Liquid over parameters, shown on canvas
+	// DefaultRetry is the activity retry policy a node of this type runs with
+	// when the graph node sets none (NodeRetryPolicy zero values). Non-idempotent
+	// nodes declare {MaxAttempts: 1} so a retried activity cannot duplicate
+	// their side effect; nil falls through to the engine defaults.
+	DefaultRetry *NodeRetryPolicy `json:"default_retry,omitempty"`
 }
 
 // PortSpec declares one named input or output port. Port keys are stable

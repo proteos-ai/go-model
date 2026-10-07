@@ -166,6 +166,11 @@ func stripElement(element LayoutElement) LayoutElement {
 			kept = append(kept, tab)
 		}
 		typed.Tabs = kept
+	case *StepperElement:
+		// Steps are never contributed; only their contents can carry stamps.
+		for i := range typed.Steps {
+			typed.Steps[i].Content = stripElement(typed.Steps[i].Content)
+		}
 	}
 	return element
 }

@@ -54,6 +54,10 @@ func walkLayoutElement(element, parent LayoutElement, tab *LayoutTab, visit func
 		for i := range typed.Tabs {
 			walkLayoutElement(typed.Tabs[i].Content, element, &typed.Tabs[i], visit)
 		}
+	case *StepperElement:
+		for i := range typed.Steps {
+			walkLayoutElement(typed.Steps[i].Content, element, nil, visit)
+		}
 	}
 }
 
@@ -70,6 +74,8 @@ func LayoutElementCommonProps(element LayoutElement) CommonProps {
 	case *CardElement:
 		return typed.CommonProps
 	case *TabsElement:
+		return typed.CommonProps
+	case *StepperElement:
 		return typed.CommonProps
 	case *FieldElement:
 		return typed.CommonProps
@@ -114,6 +120,8 @@ func SetLayoutElementExtensionKey(element LayoutElement, key string) {
 	case *CardElement:
 		typed.ExtensionKey = key
 	case *TabsElement:
+		typed.ExtensionKey = key
+	case *StepperElement:
 		typed.ExtensionKey = key
 	case *FieldElement:
 		typed.ExtensionKey = key
