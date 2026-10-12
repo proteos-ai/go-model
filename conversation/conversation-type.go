@@ -17,6 +17,37 @@ type ConversationTypeConfig struct {
 	SummaryPromptKey string `json:"summary_prompt_key,omitempty"`
 }
 
+// ConversationOutcome is one way a conversation of a type can end — "booked",
+// "not_interested", "callback". The type's list is the outcome vocabulary a
+// person picks from (the softphone after a call, the conversation header)
+// and the choice a role=outcome tag definition detects among. Description is
+// what the model reads to tell the outcomes apart (Name when empty).
+type ConversationOutcome struct {
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// ConversationOutcomeOption is one outcome a conversation may take, as GET
+// /conversations/:id/outcomes lists them: the type's outcomes (Source type)
+// plus the channel's system outcomes (Source system — the ones the service
+// sets by itself when it can tell, such as a call nobody answered, and a
+// person may pick by hand).
+type ConversationOutcomeOption struct {
+	Key         string                      `json:"key"`
+	Name        string                      `json:"name"`
+	Description string                      `json:"description,omitempty"`
+	Source      ConversationOutcomeOptionSource `json:"source"`
+}
+
+// ConversationOutcomeOptionSource says where an outcome option comes from.
+type ConversationOutcomeOptionSource string
+
+const (
+	ConversationOutcomeOptionSourceType   ConversationOutcomeOptionSource = "type"
+	ConversationOutcomeOptionSourceSystem ConversationOutcomeOptionSource = "system"
+)
+
 // ConversationType is a per-org conversation taxonomy entry. Before a meeting
 // summary is generated, a cheap classifier model reads the transcript head
 // plus every type's Definition and picks the matching Key (or none); the
@@ -34,6 +65,9 @@ type ConversationType struct {
 	// the conversation's content/participants/purpose, not internal process.
 	Definition string                 `json:"definition"`
 	Config     ConversationTypeConfig `json:"config"`
+	// Outcomes is the ordered list a conversation of this type can end with;
+	// empty = the type tracks no outcome. Serializes as an array, never null.
+	Outcomes []ConversationOutcome `json:"outcomes"`
 	// ModuleSlug attributes the type to the module that deployed it; empty =
 	// not module-owned.
 	ModuleSlug string         `json:"module_slug,omitempty"`
@@ -41,4 +75,14 @@ type ConversationType struct {
 	CreatedBy  common.UserRef `json:"created_by"`
 	UpdatedAt  time.Time      `json:"updated_at" sortable:""`
 	UpdatedBy  common.UserRef `json:"updated_by"`
+}
+
+// OutcomeByKey finds one of the type's outcomes.
+func (conversationType ConversationType) OutcomeByKey(key string) (ConversationOutcome, bool) {
+	for _, outcome := range conversationType.Outcomes {
+		if outcome.Key == key {
+			return outcome, true
+		}
+	}
+	return ConversationOutcome{}, false
 }

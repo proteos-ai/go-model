@@ -1015,6 +1015,66 @@ func IsKnownConversationTagScope(scope ConversationTagScope) bool {
 	return false
 }
 
+// ConversationOutcomeSource says who set a conversation's outcome.
+type ConversationOutcomeSource string
+
+const (
+	ConversationOutcomeSourceUser  ConversationOutcomeSource = "user"
+	ConversationOutcomeSourceModel ConversationOutcomeSource = "model"
+	// system: the service told from the channel's own facts (a call nobody
+	// answered, a meeting nobody joined) — like model, never over a user's.
+	ConversationOutcomeSourceSystem ConversationOutcomeSource = "system"
+)
+
+// ConversationTagBasis is WHAT a definition is judged over: the conversation
+// (its messages — the default, windowed per trigger) or the summary (the
+// final summary plus the humans' notes; conversation scope only, judged once
+// the summary exists — never on a realtime trigger).
+type ConversationTagBasis string
+
+const (
+	ConversationTagBasisConversation ConversationTagBasis = "conversation"
+	ConversationTagBasisSummary    ConversationTagBasis = "summary"
+)
+
+func IsKnownConversationTagBasis(basis ConversationTagBasis) bool {
+	switch basis {
+	case ConversationTagBasisConversation, ConversationTagBasisSummary:
+		return true
+	}
+	return false
+}
+
+// OrDefault reads an unset basis as conversation — rows and manifests written
+// before the field existed mean exactly that.
+func (basis ConversationTagBasis) OrDefault() ConversationTagBasis {
+	if basis == "" {
+		return ConversationTagBasisConversation
+	}
+	return basis
+}
+
+// ConversationTagRole is the special part a definition plays beyond being an
+// observation. "" = none. outcome = THE result of the conversation: a choice
+// question at conversation scope, one value per conversation, the human's
+// choice beats the model's (the model never competes with a user-set
+// outcome), surfaced in the softphone and the conversation header. phase is
+// reserved for the objectives follow-up (which phase a conversation is in).
+type ConversationTagRole string
+
+const (
+	ConversationTagRoleNone    ConversationTagRole = ""
+	ConversationTagRoleOutcome ConversationTagRole = "outcome"
+)
+
+func IsKnownConversationTagRole(role ConversationTagRole) bool {
+	switch role {
+	case ConversationTagRoleNone, ConversationTagRoleOutcome:
+		return true
+	}
+	return false
+}
+
 // ConversationTagEvaluatorKind selects the model path a definition is judged
 // by: decide (agent-service's calibrated typed decision — probabilities, no
 // prose, no localisation) or reason (a schema-constrained generation that

@@ -3,7 +3,8 @@ package conversationapi
 import conversationmodel "go.proteos.ai/model/conversation"
 
 // Normalized returns the request with every server-side default filled in,
-// exactly as the row will be stored: evaluator.kind empty ⇒ decide; screening
+// exactly as the row will be stored: evaluator.kind empty ⇒ decide; basis
+// empty ⇒ conversation; screening
 // omitted on a reason definition with a boolean question ⇒ enabled with the
 // service threshold; is_enabled nil ⇒ true. The ONE place these defaults live:
 // the service applies it before validating and storing, and `pro module`
@@ -12,6 +13,9 @@ import conversationmodel "go.proteos.ai/model/conversation"
 func (request CreateConversationTagDefinitionRequest) Normalized() CreateConversationTagDefinitionRequest {
 	if request.Evaluator.Kind == "" {
 		request.Evaluator.Kind = conversationmodel.ConversationTagEvaluatorDecide
+	}
+	if request.Basis == "" {
+		request.Basis = conversationmodel.ConversationTagBasisConversation
 	}
 	if request.Evaluator.Kind == conversationmodel.ConversationTagEvaluatorReason &&
 		request.Question.Type == conversationmodel.ConversationTagQuestionTypeBoolean && request.Evaluator.Screening == nil {

@@ -126,6 +126,9 @@ var platformEntities = []PlatformEntity{
 	// Conversation briefs: guidance prepared ahead of a conversation (a call, a
 	// meeting) with a contact (prepare, revise, discard; binds automatically).
 	{Slug: "conversation-briefs", Name: "Conversation Briefs"},
+	// Conversation notes: what a person recorded about a conversation (an
+	// append log, author-stamped; as visible as the conversation).
+	{Slug: "conversation-notes", Name: "Conversation Notes"},
 	// Conversation intelligence: the typed questions asked of conversations
 	// (definitions), where/when they are evaluated (sets), and the observations
 	// they produce incl. their evaluation history (tags).
@@ -182,6 +185,7 @@ const (
 	// point at, or (unlinked) as their own owner / connection.
 	EntitySlugTranscriptions     = "transcriptions"
 	EntitySlugConversationBriefs = "conversation-briefs"
+	EntitySlugConversationNotes  = "conversation-notes"
 	EntitySlugChannelActions     = "channel-actions"
 	EntitySlugChannelEvents      = "channel-events"
 	EntitySlugConversationTags   = "conversation-tags"

@@ -75,6 +75,14 @@ type ConversationTagDefinition struct {
 	// reason (only a reasoning generation can localise verbatim quotes).
 	Scope     ConversationTagScope     `json:"scope"`
 	Evaluator ConversationTagEvaluator `json:"evaluator"`
+	// Basis: conversation (default — the messages, windowed per trigger) |
+	// summary (the final summary + the humans' notes; conversation scope only;
+	// skipped until the conversation has a summary).
+	Basis ConversationTagBasis `json:"basis"`
+	// Role: "" | outcome. outcome requires a choice question at conversation
+	// scope and makes the definition single-valued per conversation with the
+	// human's choice winning over the model's.
+	Role ConversationTagRole `json:"role,omitempty"`
 	// Directions narrows message/span-scope judging to messages of these
 	// directions (e.g. inbound only for customer sentiment); empty = all.
 	// Ignored for conversation scope.
@@ -92,4 +100,10 @@ type ConversationTagDefinition struct {
 	CreatedBy  common.UserRef `json:"created_by"`
 	UpdatedAt  time.Time      `json:"updated_at" sortable:""`
 	UpdatedBy  common.UserRef `json:"updated_by"`
+}
+
+// IsOutcome reports that the definition plays the outcome role: one value
+// per conversation, the human's choice beats the model's.
+func (definition ConversationTagDefinition) IsOutcome() bool {
+	return definition.Role == ConversationTagRoleOutcome
 }

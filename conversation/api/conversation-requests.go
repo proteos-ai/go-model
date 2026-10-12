@@ -14,6 +14,19 @@ type UpdateConversationRequest struct {
 	Summary  *string                               `json:"summary,omitempty"`
 	Status   *conversationmodel.ConversationStatus `json:"status,omitempty"`
 	Metadata *map[string]any                       `json:"metadata,omitempty"`
+	// TypeKey sets the conversation's type by hand (must name an existing
+	// type; "" clears). Changing the type does not touch the outcome.
+	TypeKey *string `json:"type_key,omitempty" validate:"omitempty,max=255"`
+	// OutcomeKey records how the conversation ended — one of its type's
+	// outcome keys or its channel's system outcomes (GET
+	// /conversations/:id/outcomes; "" clears). The person's choice: a later
+	// model detection never overrides it. 400 conversation_outcome_unknown
+	// when the key is in neither list.
+	OutcomeKey *string `json:"outcome_key,omitempty" validate:"omitempty,max=255"`
+}
+
+type GetConversationOutcomesResponse struct {
+	Data []conversationmodel.ConversationOutcomeOption `json:"data"`
 }
 
 type GetManyConversationsQuery struct {
@@ -24,6 +37,9 @@ type GetManyConversationsQuery struct {
 	// ParentConversationId filters a conversation's thread children (Slack
 	// threads forked from one main conversation).
 	ParentConversationId *string `json:"parent_conversation_id" form:"parent_conversation_id" db:"parent_conversation_id"`
+	TypeKey              *string `json:"type_key" form:"type_key" db:"type_key"`
+	// OutcomeKey filters by how conversations ended (one of a type's outcome keys).
+	OutcomeKey *string `json:"outcome_key" form:"outcome_key" db:"outcome_key"`
 	// ContactId filters threads whose roster contains the resolved person — the
 	// contact stream (subsumes the retired participant_external_id filter:
 	// the expansion below covers raw-identifier matching too). Post-contacts

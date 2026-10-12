@@ -15,6 +15,8 @@ type CreateConversationTypeRequest struct {
 	Name       string                                   `json:"name" validate:"max=255"`
 	Definition string                                   `json:"definition" validate:"required,max=4096"`
 	Config     conversationmodel.ConversationTypeConfig `json:"config"`
+	// Outcomes replaces the type's outcome list wholesale (omit = none).
+	Outcomes   []conversationmodel.ConversationOutcome `json:"outcomes"`
 	ModuleSlug string                                   `json:"module_slug" validate:"max=255"`
 }
 
@@ -25,6 +27,8 @@ type UpdateConversationTypeRequest struct {
 	Name       *string                                   `json:"name,omitempty" validate:"omitempty,max=255"`
 	Definition *string                                   `json:"definition,omitempty" validate:"omitempty,max=4096"`
 	Config     *conversationmodel.ConversationTypeConfig `json:"config,omitempty"`
+	// Outcomes, when present, replaces the list wholesale ([] clears it).
+	Outcomes *[]conversationmodel.ConversationOutcome `json:"outcomes,omitempty"`
 }
 
 type GetManyConversationTypesQuery struct {

@@ -43,6 +43,16 @@ type Conversation struct {
 	// may be deleted/redeployed independently of historic conversations.
 	TypeKey string             `json:"type_key,omitempty"`
 	Status  ConversationStatus `json:"status" sortable:""`
+	// OutcomeKey is how the conversation ended — one of its type's outcome
+	// keys; empty = none yet. A person sets it (PATCH outcome_key) or a
+	// role=outcome tag detection stamps it while no person has.
+	OutcomeKey string `json:"outcome_key,omitempty"`
+	// OutcomeSource says who set the outcome: user | model | system; empty
+	// with no outcome. A user outcome is never overwritten by the model or
+	// the service.
+	OutcomeSource ConversationOutcomeSource `json:"outcome_source,omitempty"`
+	OutcomeSetBy  *common.UserRef           `json:"outcome_set_by,omitempty"`
+	OutcomeSetAt  *time.Time                `json:"outcome_set_at,omitempty"`
 	// RoomId links a room-borne thread (a Slack channel conversation) to its
 	// room directory row; empty for DMs, email, meeting, adhoc. Stamped at
 	// ingest; no FK — a pruned room leaves the id dangling by design.

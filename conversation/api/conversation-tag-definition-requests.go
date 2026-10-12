@@ -18,6 +18,8 @@ type CreateConversationTagDefinitionRequest struct {
 	Question      conversationmodel.ConversationTagQuestion  `json:"question"`
 	Scope         conversationmodel.ConversationTagScope     `json:"scope" validate:"required"`
 	Evaluator     conversationmodel.ConversationTagEvaluator `json:"evaluator"`
+	Basis         conversationmodel.ConversationTagBasis     `json:"basis"`
+	Role          conversationmodel.ConversationTagRole      `json:"role"`
 	Directions    []conversationmodel.MessageDirection       `json:"directions"`
 	MinConfidence float64                                    `json:"min_confidence" validate:"min=0,max=1"`
 	Color         string                                     `json:"color" validate:"max=64"`
@@ -35,6 +37,8 @@ type UpdateConversationTagDefinitionRequest struct {
 	Question      *conversationmodel.ConversationTagQuestion  `json:"question,omitempty"`
 	Scope         *conversationmodel.ConversationTagScope     `json:"scope,omitempty"`
 	Evaluator     *conversationmodel.ConversationTagEvaluator `json:"evaluator,omitempty"`
+	Basis         *conversationmodel.ConversationTagBasis     `json:"basis,omitempty"`
+	Role          *conversationmodel.ConversationTagRole      `json:"role,omitempty"`
 	Directions    *[]conversationmodel.MessageDirection       `json:"directions,omitempty"`
 	MinConfidence *float64                                    `json:"min_confidence,omitempty" validate:"omitempty,min=0,max=1"`
 	Color         *string                                     `json:"color,omitempty" validate:"omitempty,max=64"`
@@ -45,10 +49,11 @@ type GetManyConversationTagDefinitionsQuery struct {
 	// ModuleSlug filters to definitions deployed by one module — the `pro
 	// module` remote-state discovery door.
 	ModuleSlug *string `json:"module_slug" form:"module_slug"`
-	// Group / Scope / IsEnabled are exact filters (repository-applied; `group`
-	// is a reserved word so the generic mapper is bypassed).
+	// Group / Scope / Role / IsEnabled are exact filters (repository-applied;
+	// `group` is a reserved word so the generic mapper is bypassed).
 	Group     *string `json:"group" form:"group"`
 	Scope     *string `json:"scope" form:"scope"`
+	Role      *string `json:"role" form:"role"`
 	IsEnabled *bool   `json:"is_enabled" form:"is_enabled"`
 	// Search filters by a case-insensitive substring of key or name.
 	Search *string `json:"search" form:"search"`
