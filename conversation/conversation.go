@@ -53,6 +53,10 @@ type Conversation struct {
 	OutcomeSource ConversationOutcomeSource `json:"outcome_source,omitempty"`
 	OutcomeSetBy  *common.UserRef           `json:"outcome_set_by,omitempty"`
 	OutcomeSetAt  *time.Time                `json:"outcome_set_at,omitempty"`
+	// HasObjectives: the conversation currently holds objective rows (a
+	// definition applies to it and a sync ran). Maintained by the objective
+	// service; the sync gate's "was this ever tracked" without a ledger probe.
+	HasObjectives bool `json:"has_objectives"`
 	// RoomId links a room-borne thread (a Slack channel conversation) to its
 	// room directory row; empty for DMs, email, meeting, adhoc. Stamped at
 	// ingest; no FK — a pruned room leaves the id dangling by design.
@@ -62,6 +66,13 @@ type Conversation struct {
 	// child is a native Slack thread); empty for main/DM/email/meeting/adhoc.
 	// No FK — empty-string convention.
 	ParentConversationId string `json:"parent_conversation_id,omitempty"`
+	// CalendarEventIcalUid is the provider's iCalendar UID of the calendar event
+	// a meeting conversation was born from. With StartedAt it names the meeting
+	// INSTANCE on every invitee's calendar (Google's UID names the series,
+	// Microsoft's names one occurrence — never use it alone). Stamped when the
+	// meeting bot starts; empty for everything else. No FK — the calendar
+	// mirror belongs to scheduling-service.
+	CalendarEventIcalUid string `json:"calendar_event_ical_uid,omitempty"`
 	// StartedByMessageId is OUR message id of the child conversation's root
 	// message, which lives in the parent conversation (a message belongs to
 	// exactly one conversation); empty when the root is unknown (the child's

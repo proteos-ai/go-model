@@ -20,6 +20,9 @@ type GetManyCalendarEventsQuery struct {
 	RecordEntitySlug  string    `json:"record_entity_slug" form:"record_entity_slug"`
 	RecordId          string    `json:"record_id" form:"record_id"`
 	ContactId         string    `json:"contact_id" form:"contact_id"`
+	// IcalUid narrows to the instance(s) of one provider event (the iCalendar UID
+	// both calendar mirrors carry) — the cross-calendar correlation key.
+	IcalUid           string    `json:"ical_uid" form:"ical_uid" validate:"max=255"`
 	IsDeletedIncluded bool      `json:"is_deleted_included" form:"is_deleted_included"`
 }
 

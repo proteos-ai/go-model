@@ -1026,6 +1026,67 @@ const (
 	ConversationOutcomeSourceSystem ConversationOutcomeSource = "system"
 )
 
+// ConversationObjectiveMeasureKind is how an objective definition's
+// achievement is told: tag (a tag on a tag definition meets a value
+// condition) or outcome (the conversation's outcome is one of a set).
+type ConversationObjectiveMeasureKind string
+
+const (
+	ConversationObjectiveMeasureTag     ConversationObjectiveMeasureKind = "tag"
+	ConversationObjectiveMeasureOutcome ConversationObjectiveMeasureKind = "outcome"
+)
+
+func IsKnownConversationObjectiveMeasureKind(kind ConversationObjectiveMeasureKind) bool {
+	return kind == ConversationObjectiveMeasureTag || kind == ConversationObjectiveMeasureOutcome
+}
+
+// ConversationObjectiveStatus is an objective's standing on a conversation:
+// open (not yet, or no longer, achieved) or achieved. Whether an achieved
+// standing is still provisional is a separate flag (IsProvisional), never a
+// third status — the objective IS achieved; the evidence is what may still
+// change.
+type ConversationObjectiveStatus string
+
+const (
+	ConversationObjectiveStatusOpen     ConversationObjectiveStatus = "open"
+	ConversationObjectiveStatusAchieved ConversationObjectiveStatus = "achieved"
+)
+
+func IsKnownConversationObjectiveStatus(status ConversationObjectiveStatus) bool {
+	return status == ConversationObjectiveStatusOpen || status == ConversationObjectiveStatusAchieved
+}
+
+// ConversationObjectiveSource says who achieved an objective: a person (a
+// user tag or a hand-picked outcome), the model (a detected tag or outcome)
+// or the system (a channel-level outcome the service set by itself). Same
+// vocabulary as ConversationOutcomeSource and the tag source.
+type ConversationObjectiveSource string
+
+const (
+	ConversationObjectiveSourceUser   ConversationObjectiveSource = "user"
+	ConversationObjectiveSourceModel  ConversationObjectiveSource = "model"
+	ConversationObjectiveSourceSystem ConversationObjectiveSource = "system"
+)
+
+func IsKnownConversationObjectiveSource(source ConversationObjectiveSource) bool {
+	switch source {
+	case ConversationObjectiveSourceUser, ConversationObjectiveSourceModel, ConversationObjectiveSourceSystem:
+		return true
+	}
+	return false
+}
+
+// ConversationPhaseStatus is where a conversation stands in one of its
+// type's phases — see ConversationPhaseProgress.
+type ConversationPhaseStatus string
+
+const (
+	ConversationPhaseStatusDone      ConversationPhaseStatus = "done"
+	ConversationPhaseStatusCurrent   ConversationPhaseStatus = "current"
+	ConversationPhaseStatusUpcoming  ConversationPhaseStatus = "upcoming"
+	ConversationPhaseStatusUntracked ConversationPhaseStatus = "untracked"
+)
+
 // ConversationTagBasis is WHAT a definition is judged over: the conversation
 // (its messages — the default, windowed per trigger) or the summary (the
 // final summary plus the humans' notes; conversation scope only, judged once
@@ -1034,7 +1095,7 @@ type ConversationTagBasis string
 
 const (
 	ConversationTagBasisConversation ConversationTagBasis = "conversation"
-	ConversationTagBasisSummary    ConversationTagBasis = "summary"
+	ConversationTagBasisSummary      ConversationTagBasis = "summary"
 )
 
 func IsKnownConversationTagBasis(basis ConversationTagBasis) bool {
@@ -1059,7 +1120,8 @@ func (basis ConversationTagBasis) OrDefault() ConversationTagBasis {
 // question at conversation scope, one value per conversation, the human's
 // choice beats the model's (the model never competes with a user-set
 // outcome), surfaced in the softphone and the conversation header. phase is
-// reserved for the objectives follow-up (which phase a conversation is in).
+// reserved for a later phase DETECTOR (today phase progress is derived from
+// the objectives pinned to each phase, see ConversationPhaseProgress).
 type ConversationTagRole string
 
 const (
@@ -1149,4 +1211,19 @@ const (
 	ConversationTagEvaluationStatusRunning ConversationTagEvaluationStatus = "running"
 	ConversationTagEvaluationStatusDone    ConversationTagEvaluationStatus = "done"
 	ConversationTagEvaluationStatusFailed  ConversationTagEvaluationStatus = "failed"
+)
+
+// MeetingBotStatus is the lifecycle of a MeetingBot: scheduled (a calendar bot
+// the provider will send; an adhoc bot dispatched but not yet in the call) →
+// joining → recording → ended | failed, or removed (a person withdrew Ava —
+// terminal, and it suppresses re-scheduling for the meeting instance).
+type MeetingBotStatus string
+
+const (
+	MeetingBotStatusScheduled MeetingBotStatus = "scheduled"
+	MeetingBotStatusJoining   MeetingBotStatus = "joining"
+	MeetingBotStatusRecording MeetingBotStatus = "recording"
+	MeetingBotStatusEnded     MeetingBotStatus = "ended"
+	MeetingBotStatusFailed    MeetingBotStatus = "failed"
+	MeetingBotStatusRemoved   MeetingBotStatus = "removed"
 )

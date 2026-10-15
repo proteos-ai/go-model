@@ -78,8 +78,10 @@ const (
 	// OnErrorContinue passes the node's input items through unchanged to its
 	// main output and continues.
 	OnErrorContinue OnErrorPolicy = "continue"
-	// OnErrorContinueErrorOutput emits error items on the node's `error` output
-	// port if it declares one; otherwise behaves like stop.
+	// OnErrorContinueErrorOutput routes the failure to the node's implicit
+	// `error` output port: one item per input item, the input's json plus an
+	// `error` object (code, message, details, is_user_error) — see ErrorItems.
+	// Every non-trigger node has the port; descriptors never declare it.
 	OnErrorContinueErrorOutput OnErrorPolicy = "continue_error_output"
 )
 
@@ -130,8 +132,9 @@ type NodePosition struct {
 // port (and by the v1→v2 graph upgrade).
 const DefaultPort = "main"
 
-// ErrorPort is the reserved output-port key the on_error=continue_error_output
-// policy routes failed items to, when the node's descriptor declares it.
+// ErrorPort is the reserved output-port key every non-trigger node implicitly
+// has; the on_error=continue_error_output policy routes the failed run's error
+// items to it. Descriptors may not declare an output with this key.
 const ErrorPort = "error"
 
 // ConnectionEndpoint addresses one side of a connection: a node by id and one of

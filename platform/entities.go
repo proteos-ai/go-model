@@ -135,6 +135,12 @@ var platformEntities = []PlatformEntity{
 	{Slug: "conversation-tag-definitions", Name: "Conversation Tag Definitions"},
 	{Slug: "conversation-tag-sets", Name: "Conversation Tag Sets"},
 	{Slug: "conversation-tags", Name: "Conversation Tags"},
+	// Conversation objectives: what a conversation should achieve
+	// (definitions — config, phase-pinned, optionally measured) and each
+	// definition's standing per conversation (objectives — resolved from the
+	// tags and the outcome, persisted as the analytics ledger, read-only).
+	{Slug: "conversation-objective-definitions", Name: "Conversation Objective Definitions"},
+	{Slug: "conversation-objectives", Name: "Conversation Objectives"},
 	// Connectors (connector-service). `connections` above is shared; this is
 	// the manifest catalog.
 	{Slug: "connectors", Name: "Connectors"},
@@ -183,12 +189,13 @@ const (
 	EntitySlugMessages      = "messages"
 	// The conversation-linked entities: as visible as the conversation they
 	// point at, or (unlinked) as their own owner / connection.
-	EntitySlugTranscriptions     = "transcriptions"
-	EntitySlugConversationBriefs = "conversation-briefs"
-	EntitySlugConversationNotes  = "conversation-notes"
-	EntitySlugChannelActions     = "channel-actions"
-	EntitySlugChannelEvents      = "channel-events"
-	EntitySlugConversationTags   = "conversation-tags"
+	EntitySlugTranscriptions         = "transcriptions"
+	EntitySlugConversationBriefs     = "conversation-briefs"
+	EntitySlugConversationNotes      = "conversation-notes"
+	EntitySlugChannelActions         = "channel-actions"
+	EntitySlugChannelEvents          = "channel-events"
+	EntitySlugConversationTags       = "conversation-tags"
+	EntitySlugConversationObjectives = "conversation-objectives"
 )
 
 // reservedSlugs is the membership set behind IsReserved.

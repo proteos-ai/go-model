@@ -28,15 +28,27 @@ type ConversationOutcome struct {
 	Description string `json:"description,omitempty"`
 }
 
+// ConversationPhase is one stage a conversation of a type moves through —
+// "intro", "discovery", "close". The type's list is ordered; progress
+// through it is DERIVED from the objectives pinned to each phase (every
+// measured objective of a phase achieved ⇒ the phase is done), never
+// detected on its own. Description is for humans (the checklist, the
+// summary prompt).
+type ConversationPhase struct {
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
 // ConversationOutcomeOption is one outcome a conversation may take, as GET
 // /conversations/:id/outcomes lists them: the type's outcomes (Source type)
 // plus the channel's system outcomes (Source system — the ones the service
 // sets by itself when it can tell, such as a call nobody answered, and a
 // person may pick by hand).
 type ConversationOutcomeOption struct {
-	Key         string                      `json:"key"`
-	Name        string                      `json:"name"`
-	Description string                      `json:"description,omitempty"`
+	Key         string                          `json:"key"`
+	Name        string                          `json:"name"`
+	Description string                          `json:"description,omitempty"`
 	Source      ConversationOutcomeOptionSource `json:"source"`
 }
 
@@ -68,6 +80,10 @@ type ConversationType struct {
 	// Outcomes is the ordered list a conversation of this type can end with;
 	// empty = the type tracks no outcome. Serializes as an array, never null.
 	Outcomes []ConversationOutcome `json:"outcomes"`
+	// Phases is the ordered list of stages a conversation of this type moves
+	// through; empty = the type tracks no phases. Serializes as an array,
+	// never null.
+	Phases []ConversationPhase `json:"phases"`
 	// ModuleSlug attributes the type to the module that deployed it; empty =
 	// not module-owned.
 	ModuleSlug string         `json:"module_slug,omitempty"`
@@ -85,4 +101,14 @@ func (conversationType ConversationType) OutcomeByKey(key string) (ConversationO
 		}
 	}
 	return ConversationOutcome{}, false
+}
+
+// PhaseByKey finds one of the type's phases.
+func (conversationType ConversationType) PhaseByKey(key string) (ConversationPhase, bool) {
+	for _, phase := range conversationType.Phases {
+		if phase.Key == key {
+			return phase, true
+		}
+	}
+	return ConversationPhase{}, false
 }

@@ -38,6 +38,10 @@ type GetManyConversationsQuery struct {
 	// threads forked from one main conversation).
 	ParentConversationId *string `json:"parent_conversation_id" form:"parent_conversation_id" db:"parent_conversation_id"`
 	TypeKey              *string `json:"type_key" form:"type_key" db:"type_key"`
+	// CalendarEventIcalUid filters to the meeting conversations born from one
+	// calendar event UID (stamped at meeting-bot start); pair with started_at
+	// to name one instance.
+	CalendarEventIcalUid *string `json:"calendar_event_ical_uid" form:"calendar_event_ical_uid" db:"calendar_event_ical_uid"`
 	// OutcomeKey filters by how conversations ended (one of a type's outcome keys).
 	OutcomeKey *string `json:"outcome_key" form:"outcome_key" db:"outcome_key"`
 	// ContactId filters threads whose roster contains the resolved person — the

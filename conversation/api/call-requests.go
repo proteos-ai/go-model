@@ -73,6 +73,15 @@ type UpdatePhoneNumberRequest struct {
 	Routing *PhoneNumberRouting `json:"routing,omitempty"`
 }
 
+// SetCallRecordingRequest is the body of
+// PUT /conversations/v1/conversations/:id/recording — the in-call recording
+// control on a live phone conversation. true starts (or resumes) the
+// recording, false pauses it. A recording that did not run from answer to
+// hangup is marked partial on the conversation.
+type SetCallRecordingRequest struct {
+	IsRecordingEnabled bool `json:"is_recording_enabled"`
+}
+
 // CallTokenResponse is the minted browser-calling grant the softphone hands
 // to the vendor's JS SDK (Twilio Voice: `new Device(token, { edge })`).
 // Clients refresh by calling the endpoint again (the SDK's tokenWillExpire

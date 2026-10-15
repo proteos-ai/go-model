@@ -33,15 +33,16 @@ type CreateConversationTagRequest struct {
 // active unless Status says otherwise. The anchors are tri-state
 // (common.Optional): absent keeps the stored anchor, JSON null clears it — so
 // a tag whose definition's scope changed (span → message → conversation) can
-// shed its offsets / message ids.
+// shed its offsets / message ids. `omitzero` keeps an unset Optional out of
+// an encoded body (an SDK patch of `status` alone must not clear anchors).
 type UpdateConversationTagRequest struct {
 	Status         *conversationmodel.ConversationTagStatus `json:"status,omitempty"`
 	Why            *string                                  `json:"why,omitempty" validate:"omitempty,max=1024"`
 	Value          *string                                  `json:"value,omitempty" validate:"omitempty,min=1,max=255"`
-	StartMessageId common.Optional[string]                  `json:"start_message_id"`
-	StartOffset    common.Optional[int]                     `json:"start_offset"`
-	EndMessageId   common.Optional[string]                  `json:"end_message_id"`
-	EndOffset      common.Optional[int]                     `json:"end_offset"`
+	StartMessageId common.Optional[string]                  `json:"start_message_id,omitzero"`
+	StartOffset    common.Optional[int]                     `json:"start_offset,omitzero"`
+	EndMessageId   common.Optional[string]                  `json:"end_message_id,omitzero"`
+	EndOffset      common.Optional[int]                     `json:"end_offset,omitzero"`
 }
 
 // EvaluateConversationTagsRequest starts a manual evaluation (POST

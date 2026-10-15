@@ -20,4 +20,10 @@ type DispatchMeetingBotRequest struct {
 	// + code-switching). Only the deepgram_streaming provider consumes this;
 	// meeting_captions takes the platform's own caption language.
 	Language string `json:"language"`
+	// CalendarEventIcalUid + StartAt name the calendar meeting instance the bot
+	// is sent for (a client dispatching Ava from the calendar), so the event's
+	// surface finds and follows it. Optional; StartAt is the instance start
+	// (the conversation's StartedAt when JoinAt is omitted).
+	CalendarEventIcalUid string     `json:"calendar_event_ical_uid" validate:"max=255"`
+	StartAt              *time.Time `json:"start_at,omitempty"`
 }
