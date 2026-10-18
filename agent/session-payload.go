@@ -10,9 +10,15 @@ import "encoding/json"
 // discriminator because the sibling EventType already is it.
 type EventPayload interface{ isEventPayload() }
 
-// UserMessagePayload is a user message body (text + file blocks).
+// UserMessagePayload is a user message body (text + file blocks). Context is
+// what the launching surface hands the model alongside the message (a call's
+// summary and linked records, say): stored with the event like every payload
+// field, sent to the model as an extra text block, never rendered as part of
+// the person's message. Not a place for secrets — the session owner can read
+// it back through the events API.
 type UserMessagePayload struct {
 	Content []ContentBlock `json:"content"`
+	Context string         `json:"context,omitempty"`
 }
 
 func (UserMessagePayload) isEventPayload() {}

@@ -49,45 +49,21 @@ func (pageType PageType) Normalized() PageType {
 	return pageType
 }
 
-// PageActionKind selects what a page toolbar button invokes. Empty normalizes
-// to PageActionKindAction so pages persisted before `kind` existed keep working.
-type PageActionKind string
+// PageActionKind and PageAction live in the common model package so
+// conversation-service (conversation types carry post-call actions) shares
+// the one contract — meta already imports conversation, so the type cannot
+// live here. The aliases keep every metamodel reference compiling.
+type PageActionKind = common.PageActionKind
 
 const (
-	// PageActionKindAction invokes a function-service Action (by slug).
-	PageActionKindAction PageActionKind = "action"
-	// PageActionKindWorkflow starts a manual run of a workflow (by key).
-	PageActionKindWorkflow PageActionKind = "workflow"
+	PageActionKindAction   = common.PageActionKindAction
+	PageActionKindWorkflow = common.PageActionKindWorkflow
+	PageActionKindAgent    = common.PageActionKindAgent
+	PageActionKindIntent   = common.PageActionKindIntent
 )
 
-// Normalized returns the kind with the empty value defaulting to action.
-func (kind PageActionKind) Normalized() PageActionKind {
-	if kind == "" {
-		return PageActionKindAction
-	}
-	return kind
-}
-
-// PageAction is one toolbar button on a page. Which target it invokes follows
-// from Kind: action → Action (slug) + Params, workflow → Workflow (key) +
-// Inputs. Params / Inputs map target field names to Liquid templates rendered
-// client-side against the page scope ({record, entity, params, user}); a
-// resolved field is locked in the invoke dialog. SkipConfirmation fires the
-// target immediately when every required field resolved from the templates.
-type PageAction struct {
-	Label            string            `json:"label"`
-	Icon             Icon              `json:"icon"`
-	Kind             PageActionKind    `json:"kind,omitempty"`
-	Action           string            `json:"action,omitempty"`
-	Workflow         string            `json:"workflow,omitempty"`
-	Params           map[string]string `json:"params,omitempty"`
-	Inputs           map[string]string `json:"inputs,omitempty"`
-	SkipConfirmation bool              `json:"skip_confirmation,omitempty"`
-	// ExtensionKey is the list-extension stamp for a toolbar action a list
-	// extension appended to its host list — same contract as
-	// Column.ExtensionKey. Never set on a page's own actions.
-	ExtensionKey string `json:"extension_key,omitempty"`
-}
+// PageAction is one toolbar button on a page or list — see common.PageAction.
+type PageAction = common.PageAction
 
 type Page struct {
 	Slug       string         `json:"slug" sortable:""`

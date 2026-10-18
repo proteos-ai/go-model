@@ -31,7 +31,12 @@ type Agent struct {
 	Toolsets     []string    `json:"toolsets"`
 	// IsOrgDefault marks the single agent surfaced by default for the org (e.g. the
 	// Ask Proteos assistant). At most one agent per org may carry it.
-	IsOrgDefault bool           `json:"is_org_default"`
+	IsOrgDefault bool `json:"is_org_default"`
+	// HasWorkspace marks an agent that runs beside the tabbed workspace in the web
+	// app. The service appends the workspace-mode section (tab client tools, app
+	// context, how to work) to the system prompt it syncs to the provider, and the
+	// web client advertises the tab tools to it instead of plain navigation.
+	HasWorkspace bool           `json:"has_workspace"`
 	Version      int            `json:"version"`
 	CreatedAt    time.Time      `json:"created_at" sortable:""`
 	CreatedBy    common.UserRef `json:"created_by"`

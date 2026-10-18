@@ -18,6 +18,7 @@ type CreateAgentRequest struct {
 	McpServers   []string               `json:"mcp_servers"`
 	Toolsets     []string               `json:"toolsets"`
 	IsOrgDefault bool                   `json:"is_org_default"`
+	HasWorkspace bool                   `json:"has_workspace"`
 }
 
 type UpdateAgentRequest struct {
@@ -32,6 +33,7 @@ type UpdateAgentRequest struct {
 	McpServers   *[]string               `json:"mcp_servers,omitempty"`
 	Toolsets     *[]string               `json:"toolsets,omitempty"`
 	IsOrgDefault *bool                   `json:"is_org_default,omitempty"`
+	HasWorkspace *bool                   `json:"has_workspace,omitempty"`
 }
 
 type GetManyAgentsQuery struct {

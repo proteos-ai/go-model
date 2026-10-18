@@ -18,8 +18,10 @@ type CreateConversationTypeRequest struct {
 	// Outcomes replaces the type's outcome list wholesale (omit = none).
 	Outcomes []conversationmodel.ConversationOutcome `json:"outcomes"`
 	// Phases replaces the type's phase list wholesale (omit = none).
-	Phases     []conversationmodel.ConversationPhase `json:"phases"`
-	ModuleSlug string                                `json:"module_slug" validate:"max=255"`
+	Phases []conversationmodel.ConversationPhase `json:"phases"`
+	// Actions replaces the type's post-call action list wholesale (omit = none).
+	Actions    []common.PageAction `json:"actions"`
+	ModuleSlug string              `json:"module_slug" validate:"max=255"`
 }
 
 // UpdateConversationTypeRequest is a partial update — nil leaves the stored
@@ -33,6 +35,8 @@ type UpdateConversationTypeRequest struct {
 	Outcomes *[]conversationmodel.ConversationOutcome `json:"outcomes,omitempty"`
 	// Phases, when present, replaces the list wholesale ([] clears it).
 	Phases *[]conversationmodel.ConversationPhase `json:"phases,omitempty"`
+	// Actions, when present, replaces the list wholesale ([] clears it).
+	Actions *[]common.PageAction `json:"actions,omitempty"`
 }
 
 type GetManyConversationTypesQuery struct {

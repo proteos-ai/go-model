@@ -23,7 +23,8 @@ var SupportedMenuItemTypes = []MenuItemType{
 	MenuItemTypeList,
 }
 
-type Icon string
+// Icon is shared with common.PageAction (see page.go).
+type Icon = common.Icon
 
 const (
 	IconDashboard     Icon = "dashboard"

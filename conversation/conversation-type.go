@@ -84,6 +84,13 @@ type ConversationType struct {
 	// through; empty = the type tracks no phases. Serializes as an array,
 	// never null.
 	Phases []ConversationPhase `json:"phases"`
+	// Actions are what to do next once a conversation of this type has an
+	// outcome — the softphone's post-call "Next steps" (record proposals,
+	// agent hand-offs, actions, workflows). Same contract as Page.Actions;
+	// each button's visible_when reads the wrap-up scope (conversation,
+	// contact, records, records_by_entity, …). Serializes as an array, never
+	// null.
+	Actions []common.PageAction `json:"actions"`
 	// ModuleSlug attributes the type to the module that deployed it; empty =
 	// not module-owned.
 	ModuleSlug string         `json:"module_slug,omitempty"`
