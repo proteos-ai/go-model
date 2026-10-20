@@ -226,6 +226,7 @@ type SizingProps struct {
 	Width     *SizeValue  `json:"width,omitempty"`
 	Height    *SizeValue  `json:"height,omitempty"`
 	MinHeight *SizeValue  `json:"min_height,omitempty"`
+	MaxHeight *SizeValue  `json:"max_height,omitempty"`
 	Grow      *float64    `json:"grow,omitempty"`
 	Shrink    *float64    `json:"shrink,omitempty"`
 	Align     LayoutAlign `json:"align,omitempty"`
@@ -263,7 +264,11 @@ type CommonProps struct {
 	// row's height. The layout root always fills the page body.
 	Height *SizeValue `json:"height,omitempty"`
 	// MinHeight is a floor under Height — "Npx" or "N%" only.
-	MinHeight  *SizeValue        `json:"min_height,omitempty"`
+	MinHeight *SizeValue `json:"min_height,omitempty"`
+	// MaxHeight is a ceiling over Height — "Npx" or "N%" only. A box that would
+	// grow past it scrolls its content instead of spilling (a field scrolls its
+	// value, the label stays). Fixed px / % heights bound the same way.
+	MaxHeight  *SizeValue        `json:"max_height,omitempty"`
 	Grow       *float64          `json:"grow,omitempty"`
 	Shrink     *float64          `json:"shrink,omitempty"`
 	Align      LayoutAlign       `json:"align,omitempty"`
