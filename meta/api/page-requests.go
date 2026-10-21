@@ -11,11 +11,15 @@ type CreatePageRequest struct {
 	// Type defaults to "record" when empty. The type↔entity_slug invariant
 	// (record requires entity_slug, standalone types forbid it) is enforced in
 	// the service's domain logic, not via struct tags.
-	ModuleSlug string                 `json:"module_slug"`
-	Type       metamodel.PageType     `json:"type"`
-	EntitySlug string                 `json:"entity_slug"`
-	Actions    []metamodel.PageAction `json:"actions"`
-	Layout     metamodel.PageLayout   `json:"layout" validate:"required"`
+	ModuleSlug string             `json:"module_slug"`
+	Type       metamodel.PageType `json:"type"`
+	EntitySlug string             `json:"entity_slug"`
+	// Kind / Reference bind a trigger page (type=trigger only). See
+	// metamodel.Page.
+	Kind      metamodel.PageActionKind `json:"kind,omitempty"`
+	Reference string                   `json:"reference,omitempty"`
+	Actions   []metamodel.PageAction   `json:"actions"`
+	Layout    metamodel.PageLayout     `json:"layout" validate:"required"`
 }
 
 type UpdatePageRequest struct {
@@ -31,6 +35,8 @@ type GetManyPagesQuery struct {
 	ModuleSlug *string `json:"module_slug" db:"module_slug"`
 	Type       *string `json:"type" db:"type"`
 	EntitySlug *string `json:"entity_slug" db:"entity_slug"`
+	Kind       *string `json:"kind" db:"kind"`
+	Reference  *string `json:"reference" db:"reference"`
 	Name       *string `json:"name" db:"name"`
 	CreatedBy  *string `json:"created_by" db:"created_by->>'id'"`
 	UpdatedBy  *string `json:"updated_by" db:"updated_by->>'id'"`

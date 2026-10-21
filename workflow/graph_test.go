@@ -71,3 +71,24 @@ func TestDecodeAgentActionParams(t *testing.T) {
 		}
 	})
 }
+
+func TestWorkflowGraph_ManualTriggerInputSchema(t *testing.T) {
+	withSchema := workflowmodel.WorkflowGraph{Nodes: []workflowmodel.WorkflowNode{
+		{Id: "t", Type: workflowmodel.NodeTypeTriggerManual, Parameters: json.RawMessage(`{"input_schema":[{"name":"reason","type":"string"}]}`)},
+	}}
+	schema, has, err := withSchema.ManualTriggerInputSchema()
+	if err != nil || !has || len(schema) != 1 || schema[0].Name != "reason" {
+		t.Fatalf("expected the declared schema, got %+v has=%v err=%v", schema, has, err)
+	}
+
+	bare := workflowmodel.WorkflowGraph{Nodes: []workflowmodel.WorkflowNode{{Id: "t", Type: workflowmodel.NodeTypeTriggerManual}}}
+	schema, has, err = bare.ManualTriggerInputSchema()
+	if err != nil || !has || schema == nil || len(schema) != 0 {
+		t.Fatalf("a manual trigger without inputs must yield an empty, non-nil schema, got %+v has=%v err=%v", schema, has, err)
+	}
+
+	none := workflowmodel.WorkflowGraph{Nodes: []workflowmodel.WorkflowNode{{Id: "c", Type: workflowmodel.NodeTypeTriggerCron}}}
+	if _, has, err := none.ManualTriggerInputSchema(); has || err != nil {
+		t.Fatalf("a graph without a manual trigger must report has=false, got has=%v err=%v", has, err)
+	}
+}

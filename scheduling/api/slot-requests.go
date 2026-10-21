@@ -20,7 +20,7 @@ type SlotParameters struct {
 }
 
 // GetSlotsRequest asks for the bookable starts of some hosts in [From, To)
-// (at most 31 days). Exactly one of TypeKey (the type's rules), LinkKey (the
+// (at most 42 days). Exactly one of TypeKey (the type's rules), LinkKey (the
 // link's type + hosts + assignment; phase 6) or Parameters governs the rules.
 // HostUserIds are the platform users to offer; Assignment decides how their
 // free time combines: single / round_robin = the union (a slot is offered when

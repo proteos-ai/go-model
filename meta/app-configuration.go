@@ -32,6 +32,62 @@ type AppHome struct {
 	Reference string      `json:"reference"`
 }
 
+// RecordPageBinding names the record pages one entity opens in, per mode
+// (PageMode). Every field is optional; the web falls back create → edit →
+// view → the entity's first record page. Strict object on the wire (no string
+// shorthand).
+type RecordPageBinding struct {
+	View   string `json:"view,omitempty"`
+	Create string `json:"create,omitempty"`
+	Edit   string `json:"edit,omitempty"`
+}
+
+// IsEmpty reports whether no mode is bound.
+func (binding RecordPageBinding) IsEmpty() bool {
+	return binding.View == "" && binding.Create == "" && binding.Edit == ""
+}
+
+// ForMode returns the page slug bound to one mode ("" when unbound).
+func (binding RecordPageBinding) ForMode(mode PageMode) string {
+	switch mode {
+	case PageModeView:
+		return binding.View
+	case PageModeCreate:
+		return binding.Create
+	case PageModeEdit:
+		return binding.Edit
+	}
+	return ""
+}
+
+// TriggerPageBinding names the trigger pages one action / workflow opens, per
+// dialog phase (TriggerPhase). Every field is optional; an unbound phase falls
+// back to the invocable's first trigger page, then to the dialog's generated
+// layout. Strict object on the wire.
+type TriggerPageBinding struct {
+	Input   string `json:"input,omitempty"`
+	Running string `json:"running,omitempty"`
+	Result  string `json:"result,omitempty"`
+}
+
+// IsEmpty reports whether no phase is bound.
+func (binding TriggerPageBinding) IsEmpty() bool {
+	return binding.Input == "" && binding.Running == "" && binding.Result == ""
+}
+
+// ForPhase returns the page slug bound to one phase ("" when unbound).
+func (binding TriggerPageBinding) ForPhase(phase TriggerPhase) string {
+	switch phase {
+	case TriggerPhaseInput:
+		return binding.Input
+	case TriggerPhaseRunning:
+		return binding.Running
+	case TriggerPhaseResult:
+		return binding.Result
+	}
+	return ""
+}
+
 // AppConfiguration is a TYPED binding row: "how app X presents itself" —
 // either to everyone (ProfileSlug empty = the app's default configuration) or to
 // one profile (ProfileSlug set = an override). One row per (app, profile);
@@ -63,10 +119,18 @@ type AppConfiguration struct {
 	// AgentKeys restricts the agents offered inside this app. Empty = every
 	// org agent. Agent keys are agent-service references, unvalidated here.
 	AgentKeys []string `json:"agent_keys,omitempty"`
-	// RecordPages maps entity_slug → record page slug: the page a record of
-	// that entity opens in from this app. Each must be a record page over that
-	// entity. Entities absent here fall back to the first page for the entity.
-	RecordPages map[string]string `json:"record_pages,omitempty"`
+	// RecordPages maps entity_slug → the record pages a record of that entity
+	// opens in from this app, per mode (view / create / edit). Each must be a
+	// record page over that entity. Modes absent fall back create → edit →
+	// view → the entity's first page.
+	RecordPages map[string]RecordPageBinding `json:"record_pages,omitempty"`
+	// ActionPages maps action slug → the trigger pages its invoke dialog
+	// renders, per phase (input / running / result); WorkflowPages the same
+	// for workflow keys. Each must be a trigger page bound to exactly that
+	// kind + reference. Phases absent fall back to the invocable's first
+	// trigger page, then to the dialog's generated layout.
+	ActionPages   map[string]TriggerPageBinding `json:"action_pages,omitempty"`
+	WorkflowPages map[string]TriggerPageBinding `json:"workflow_pages,omitempty"`
 	// SearchableEntities lists the entity slugs whose records the command
 	// palette searches (by record_title) while inside this app. Empty = no
 	// record search. Each must name an existing entity (validated at save);

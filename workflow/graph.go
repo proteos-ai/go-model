@@ -436,6 +436,27 @@ func DecodeManualTriggerParams(raw json.RawMessage) (ManualTriggerParams, error)
 	return params, nil
 }
 
+// ManualTriggerInputSchema returns the input_schema of the graph's
+// trigger.manual node — what a manual run (and a trigger page) binds to.
+// hasManualTrigger is false when the graph has no manual trigger at all; a
+// manual trigger without a schema yields an empty, non-nil slice.
+func (graph WorkflowGraph) ManualTriggerInputSchema() (schema []metamodel.Attribute, hasManualTrigger bool, err error) {
+	for _, node := range graph.Nodes {
+		if node.Type != NodeTypeTriggerManual {
+			continue
+		}
+		params, err := DecodeManualTriggerParams(node.Parameters)
+		if err != nil {
+			return nil, true, err
+		}
+		if params.InputSchema == nil {
+			return []metamodel.Attribute{}, true, nil
+		}
+		return params.InputSchema, true, nil
+	}
+	return nil, false, nil
+}
+
 // DecodeCronTriggerParams decodes a trigger.cron node's raw parameters.
 func DecodeCronTriggerParams(raw json.RawMessage) (CronTriggerParams, error) {
 	var params CronTriggerParams
