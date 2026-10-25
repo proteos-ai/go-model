@@ -56,6 +56,12 @@ type GetManyPagesResponse struct {
 type PublicPageComponent struct {
 	Slug        string         `json:"slug"`
 	PropsSchema map[string]any `json:"props_schema,omitempty"`
+	// BundleChecksum is the bundle's content address ("sha256:<hex>"), so the
+	// renderer can fetch it under an immutable URL. Not secret: the hash of a
+	// world-readable file.
+	BundleChecksum string `json:"bundle_checksum,omitempty"`
+	// ReservedHeight the component declares for its box before it renders.
+	ReservedHeight int `json:"reserved_height,omitempty"`
 }
 
 // PublicPageResponse is the payload of the unauthenticated

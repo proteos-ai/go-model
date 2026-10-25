@@ -61,8 +61,8 @@ var PageActionIntents = []PageActionIntent{
 }
 
 // PageAction is one action button — a page's or a list's toolbar button, or a
-// conversation type's post-call action. Which target it invokes follows from
-// Kind:
+// conversation type's next step (a live call's quick action, the wrap-up's
+// "Next steps"). Which target it invokes follows from Kind:
 //
 //   - action   → Action (slug) + Params
 //   - workflow → Workflow (key) + Inputs
@@ -72,10 +72,14 @@ var PageActionIntents = []PageActionIntent{
 // Params / Inputs map target field names to Liquid templates; Prompt, Context,
 // Entity and Record are Liquid templates too. Everything renders client-side
 // against the surface's scope (a page: {record, entity, params, current_user};
-// the call wrap-up: {conversation, contact, records, records_by_entity, brief,
-// current_user}). Prompt is literal message TEXT, never a Prompt resource key.
-// VisibleWhen hides the button unless it matches the surface's subject (the
-// record on a page, the wrap-up scope after a call). SkipConfirmation fires an
+// a conversation: {conversation, contact, records, records_by_entity, tags,
+// tags_by_definition, brief, current_user}, where `| summarize: "<lens>"` on
+// the conversation or a tag writes a focused summary of what was said when the
+// button is pressed). Prompt is literal message TEXT, never a Prompt resource
+// key. VisibleWhen hides the button unless it matches the surface's subject
+// (the record on a page, the whole scope on a conversation — the stage is
+// `conversation.status eq active` / `in ended|archived`, a detected tag
+// `tags_by_definition.<key> not_empty`). SkipConfirmation fires an
 // action/workflow immediately when every required field resolved.
 type PageAction struct {
 	Label            string            `json:"label"`

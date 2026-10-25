@@ -35,9 +35,15 @@ type Component struct {
 	// written for the restricted public sdk (only
 	// `functions.actions.invokePublic` reaches the platform on a public page).
 	// Defaults to false.
-	IsPublic  bool           `json:"is_public"`
-	CreatedAt time.Time      `json:"created_at" sortable:""`
-	CreatedBy common.UserRef `json:"created_by" sortable:""`
-	UpdatedAt time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy common.UserRef `json:"updated_by" sortable:""`
+	IsPublic bool `json:"is_public"`
+	// ReservedHeight is the height in px the host reserves for a placement of
+	// this component before it has rendered, when the page element sets no
+	// `reserved_height` of its own and no earlier visit is remembered: what
+	// the author knows the loading state and typical content need. Declared
+	// in the component's manifest.json; 0 = undeclared (the host default).
+	ReservedHeight int            `json:"reserved_height,omitempty"`
+	CreatedAt      time.Time      `json:"created_at" sortable:""`
+	CreatedBy      common.UserRef `json:"created_by" sortable:""`
+	UpdatedAt      time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy      common.UserRef `json:"updated_by" sortable:""`
 }

@@ -17,15 +17,20 @@ type CreateComponentRequest struct {
 	// metamodel.Component.IsPublic). Manifest-driven: a deploy without the
 	// field sets false.
 	IsPublic bool `json:"is_public"`
+	// ReservedHeight is the px the host reserves for the component before it
+	// renders (see metamodel.Component.ReservedHeight). Manifest-driven: a
+	// deploy without the field sets 0 (undeclared).
+	ReservedHeight int `json:"reserved_height" validate:"min=0"`
 }
 
 type UpdateComponentRequest struct {
-	Name         *string        `json:"name,omitempty"`
-	Description  *string        `json:"description,omitempty"`
-	BundleFileId *string        `json:"bundle_file_id,omitempty"`
-	SourceFileId *string        `json:"source_file_id,omitempty"`
-	PropsSchema  map[string]any `json:"props_schema,omitempty"`
-	IsPublic     *bool          `json:"is_public,omitempty"`
+	Name           *string        `json:"name,omitempty"`
+	Description    *string        `json:"description,omitempty"`
+	BundleFileId   *string        `json:"bundle_file_id,omitempty"`
+	SourceFileId   *string        `json:"source_file_id,omitempty"`
+	PropsSchema    map[string]any `json:"props_schema,omitempty"`
+	IsPublic       *bool          `json:"is_public,omitempty"`
+	ReservedHeight *int           `json:"reserved_height,omitempty" validate:"omitempty,min=0"`
 }
 
 type GetManyComponentsQuery struct {
