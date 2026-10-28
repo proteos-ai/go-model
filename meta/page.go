@@ -77,6 +77,7 @@ const (
 	PageActionKindWorkflow = common.PageActionKindWorkflow
 	PageActionKindAgent    = common.PageActionKindAgent
 	PageActionKindIntent   = common.PageActionKindIntent
+	PageActionKindLink     = common.PageActionKindLink
 )
 
 // PageAction is one toolbar button on a page or list — see common.PageAction.

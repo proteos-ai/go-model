@@ -31,6 +31,10 @@ const (
 	// `Prompt` + `Context`), shows it as an editable review and saves only
 	// what the person confirms — the command palette's create/update intents.
 	PageActionKindIntent PageActionKind = "intent"
+	// PageActionKindLink opens `Url` in a new browser tab. The template
+	// renders synchronously on the press — no model call, nothing awaited — so
+	// the open stays inside the click and is never popup-blocked.
+	PageActionKindLink PageActionKind = "link"
 )
 
 // Normalized returns the kind with the empty value defaulting to action.
@@ -68,14 +72,16 @@ var PageActionIntents = []PageActionIntent{
 //   - workflow → Workflow (key) + Inputs
 //   - agent    → Agent (key) + Prompt + Context
 //   - intent   → Intent + Entity (+ Record) + Prompt + Context
+//   - link     → Url
 //
 // Params / Inputs map target field names to Liquid templates; Prompt, Context,
-// Entity and Record are Liquid templates too. Everything renders client-side
+// Entity, Record and Url are Liquid templates too. Everything renders client-side
 // against the surface's scope (a page: {record, entity, params, current_user};
 // a conversation: {conversation, contact, records, records_by_entity, tags,
 // tags_by_definition, brief, current_user}, where `| summarize: "<lens>"` on
 // the conversation or a tag writes a focused summary of what was said when the
-// button is pressed). Prompt is literal message TEXT, never a Prompt resource
+// button is pressed — except in Url, which renders synchronously and leaves
+// `summarize` empty). Prompt is literal message TEXT, never a Prompt resource
 // key. VisibleWhen hides the button unless it matches the surface's subject
 // (the record on a page, the whole scope on a conversation — the stage is
 // `conversation.status eq active` / `in ended|archived`, a detected tag
@@ -91,6 +97,7 @@ type PageAction struct {
 	Intent           PageActionIntent  `json:"intent,omitempty"`
 	Entity           string            `json:"entity,omitempty"`
 	Record           string            `json:"record,omitempty"`
+	Url              string            `json:"url,omitempty"`
 	Params           map[string]string `json:"params,omitempty"`
 	Inputs           map[string]string `json:"inputs,omitempty"`
 	Prompt           string            `json:"prompt,omitempty"`
@@ -195,9 +202,13 @@ func validatePageActionTarget(kind PageActionKind, action PageAction) *pageActio
 		if strings.TrimSpace(action.Entity) == "" {
 			return pageActionRule(pageActionCodeTargetRequired, "an intent button requires `entity` (the entity slug)")
 		}
+	case PageActionKindLink:
+		if strings.TrimSpace(action.Url) == "" {
+			return pageActionRule(pageActionCodeTargetRequired, "a link button requires `url` (the address to open)")
+		}
 	default:
 		return pageActionRule(pageActionCodeUnsupportedKind,
-			"kind %q is not supported (expected action, workflow, agent or intent)", action.Kind)
+			"kind %q is not supported (expected action, workflow, agent, intent or link)", action.Kind)
 	}
 	return nil
 }
@@ -215,6 +226,7 @@ func validatePageActionFields(kind PageActionKind, action PageAction) *pageActio
 		{"intent", action.Intent != "", PageActionKindIntent},
 		{"entity", action.Entity != "", PageActionKindIntent},
 		{"record", action.Record != "", PageActionKindIntent},
+		{"url", action.Url != "", PageActionKindLink},
 	}
 	for _, target := range targets {
 		if target.isSet && target.ownedBy != kind {
