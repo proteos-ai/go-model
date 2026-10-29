@@ -895,9 +895,10 @@ func (s *PageLayoutSidePanel) UnmarshalJSON(data []byte) error {
 // (or "auto") together with zero padding lets a component fill the page
 // edge-to-edge.
 //
-// Honored on `platform`, `public` and `kiosk` pages; record pages reject it
-// (see the metadata-service layout validator's type gate). On platform pages
-// it styles the app shell's content area rather than a standalone shell.
+// Honored on `platform`, `record`, `public` and `kiosk` pages; on platform
+// and record pages it styles the app shell's content area rather than a
+// standalone shell. Trigger pages take max_width only, and Header is
+// record-only (see the metadata-service layout validator's type gate).
 type PageStyle struct {
 	// Background is a design-token key ("bg", "bg-2", "accent", …) resolved to
 	// var(--color-<key>) by the renderer, or a raw CSS color for branded pages.
@@ -908,6 +909,27 @@ type PageStyle struct {
 	// container (mirrors the Tailwind px/py idiom). "0px" makes it flush.
 	PaddingX *SizeValue `json:"padding_x,omitempty"`
 	PaddingY *SizeValue `json:"padding_y,omitempty"`
+	// Header picks the record toolbar's shape (record pages only). Unset =
+	// PageHeaderFull.
+	Header *PageHeader `json:"header,omitempty"`
+}
+
+// PageHeader is the record toolbar's shape.
+type PageHeader string
+
+const (
+	// PageHeaderFull is the two-strip toolbar: title + close, then links,
+	// page actions and Edit / Delete.
+	PageHeaderFull PageHeader = "full"
+	// PageHeaderCondensed is the title strip alone: a (⋯) overflow holding the
+	// page actions and the record's links (shown only when there are any),
+	// then Edit / Delete (or Cancel / Save), beside the close button.
+	PageHeaderCondensed PageHeader = "condensed"
+)
+
+// IsValid reports whether the header is a known value.
+func (header PageHeader) IsValid() bool {
+	return header == PageHeaderFull || header == PageHeaderCondensed
 }
 
 // PageLayout is the typed layout document persisted on Page.
