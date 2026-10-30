@@ -23,6 +23,10 @@ type CreateEntityRequest struct {
 	Description    string                    `json:"description"`
 	TitleTemplate  string                    `json:"title_template"`
 	Attributes     []metamodel.Attribute     `json:"attributes"`
+	// UniqueConstraints are the composite unique constraints (see
+	// metamodel.UniqueConstraint). Manifest-driven full-replacement on upsert:
+	// omitted means none.
+	UniqueConstraints []metamodel.UniqueConstraint `json:"unique_constraints,omitempty"`
 }
 
 type UpdateEntityRequest struct {
@@ -38,6 +42,9 @@ type UpdateEntityRequest struct {
 	Description    *string                   `json:"description,omitempty"`
 	TitleTemplate  *string                   `json:"title_template,omitempty"`
 	Attributes     *[]metamodel.Attribute    `json:"attributes,omitempty"`
+	// UniqueConstraints nil leaves the stored list alone; a non-nil pointer
+	// (an empty list included) replaces it.
+	UniqueConstraints *[]metamodel.UniqueConstraint `json:"unique_constraints,omitempty"`
 }
 
 // GetOneEntityQuery contains query parameters for GetOne endpoint

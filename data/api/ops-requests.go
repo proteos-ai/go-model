@@ -49,6 +49,12 @@ type UpdateTableRequest struct {
 type UpdateTableResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+	// PendingUniqueConstraints names the unique constraints whose index is
+	// being built in the background (the table already holds rows, so the
+	// build runs CONCURRENTLY and outlives this call). Until it is ready the
+	// constraint is NOT enforced; if the table holds duplicates it ends up
+	// invalid — GET /data/v1/entities/:slug/indexes shows which.
+	PendingUniqueConstraints []string `json:"pending_unique_constraints,omitempty"`
 }
 
 // === Tenant Schema Sweep ===
@@ -90,6 +96,12 @@ type SweepTenantSchemasReport struct {
 	ShareTablesEnsured int `json:"share_tables_ensured"`
 	// ColumnsRetired counts (table × retired column) drops that ran cleanly.
 	ColumnsRetired int `json:"columns_retired"`
+	// EntityIndexesReconciled counts the entities of the CALLER's org whose
+	// per-entity indexes (unique constraints, automatic relation indexes,
+	// applied indexes) were reconciled against the record table. Scoped to the
+	// token's org because entity definitions are read from metadata-service,
+	// which is org-pinned; the record-table phases above are cross-org.
+	EntityIndexesReconciled int `json:"entity_indexes_reconciled"`
 	// Statements is populated on a dry run only.
 	Statements []string       `json:"statements,omitempty"`
 	Failures   []SweepFailure `json:"failures,omitempty"`

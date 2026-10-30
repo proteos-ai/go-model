@@ -31,10 +31,16 @@ type Entity struct {
 	Description    string          `json:"description" sortable:""`
 	TitleTemplate  string          `json:"title_template" sortable:""`
 	Attributes     []Attribute     `json:"attributes"`
-	CreatedAt      time.Time       `json:"created_at" sortable:""`
-	CreatedBy      common.UserRef  `json:"created_by" sortable:""`
-	UpdatedAt      time.Time       `json:"updated_at" sortable:""`
-	UpdatedBy      common.UserRef  `json:"updated_by" sortable:""`
+	// UniqueConstraints are the entity's composite (2+ attribute) unique
+	// constraints. One-attribute constraints are `is_unique` on the attribute;
+	// metamodel.EffectiveUniqueConstraints folds both into the list
+	// data-service enforces. Omitted on the wire when empty, so a manifest
+	// that never declares one reads back without drift.
+	UniqueConstraints []UniqueConstraint `json:"unique_constraints,omitempty"`
+	CreatedAt         time.Time          `json:"created_at" sortable:""`
+	CreatedBy         common.UserRef     `json:"created_by" sortable:""`
+	UpdatedAt         time.Time          `json:"updated_at" sortable:""`
+	UpdatedBy         common.UserRef     `json:"updated_by" sortable:""`
 }
 
 type EntityWithSchema struct {
