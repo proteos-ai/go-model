@@ -39,6 +39,8 @@ type GetManySchedulingLinksQuery struct {
 	TypeKey   *string `json:"type_key" form:"type_key"`
 	IsPublic  *bool   `json:"is_public" form:"is_public"`
 	IsEnabled *bool   `json:"is_enabled" form:"is_enabled"`
+	// HostUserId narrows to the links that list this user among their hosts.
+	HostUserId *string `json:"host_user_id" form:"host_user_id"`
 	// Search filters by a case-insensitive substring of key or name.
 	Search *string `json:"search" form:"search"`
 	common.Pagination
