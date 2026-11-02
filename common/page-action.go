@@ -56,22 +56,66 @@ const (
 	// `Entity` — `Record` when set, else the surface's linked record of that
 	// entity (picked by the person when there are several).
 	PageActionIntentUpdateRecord PageActionIntent = "update_record"
+	// PageActionIntentUpsertRecord lets the model choose: change one of the
+	// records `Match` finds, or prepare a NEW record of `Entity` when none of
+	// them fits. The rules for choosing live in `Prompt`.
+	PageActionIntentUpsertRecord PageActionIntent = "upsert_record"
+	// PageActionIntentInvokeAction opens the invoke dialog of `Action` with
+	// its params filled by the model from `Prompt` + `Context`; `Params`
+	// (Liquid) still prefill and lock what the surface already knows. The
+	// person always reviews before it runs.
+	PageActionIntentInvokeAction PageActionIntent = "invoke_action"
+	// PageActionIntentInvokeWorkflow is invoke_action for a manual run of
+	// `Workflow`, its Manual Trigger inputs filled by the model; `Inputs`
+	// prefill and lock.
+	PageActionIntentInvokeWorkflow PageActionIntent = "invoke_workflow"
 )
 
 // PageActionIntents is the closed set a kind=intent button may name.
 var PageActionIntents = []PageActionIntent{
 	PageActionIntentCreateRecord,
 	PageActionIntentUpdateRecord,
+	PageActionIntentUpsertRecord,
+	PageActionIntentInvokeAction,
+	PageActionIntentInvokeWorkflow,
+}
+
+// isRecordIntent reports whether the intent prepares a record of `Entity`.
+func (intent PageActionIntent) isRecordIntent() bool {
+	return intent == PageActionIntentCreateRecord ||
+		intent == PageActionIntentUpdateRecord ||
+		intent == PageActionIntentUpsertRecord
+}
+
+const pageActionIntentList = "create_record, update_record, upsert_record, invoke_action or invoke_workflow"
+
+// PageActionMatchMaxLimit caps how many candidates an upsert_record button
+// hands the model.
+const PageActionMatchMaxLimit = 25
+
+// PageActionMatch is the list query an upsert_record button finds its
+// candidate records with — a page of `Entity` records, fetched when the
+// button is pressed. Filter has the list endpoint's `_filter` shape; every
+// element's Value is a Liquid template rendered against the surface's scope,
+// and a value that renders empty yields no candidates at all (never a wider
+// query). Sort is the list endpoint's `field:asc|desc`; Limit defaults to 10.
+type PageActionMatch struct {
+	Filter *FilterGroup `json:"filter,omitempty"`
+	Sort   string       `json:"sort,omitempty"`
+	Limit  int          `json:"limit,omitempty"`
 }
 
 // PageAction is one action button — a page's or a list's toolbar button, or a
-// conversation type's next step (a live call's quick action, the wrap-up's
-// "Next steps"). Which target it invokes follows from Kind:
+// conversation type's action (the strip in the call or meeting surface's
+// footer, during and after the conversation). Which target it invokes
+// follows from Kind:
 //
 //   - action   → Action (slug) + Params
 //   - workflow → Workflow (key) + Inputs
 //   - agent    → Agent (key) + Prompt + Context
-//   - intent   → Intent + Entity (+ Record) + Prompt + Context
+//   - intent   → Intent + Prompt + Context (+ FieldScope), and by intent:
+//     create/update/upsert_record → Entity (+ Record | Match);
+//     invoke_action → Action (+ Params); invoke_workflow → Workflow (+ Inputs)
 //   - link     → Url
 //
 // Params / Inputs map target field names to Liquid templates; Prompt, Context,
@@ -88,15 +132,21 @@ var PageActionIntents = []PageActionIntent{
 // `tags_by_definition.<key> not_empty`). SkipConfirmation fires an
 // action/workflow immediately when every required field resolved.
 type PageAction struct {
-	Label            string            `json:"label"`
-	Icon             Icon              `json:"icon"`
-	Kind             PageActionKind    `json:"kind,omitempty"`
-	Action           string            `json:"action,omitempty"`
-	Workflow         string            `json:"workflow,omitempty"`
-	Agent            string            `json:"agent,omitempty"`
-	Intent           PageActionIntent  `json:"intent,omitempty"`
-	Entity           string            `json:"entity,omitempty"`
-	Record           string            `json:"record,omitempty"`
+	Label    string           `json:"label"`
+	Icon     Icon             `json:"icon"`
+	Kind     PageActionKind   `json:"kind,omitempty"`
+	Action   string           `json:"action,omitempty"`
+	Workflow string           `json:"workflow,omitempty"`
+	Agent    string           `json:"agent,omitempty"`
+	Intent   PageActionIntent `json:"intent,omitempty"`
+	Entity   string           `json:"entity,omitempty"`
+	Record   string           `json:"record,omitempty"`
+	Match    *PageActionMatch `json:"match,omitempty"`
+	// FieldScope (intent only) lists the attribute names the proposal may
+	// fill — plain names, not templates. Set, it replaces the app's bound
+	// create / edit page as the proposal's scope; required attributes
+	// without a default are always added so a create can be saved.
+	FieldScope       []string          `json:"field_scope,omitempty"`
 	Url              string            `json:"url,omitempty"`
 	Params           map[string]string `json:"params,omitempty"`
 	Inputs           map[string]string `json:"inputs,omitempty"`
@@ -154,6 +204,8 @@ const (
 	pageActionCodeUnsupportedKind    = "unsupported_page_action_kind"
 	pageActionCodeUnsupportedIntent  = "unsupported_page_action_intent"
 	pageActionCodeVisibleWhenInvalid = "page_action_visible_when_invalid"
+	pageActionCodeMatchInvalid       = "page_action_match_invalid"
+	pageActionCodeFieldScopeInvalid  = "page_action_field_scope_invalid"
 )
 
 func validatePageAction(action PageAction) *pageActionRuleError {
@@ -165,6 +217,12 @@ func validatePageAction(action PageAction) *pageActionRuleError {
 		return err
 	}
 	if err := validatePageActionFields(kind, action); err != nil {
+		return err
+	}
+	if err := validatePageActionMatch(action.Match); err != nil {
+		return err
+	}
+	if err := validatePageActionFieldScope(action.FieldScope); err != nil {
 		return err
 	}
 	if action.VisibleWhen != nil {
@@ -193,14 +251,19 @@ func validatePageActionTarget(kind PageActionKind, action PageAction) *pageActio
 		}
 	case PageActionKindIntent:
 		if action.Intent == "" {
-			return pageActionRule(pageActionCodeTargetRequired, "an intent button requires `intent` (create_record or update_record)")
+			return pageActionRule(pageActionCodeTargetRequired, "an intent button requires `intent` (%s)", pageActionIntentList)
 		}
 		if !isPageActionIntent(action.Intent) {
 			return pageActionRule(pageActionCodeUnsupportedIntent,
-				"intent %q is not supported (expected create_record or update_record)", action.Intent)
+				"intent %q is not supported (expected %s)", action.Intent, pageActionIntentList)
 		}
-		if strings.TrimSpace(action.Entity) == "" {
-			return pageActionRule(pageActionCodeTargetRequired, "an intent button requires `entity` (the entity slug)")
+		switch {
+		case action.Intent == PageActionIntentInvokeAction && action.Action == "":
+			return pageActionRule(pageActionCodeTargetRequired, "an invoke_action intent requires `action` (the action slug)")
+		case action.Intent == PageActionIntentInvokeWorkflow && action.Workflow == "":
+			return pageActionRule(pageActionCodeTargetRequired, "an invoke_workflow intent requires `workflow` (the workflow key)")
+		case action.Intent.isRecordIntent() && strings.TrimSpace(action.Entity) == "":
+			return pageActionRule(pageActionCodeTargetRequired, "a %s intent requires `entity` (the entity slug)", action.Intent)
 		}
 	case PageActionKindLink:
 		if strings.TrimSpace(action.Url) == "" {
@@ -213,38 +276,104 @@ func validatePageActionTarget(kind PageActionKind, action PageAction) *pageActio
 	return nil
 }
 
-// validatePageActionFields rejects every field that belongs to another kind.
-func validatePageActionFields(kind PageActionKind, action PageAction) *pageActionRuleError {
-	targets := []struct {
-		field   string
-		isSet   bool
-		ownedBy PageActionKind
-	}{
-		{"action", action.Action != "", PageActionKindAction},
-		{"workflow", action.Workflow != "", PageActionKindWorkflow},
-		{"agent", action.Agent != "", PageActionKindAgent},
-		{"intent", action.Intent != "", PageActionKindIntent},
-		{"entity", action.Entity != "", PageActionKindIntent},
-		{"record", action.Record != "", PageActionKindIntent},
-		{"url", action.Url != "", PageActionKindLink},
-	}
-	for _, target := range targets {
-		if target.isSet && target.ownedBy != kind {
-			return pageActionRule(pageActionCodeTargetConflict, "a %s button must not set `%s`", kind, target.field)
+// pageActionOwnedFields is what a button of this kind (and intent) may set
+// beyond label, icon, prompt/context and visible_when.
+func pageActionOwnedFields(kind PageActionKind, intent PageActionIntent) []string {
+	switch kind {
+	case PageActionKindAction:
+		return []string{"action", "params", "skip_confirmation"}
+	case PageActionKindWorkflow:
+		return []string{"workflow", "inputs", "skip_confirmation"}
+	case PageActionKindAgent:
+		return []string{"agent"}
+	case PageActionKindLink:
+		return []string{"url"}
+	case PageActionKindIntent:
+		switch intent {
+		case PageActionIntentUpdateRecord:
+			return []string{"intent", "entity", "record", "field_scope"}
+		case PageActionIntentUpsertRecord:
+			return []string{"intent", "entity", "match", "field_scope"}
+		case PageActionIntentInvokeAction:
+			return []string{"intent", "action", "params", "field_scope"}
+		case PageActionIntentInvokeWorkflow:
+			return []string{"intent", "workflow", "inputs", "field_scope"}
+		default:
+			return []string{"intent", "entity", "field_scope"}
 		}
 	}
-	if kind == PageActionKindIntent && action.Intent == PageActionIntentCreateRecord && action.Record != "" {
-		return pageActionRule(pageActionCodeTargetConflict, "a create_record intent must not set `record`")
+	return nil
+}
+
+// validatePageActionFields rejects every field the button's kind (and, for
+// an intent, its intent) does not carry.
+func validatePageActionFields(kind PageActionKind, action PageAction) *pageActionRuleError {
+	owned := pageActionOwnedFields(kind, action.Intent)
+	fields := []struct {
+		field string
+		isSet bool
+		code  string
+	}{
+		{"action", action.Action != "", pageActionCodeTargetConflict},
+		{"workflow", action.Workflow != "", pageActionCodeTargetConflict},
+		{"agent", action.Agent != "", pageActionCodeTargetConflict},
+		{"intent", action.Intent != "", pageActionCodeTargetConflict},
+		{"entity", action.Entity != "", pageActionCodeTargetConflict},
+		{"record", action.Record != "", pageActionCodeTargetConflict},
+		{"match", action.Match != nil, pageActionCodeTargetConflict},
+		{"field_scope", len(action.FieldScope) > 0, pageActionCodeTargetConflict},
+		{"url", action.Url != "", pageActionCodeTargetConflict},
+		{"params", len(action.Params) > 0, pageActionCodePrefillMismatch},
+		{"inputs", len(action.Inputs) > 0, pageActionCodePrefillMismatch},
+		{"skip_confirmation", action.SkipConfirmation, pageActionCodeTargetConflict},
 	}
-	if len(action.Params) > 0 && kind != PageActionKindAction {
-		return pageActionRule(pageActionCodePrefillMismatch, "a %s button must not set `params` (action buttons only)", kind)
-	}
-	if len(action.Inputs) > 0 && kind != PageActionKindWorkflow {
-		return pageActionRule(pageActionCodePrefillMismatch, "a %s button must not set `inputs` (workflow buttons only)", kind)
+	for _, field := range fields {
+		if !field.isSet || slices.Contains(owned, field.field) {
+			continue
+		}
+		if kind == PageActionKindIntent {
+			return pageActionRule(field.code, "a %s intent must not set `%s`", action.Intent, field.field)
+		}
+		return pageActionRule(field.code, "a %s button must not set `%s`", kind, field.field)
 	}
 	carriesPrompt := kind == PageActionKindAgent || kind == PageActionKindIntent
 	if !carriesPrompt && (action.Prompt != "" || action.Context != "") {
 		return pageActionRule(pageActionCodePromptMismatch, "a %s button must not set `prompt` or `context` (agent and intent buttons only)", kind)
+	}
+	return nil
+}
+
+// validatePageActionMatch checks an upsert_record button's candidate query.
+func validatePageActionMatch(match *PageActionMatch) *pageActionRuleError {
+	if match == nil {
+		return nil
+	}
+	if match.Limit < 0 || match.Limit > PageActionMatchMaxLimit {
+		return pageActionRule(pageActionCodeMatchInvalid, "match.limit must be between 1 and %d", PageActionMatchMaxLimit)
+	}
+	if match.Filter != nil {
+		if problems := ValidateFilterGroup("match.filter", match.Filter); len(problems) > 0 {
+			first := problems[0]
+			return pageActionRule(pageActionCodeMatchInvalid, "%s: %s", first.Path, first.Message)
+		}
+	}
+	return nil
+}
+
+// validatePageActionFieldScope checks an intent button's field list: plain,
+// distinct attribute names. Whether they exist is the client's to resolve —
+// the entity is a template.
+func validatePageActionFieldScope(fieldScope []string) *pageActionRuleError {
+	seen := make(map[string]bool, len(fieldScope))
+	for index, name := range fieldScope {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			return pageActionRule(pageActionCodeFieldScopeInvalid, "field_scope[%d] is empty", index)
+		}
+		if seen[trimmed] {
+			return pageActionRule(pageActionCodeFieldScopeInvalid, "field_scope[%d]: %q is listed twice", index, trimmed)
+		}
+		seen[trimmed] = true
 	}
 	return nil
 }

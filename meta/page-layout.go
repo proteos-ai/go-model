@@ -232,7 +232,10 @@ type SizingProps struct {
 	Align     LayoutAlign `json:"align,omitempty"`
 }
 
-// ResponsiveSizing carries breakpoint-specific sizing overrides.
+// ResponsiveSizing carries breakpoint-specific sizing overrides. Desktop-first,
+// resolved by the renderer on the page's own rendered width (not the window):
+// LG below 1280px, MD below 1024px, SM below 640px. A narrower breakpoint
+// inherits every wider override it does not set (SM → MD → LG → base).
 type ResponsiveSizing struct {
 	SM *SizingProps `json:"sm,omitempty"`
 	MD *SizingProps `json:"md,omitempty"`

@@ -84,12 +84,15 @@ type ConversationType struct {
 	// through; empty = the type tracks no phases. Serializes as an array,
 	// never null.
 	Phases []ConversationPhase `json:"phases"`
-	// Actions are the type's next steps — the live call's quick actions and
-	// the wrap-up's "Next steps" (record proposals, agent hand-offs, actions,
-	// workflows). Same contract as Page.Actions; each button's visible_when
-	// reads the conversation scope (conversation.status for the stage,
-	// outcome_key, records_by_entity, tags_by_definition, …) — no rule means
-	// offered throughout. Serializes as an array, never null.
+	// Actions are the type's action buttons — one strip in the footer of the
+	// call or meeting surface, the same place during the conversation and in
+	// its wrap-up (record proposals, agent hand-offs, actions, workflows).
+	// Same contract as Page.Actions; each button's visible_when reads the
+	// conversation scope (conversation.status for the stage, outcome_key,
+	// records_by_entity, tags_by_definition, …) — no rule means offered
+	// throughout. The rule decides when a button appears; once pressed it
+	// stays for the rest of the conversation. Serializes as an array, never
+	// null.
 	Actions []common.PageAction `json:"actions"`
 	// ModuleSlug attributes the type to the module that deployed it; empty =
 	// not module-owned.
