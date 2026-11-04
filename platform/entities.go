@@ -154,6 +154,10 @@ var platformEntities = []PlatformEntity{
 	{Slug: "scheduling-links", Name: "Scheduling Links"},
 	{Slug: "scheduling-profiles", Name: "Scheduling Profiles"},
 	{Slug: "availability-constraints", Name: "Availability Constraints"},
+	// Discovery (discovery-service). What users send Proteos to show how they
+	// work: screenshots, recordings and written feedback — ink-annotated
+	// frames kept as data. Mass noun: the slug has no plural form.
+	{Slug: EntitySlugDiscoveryEvidence, Name: "Discovery Evidence"},
 }
 
 // The knowledge entity slugs, named because code keys off them rather than only
@@ -266,3 +270,7 @@ func IsReservedTableName(slug string) bool {
 	_, ok := reservedTableNames[slug]
 	return ok
 }
+
+// discovery-service's slug, named because its middleware and repository key off
+// it (the scoped-by-default gate and the owner predicate).
+const EntitySlugDiscoveryEvidence = "discovery-evidence"
