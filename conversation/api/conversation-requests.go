@@ -1,6 +1,8 @@
 package conversationapi
 
 import (
+	"time"
+
 	"go.proteos.ai/model/common"
 	conversationmodel "go.proteos.ai/model/conversation"
 )
@@ -42,6 +44,12 @@ type GetManyConversationsQuery struct {
 	// calendar event UID (stamped at meeting-bot start); pair with started_at
 	// to name one instance.
 	CalendarEventIcalUid *string `json:"calendar_event_ical_uid" form:"calendar_event_ical_uid" db:"calendar_event_ical_uid"`
+	// BriefId filters to the calls dialled with one brief (or later given it).
+	BriefId *string `json:"brief_id" form:"brief_id" db:"brief_id"`
+	// UpdatedAfter keeps conversations whose row changed at or after this
+	// instant: an outcome set, a call ended, a brief attached, but also any other
+	// write such as a summary. No db tag (a range, repository-applied).
+	UpdatedAfter *time.Time `json:"updated_after" form:"updated_after"`
 	// OutcomeKey filters by how conversations ended (one of a type's outcome keys).
 	OutcomeKey *string `json:"outcome_key" form:"outcome_key" db:"outcome_key"`
 	// ContactId filters threads whose roster contains the resolved person — the

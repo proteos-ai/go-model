@@ -73,6 +73,13 @@ type Conversation struct {
 	// meeting bot starts; empty for everything else. No FK — the calendar
 	// mirror belongs to scheduling-service.
 	CalendarEventIcalUid string `json:"calendar_event_ical_uid,omitempty"`
+	// BriefId is the brief a phone call was dialled with, or the first brief
+	// attached to it by hand; the first value stays. Stamped at call start even
+	// when the brief is already used, so a second dial still names its brief —
+	// that brief's ConversationId keeps pointing at the first call, and stays
+	// the link for "the briefs of a conversation". Empty on everything else:
+	// a meeting may carry several briefs.
+	BriefId string `json:"brief_id,omitempty"`
 	// StartedByMessageId is OUR message id of the child conversation's root
 	// message, which lives in the parent conversation (a message belongs to
 	// exactly one conversation); empty when the root is unknown (the child's
