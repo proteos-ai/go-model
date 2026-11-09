@@ -29,6 +29,12 @@ type AppendEventRequest struct {
 	// event echoed back over the stream. Omitted, the service mints one.
 	TurnId  *string         `json:"turn_id,omitempty"`
 	Payload json.RawMessage `json:"payload,omitempty"`
+	// ClientTools is the sending surface's client-tool catalog (as on
+	// CreateSessionRequest), honoured on user.message only. A surface that did not
+	// create the session (it opened one by id) attaches its tools this way: when the
+	// names differ from the session's current client tools they replace them before
+	// the turn runs. Omitted, the session's tools are left as they are.
+	ClientTools []agentmodel.ClientToolSpec `json:"client_tools,omitempty"`
 }
 
 type GetManySessionsQuery struct {
