@@ -36,8 +36,30 @@ type Message struct {
 	// the human sends it (the provider-side anchor is re-resolved at send time);
 	// stamped on directly-sent targeted replies too, as provenance. Empty for
 	// everything else.
-	ReplyToMessageId string    `json:"reply_to_message_id,omitempty"`
-	OccurredAt       time.Time `json:"occurred_at" sortable:""`
+	ReplyToMessageId string `json:"reply_to_message_id,omitempty"`
+	// Subject is a draft's edited subject, held until send. Nil means the
+	// conversation's subject, which is every other message. Empty is a subject
+	// deliberately cleared on a new email.
+	Subject *string `json:"subject,omitempty"`
+	// ToneProfileId is the tone profile this draft was written in, when known.
+	// Stored as given: a deleted profile simply no longer resolves.
+	ToneProfileId string `json:"tone_profile_id,omitempty"`
+	// IsQuoteRemoved: the reviewer took the quoted previous message off this
+	// reply. False sends the quote, which is what a mail client does.
+	IsQuoteRemoved bool `json:"is_quote_removed,omitempty"`
+	// IsSentFromPlatform: the platform wrote this message (a send, or a draft
+	// that can only go out through it). Its content is what the person wrote,
+	// without the quote the email carried — what ingest imports keeps its full
+	// body instead. Set at creation, never changed.
+	IsSentFromPlatform bool `json:"is_sent_from_platform,omitempty"`
+	// DraftVersion is the newest entry in this draft's history. 0 until the first
+	// real change, when the draft as proposed becomes version 1.
+	DraftVersion int `json:"draft_version,omitempty"`
+	// QuotedText is a READ-TIME projection on a single draft read: the quote its
+	// send would carry below the text, so the review surface can show it. Never
+	// stored, because stored messages hold only what the person wrote.
+	QuotedText string    `json:"quoted_text,omitempty"`
+	OccurredAt time.Time `json:"occurred_at" sortable:""`
 	// Reactions is a READ-TIME projection aggregated from the message_reaction
 	// edges (never a stored column): empty for a message nobody reacted to and
 	// for channels without reactions — that IS the graceful degradation.

@@ -61,10 +61,17 @@ type PublicCalendarEvent struct {
 	Link     PublicSchedulingLink          `json:"link"`
 	Host     PublicHost                    `json:"host"`
 	Contact  BookingContact                `json:"contact"`
+	// ConferencingProvider names the service behind JoinUrl (Teams, Meet) so
+	// the page can say where the call happens.
+	ConferencingProvider schedulingmodel.ConferencingProvider `json:"conferencing_provider,omitempty"`
 	// IsCancelled mirrors a tombstoned / cancelled row (the manage page shows
 	// the outcome instead of the actions).
 	IsCancelled bool       `json:"is_cancelled"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+	// RescheduledToEventId names the live booking a moved event was replaced
+	// by (the end of the chain when it moved more than once). Its manage page
+	// takes the same token.
+	RescheduledToEventId string `json:"rescheduled_to_event_id,omitempty"`
 }
 
 type PublicBookSchedulingLinkResponse struct {

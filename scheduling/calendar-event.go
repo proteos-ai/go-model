@@ -72,12 +72,17 @@ type CalendarEvent struct {
 	StartAt     time.Time `json:"start_at" sortable:""`
 	EndAt       time.Time `json:"end_at" sortable:""`
 	IsAllDay    bool      `json:"is_all_day"`
-	// Timezone is the provider's zone for the event (IANA on Google, the raw
-	// Windows name on Graph) — display and all-day boundaries only.
+	// Timezone is the provider's IANA zone for the event (the Graph adapter
+	// maps Outlook's Windows names) — display and all-day boundaries only.
 	Timezone             string               `json:"timezone,omitempty"`
 	Location             string               `json:"location,omitempty"`
 	JoinUrl              string               `json:"join_url,omitempty"`
 	ConferencingProvider ConferencingProvider `json:"conferencing_provider,omitempty"`
+	// Notes is what the booker wrote on a scheduling-link booking. Unlike
+	// Description (the provider's body, Teams / Meet block included, rewritten
+	// on every sync) the platform owns it, so a reschedule carries the
+	// booker's words forward without the old event's conferencing block.
+	Notes string `json:"notes,omitempty"`
 
 	Organizer        conversationmodel.ContactRef `json:"organizer"`
 	Attendees        []CalendarAttendee           `json:"attendees"`
@@ -100,6 +105,10 @@ type CalendarEvent struct {
 	// ManageTokenHash backs the public manage link of a publicly booked event.
 	// Never on the wire.
 	ManageTokenHash string `json:"-"`
+	// RescheduledToEventId points a booking that was moved at the event that
+	// replaced it (a move books the new slot, then cancels this one), so an
+	// old manage link leads to the live booking. Platform-owned, like Notes.
+	RescheduledToEventId string `json:"rescheduled_to_event_id,omitempty"`
 	// IsProjected marks a read where the viewer only sees busy blocks of a
 	// colleague's calendar (title "Busy", everything else stripped).
 	IsProjected bool `json:"is_projected,omitempty"`

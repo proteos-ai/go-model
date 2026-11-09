@@ -55,6 +55,11 @@ var platformEntities = []PlatformEntity{
 	{Slug: "modules", Name: "Modules"},
 	{Slug: "variables", Name: "Variables"},
 	{Slug: "deployments", Name: "Deployments"},
+	// Records (data-service). Records themselves authorize per entity slug;
+	// this is the one record-level platform resource: proposed record writes
+	// awaiting review. read = list/get drafts; write = propose, reject and
+	// (together with the entity's own write/delete) approve.
+	{Slug: EntitySlugRecordDrafts, Name: "Record Drafts"},
 	// Storage (storage-service)
 	{Slug: "files", Name: "Files"},
 	// Automation (function-service)
@@ -274,3 +279,6 @@ func IsReservedTableName(slug string) bool {
 // discovery-service's slug, named because its middleware and repository key off
 // it (the scoped-by-default gate and the owner predicate).
 const EntitySlugDiscoveryEvidence = "discovery-evidence"
+
+// data-service's record-drafts slug, named because its route gate keys off it.
+const EntitySlugRecordDrafts = "record-drafts"

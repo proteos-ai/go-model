@@ -74,6 +74,12 @@ type CreateCalendarEventRequest struct {
 	// orchestrator sets it so a publicly booked event carries its manage
 	// token hash from the first insert.
 	ManageTokenHash string `json:"-"`
+	// Id and Notes are never bound from the wire either. The booking
+	// orchestrator picks the event id up front, because the invite body
+	// already carries the manage link that names it, and stores the booker's
+	// notes apart from the description the provider will rewrite.
+	Id    string `json:"-"`
+	Notes string `json:"-"`
 }
 
 // UpdateCalendarEventRequest is a partial update; nil leaves a field as is.

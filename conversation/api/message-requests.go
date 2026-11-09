@@ -1,6 +1,8 @@
 package conversationapi
 
 import (
+	"time"
+
 	"go.proteos.ai/model/common"
 	conversationmodel "go.proteos.ai/model/conversation"
 )
@@ -47,6 +49,9 @@ type SendMessageRequest struct {
 	// domain → the connection's default. Ignored on channels without sender
 	// domains; an address off the domain fails with 400 sender_not_found.
 	SenderAddressId string `json:"sender_address_id,omitempty"`
+	// ToneProfileId records the tone a draft was written in. Stored by Draft;
+	// Send ignores it.
+	ToneProfileId string `json:"tone_profile_id,omitempty"`
 }
 
 // UpdateDraftRequest edits a status=draft message — full replacement of the
@@ -61,12 +66,37 @@ type SendMessageRequest struct {
 // draft's attachment rows (files pre-uploaded to storage like
 // SendMessageRequest).
 type UpdateDraftRequest struct {
-	To          []conversationmodel.Recipient    `json:"to,omitempty"`
-	Cc          []conversationmodel.Recipient    `json:"cc,omitempty"`
-	Bcc         []conversationmodel.Recipient    `json:"bcc,omitempty"`
-	Subject     string                           `json:"subject"`
+	To  []conversationmodel.Recipient `json:"to,omitempty"`
+	Cc  []conversationmodel.Recipient `json:"cc,omitempty"`
+	Bcc []conversationmodel.Recipient `json:"bcc,omitempty"`
+	// Subject is the draft's subject after this edit. Absent keeps what is stored;
+	// an empty string clears it.
+	Subject     *string                          `json:"subject,omitempty"`
 	Content     []conversationmodel.ContentBlock `json:"content"`
 	Attachments []common.FileRef                 `json:"attachments,omitempty"`
+	// ExpectedUpdatedAt is the updated_at the editor last saw. When set, a row
+	// that has moved on since fails with 409 draft_conflict instead of being
+	// overwritten; absent means last write wins.
+	ExpectedUpdatedAt *time.Time `json:"expected_updated_at,omitempty"`
+	// IsQuoteRemoved takes the quoted previous message off (true) or puts it back
+	// on (false) this reply. Absent keeps the stored choice.
+	IsQuoteRemoved *bool `json:"is_quote_removed,omitempty"`
+	// ToneProfileId replaces the tone recorded on the draft. Absent keeps it.
+	ToneProfileId *string `json:"tone_profile_id,omitempty"`
+	// VersionKind says what this edit is in the draft's history: edited (the
+	// default), redrafted or restored.
+	VersionKind conversationmodel.MessageDraftVersionKind `json:"version_kind,omitempty"`
+	// Instruction is the reviewer's prompt behind a redraft.
+	Instruction string `json:"instruction,omitempty"`
+	// SourceVersion is the version a restore copies from.
+	SourceVersion int `json:"source_version,omitempty"`
+}
+
+// GetDraftVersionsResponse is a draft's history, oldest first, plus what changed
+// between what was proposed and the latest version.
+type GetDraftVersionsResponse struct {
+	Data    []conversationmodel.MessageDraftVersion `json:"data"`
+	Changes []conversationmodel.MessageDraftChange  `json:"changes"`
 }
 
 // GetManyMessagesQuery pages a conversation's messages; list order is
