@@ -63,7 +63,7 @@ func DecodeEventPayload(eventType EventType, raw json.RawMessage) (EventPayload,
 		return decodePayload(raw, empty, &ModelRequestStartPayload{})
 	case EventTypeSpanModelRequestEnd:
 		return decodePayload(raw, empty, &ModelRequestEndPayload{})
-	case EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated:
+	case EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded:
 		return EmptyPayload{}, nil
 	default:
 		return RawPayload{Raw: raw}, nil

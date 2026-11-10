@@ -38,6 +38,9 @@ const (
 	EventTypeSessionStatusIdle       EventType = "session.status_idle"
 	EventTypeSessionStatusTerminated EventType = "session.status_terminated"
 	EventTypeSessionError            EventType = "session.error"
+	// EventTypeSessionStatusEnded records a user ending the session. Its created_by
+	// and created_at are projected onto Session.EndedBy / EndedAt.
+	EventTypeSessionStatusEnded EventType = "session.status_ended"
 	// EventTypeSessionUpdated carries a server-side session metadata change — v1 the
 	// (often auto-generated) title. Projected onto Session.Title; not rendered.
 	EventTypeSessionUpdated EventType = "session.updated"
@@ -70,6 +73,7 @@ var EventTypes = []EventType{
 	EventTypeSessionStatusIdle,
 	EventTypeSessionStatusTerminated,
 	EventTypeSessionError,
+	EventTypeSessionStatusEnded,
 	EventTypeSessionUpdated,
 	EventTypeSpanModelRequestStart,
 	EventTypeSpanModelRequestEnd,

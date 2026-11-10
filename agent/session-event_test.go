@@ -32,7 +32,7 @@ func TestDecodeEventPayload_KnownTypes(t *testing.T) {
 }
 
 func TestDecodeEventPayload_EmptyAndStatus(t *testing.T) {
-	for _, eventType := range []EventType{EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated} {
+	for _, eventType := range []EventType{EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded} {
 		payload, err := DecodeEventPayload(eventType, nil)
 		if err != nil {
 			t.Fatalf("%s: %v", eventType, err)

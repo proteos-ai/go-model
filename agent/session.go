@@ -19,6 +19,10 @@ type Session struct {
 	AgentKey string        `json:"agent_key"`
 	Title    string        `json:"title" sortable:""`
 	Status   SessionStatus `json:"status"`
+	// EndedAt / EndedBy record who ended the session and when. Both are set only
+	// while Status is ended: reopening the session (its next turn) clears them.
+	EndedAt *time.Time      `json:"ended_at"`
+	EndedBy *common.UserRef `json:"ended_by"`
 	// Tools is the session's resolved tool manifest (the agent's tools + the surface's
 	// client tools), snapshotted at create. It maps a custom tool's name to its kind so
 	// the runtime can route an inbound custom_tool_use and tag the ledger tool_kind.
@@ -80,7 +84,10 @@ func (session Session) ToolKind(name string) ToolKind {
 
 // SessionStatus is the latest lifecycle state of a session, projected from the
 // session.status_* events. idle = ready for the next user message; running = a
-// turn is in flight; terminated = ended; error = the last turn failed.
+// turn is in flight; terminated = the provider's session is gone; error = the last
+// turn failed; ended = a user closed the session (projected from
+// session.status_ended) — nothing changes at the provider, and the next
+// user.message or user.define_outcome reopens it.
 type SessionStatus string
 
 const (
@@ -88,4 +95,5 @@ const (
 	SessionStatusRunning    SessionStatus = "running"
 	SessionStatusTerminated SessionStatus = "terminated"
 	SessionStatusError      SessionStatus = "error"
+	SessionStatusEnded      SessionStatus = "ended"
 )

@@ -113,10 +113,62 @@ const (
 	// RecordDraftChangeAttributeAdded: the reviewer brought in a field the
 	// proposer had not named.
 	RecordDraftChangeAttributeAdded RecordDraftChangeKind = "attribute_added"
+	// RecordDraftChangeItemAdded: the reviewer added a whole item (a row) the
+	// proposer had not proposed. Applied carries its data; no Attribute.
+	RecordDraftChangeItemAdded RecordDraftChangeKind = "item_added"
 )
 
+// RecordDraftVersionKind says how a version of a draft's items came to be.
+// Who the actor was cannot tell it — an agent acts AS its user — so the
+// caller names it: the proposer revising its proposal, or a reviewer editing.
+type RecordDraftVersionKind string
+
+const (
+	// RecordDraftVersionKindProposed is version 1: what was proposed.
+	RecordDraftVersionKindProposed RecordDraftVersionKind = "proposed"
+	// RecordDraftVersionKindRevised is the proposer changing its proposal
+	// (an agent's update_record_draft). It moves the baseline the reviewer's
+	// changes are measured against.
+	RecordDraftVersionKindRevised RecordDraftVersionKind = "revised"
+	// RecordDraftVersionKindEdited is a reviewer's edit. Saves by the same
+	// person update one version, so editing makes one version, not hundreds.
+	RecordDraftVersionKindEdited RecordDraftVersionKind = "edited"
+)
+
+// IsValid reports whether the kind is a known value.
+func (kind RecordDraftVersionKind) IsValid() bool {
+	switch kind {
+	case RecordDraftVersionKindProposed, RecordDraftVersionKindRevised, RecordDraftVersionKindEdited:
+		return true
+	}
+	return false
+}
+
+// IsProposer reports whether the version speaks for the proposer — the
+// baseline a reviewer's changes are diffed against.
+func (kind RecordDraftVersionKind) IsProposer() bool {
+	return kind == RecordDraftVersionKindProposed || kind == RecordDraftVersionKindRevised
+}
+
+// RecordDraftVersion is one step in a draft's history: the complete items
+// (and summary) as they stood after that step.
+type RecordDraftVersion struct {
+	Id            string                 `json:"id"`
+	OrgId         string                 `json:"org_id"`
+	RecordDraftId string                 `json:"record_draft_id"`
+	Version       int                    `json:"version"`
+	Kind          RecordDraftVersionKind `json:"kind"`
+	Summary       string                 `json:"summary"`
+	Items         []RecordDraftItem      `json:"items"`
+	CreatedAt     time.Time              `json:"created_at"`
+	CreatedBy     common.UserRef         `json:"created_by"`
+	UpdatedAt     time.Time              `json:"updated_at"`
+	UpdatedBy     common.UserRef         `json:"updated_by"`
+}
+
 // RecordDraftChange is one entry of the reviewer's delta, diffed against the
-// ORIGINAL proposal (never against an earlier attempt).
+// proposer's LATEST version — the proposal, or the proposer's last revision
+// of it — never against an earlier attempt or a reviewer's own edit.
 //
 // Current is the record's value BEFORE the write — what the reviewer saw —
 // captured for existing targets only (a create, an upsert without id and an
@@ -147,11 +199,14 @@ type RecordDraftChange struct {
 // AS THE RESOLVER, so entity permissions, hooks, validation and events apply
 // exactly as for a direct write.
 //
-// Items is the proposal, immutable after insert. AppliedItems is what the
-// resolver actually sent (nil until an approve attempt). Results is the
-// latest outcome per transaction_id across attempts — a re-approve after a
-// partial failure only re-sends the items that have not succeeded. Changes is
-// the reviewer's delta (empty ⇔ approved, non-empty ⇔ approved_with_changes).
+// Items is the draft as it stands NOW: the proposal, as revised by the
+// proposer and edited by reviewers while it is proposed (each save is a
+// RecordDraftVersion; Version is the newest one's number). AppliedItems is
+// what the last approve attempt sent (nil until one). Results is the latest
+// outcome per transaction_id across attempts — a re-approve after a partial
+// failure only re-sends the items that have not succeeded. Changes is the
+// reviewer's delta against the proposer's LATEST version (empty ⇔ approved,
+// non-empty ⇔ approved_with_changes).
 // Source is the caller-supplied provenance (agent_key, session_id, …);
 // CreatedBy is always the acting user.
 type RecordDraft struct {
@@ -162,6 +217,7 @@ type RecordDraft struct {
 	Status       RecordDraftStatus       `json:"status" sortable:""`
 	Summary      string                  `json:"summary"`
 	Items        []RecordDraftItem       `json:"items"`
+	Version      int                     `json:"version"`
 	AppliedItems []RecordDraftItem       `json:"applied_items,omitempty"`
 	Results      []RecordDraftItemResult `json:"results,omitempty"`
 	Changes      []RecordDraftChange     `json:"changes,omitempty"`
@@ -173,4 +229,11 @@ type RecordDraft struct {
 	CreatedBy    common.UserRef          `json:"created_by"`
 	UpdatedAt    time.Time               `json:"updated_at" sortable:""`
 	UpdatedBy    common.UserRef          `json:"updated_by"`
+	// ApplyingSince is set while an approve is writing the draft's records:
+	// saves, rejects and other approves are refused (409
+	// record_draft_applying) until it has stored its outcome.
+	ApplyingSince *time.Time `json:"applying_since,omitempty"`
+	// LastTransactionId is the highest numeric transaction_id the draft has
+	// ever handed out, so an id dropped by a later edit is never reused.
+	LastTransactionId int `json:"-"`
 }

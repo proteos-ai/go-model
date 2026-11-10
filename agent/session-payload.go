@@ -189,7 +189,8 @@ type ModelRequestEndPayload struct {
 func (ModelRequestEndPayload) isEventPayload() {}
 
 // EmptyPayload is the body of events that carry no fields (user.interrupt,
-// session.status_running, session.status_terminated). Marshals to `{}`.
+// session.status_running, session.status_terminated, session.status_ended).
+// Marshals to `{}`.
 type EmptyPayload struct{}
 
 func (EmptyPayload) isEventPayload() {}

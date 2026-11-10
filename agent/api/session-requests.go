@@ -37,8 +37,19 @@ type AppendEventRequest struct {
 	ClientTools []agentmodel.ClientToolSpec `json:"client_tools,omitempty"`
 }
 
+// CreatedByMe is the created_by value that stands for the calling user.
+const CreatedByMe = "me"
+
 type GetManySessionsQuery struct {
 	AgentKey *string `json:"agent_key" form:"agent_key" db:"agent_key"`
+	// Status keeps sessions in the given status; several are comma-separated
+	// ("running,idle,error").
+	Status string `json:"status" form:"status" db:"status"`
+	// Title keeps sessions whose title contains the text, ignoring case.
+	Title *string `json:"title" form:"title" db:"title" op:"contains"`
+	// CreatedBy keeps the sessions one user started: a user id, or "me" for the
+	// caller. It narrows what the caller may see; it never widens it.
+	CreatedBy *string `json:"created_by" form:"created_by"`
 	common.Pagination
 	common.Sorting
 }
