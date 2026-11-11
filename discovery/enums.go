@@ -41,3 +41,38 @@ const (
 	DiscoveryEvidenceSourceWeb       DiscoveryEvidenceSource = "web"
 	DiscoveryEvidenceSourceExtension DiscoveryEvidenceSource = "extension"
 )
+
+// DiscoveryEvidenceEnrichmentStatus is the state of the background call that
+// writes the title and category the sender no longer types. pending until the
+// call ran (or was found unnecessary), then completed or failed.
+type DiscoveryEvidenceEnrichmentStatus string
+
+const (
+	DiscoveryEvidenceEnrichmentStatusPending   DiscoveryEvidenceEnrichmentStatus = "pending"
+	DiscoveryEvidenceEnrichmentStatusCompleted DiscoveryEvidenceEnrichmentStatus = "completed"
+	DiscoveryEvidenceEnrichmentStatusFailed    DiscoveryEvidenceEnrichmentStatus = "failed"
+)
+
+// DiscoveryEvidenceFieldSource says who wrote a field: "" when it is empty or
+// was never set, generated for the title and category the model wrote,
+// narration for notes and frame comments drafted from what the sender said,
+// user for anything a person typed or edited. A user value is never
+// overwritten by a model.
+type DiscoveryEvidenceFieldSource string
+
+const (
+	DiscoveryEvidenceFieldSourceNone      DiscoveryEvidenceFieldSource = ""
+	DiscoveryEvidenceFieldSourceGenerated DiscoveryEvidenceFieldSource = "generated"
+	DiscoveryEvidenceFieldSourceNarration DiscoveryEvidenceFieldSource = "narration"
+	DiscoveryEvidenceFieldSourceUser      DiscoveryEvidenceFieldSource = "user"
+)
+
+// DiscoveryEvidenceNarrationStatus is where a narration job stands.
+type DiscoveryEvidenceNarrationStatus string
+
+const (
+	DiscoveryEvidenceNarrationStatusTranscribing DiscoveryEvidenceNarrationStatus = "transcribing"
+	DiscoveryEvidenceNarrationStatusDrafting     DiscoveryEvidenceNarrationStatus = "drafting"
+	DiscoveryEvidenceNarrationStatusCompleted    DiscoveryEvidenceNarrationStatus = "completed"
+	DiscoveryEvidenceNarrationStatusFailed       DiscoveryEvidenceNarrationStatus = "failed"
+)

@@ -23,6 +23,16 @@ type DiscoveryEvidence struct {
 	Status   DiscoveryEvidenceStatus   `json:"status" sortable:""`
 	Source   DiscoveryEvidenceSource   `json:"source" sortable:""`
 	Context  DiscoveryEvidenceContext  `json:"context"`
+	// The sender types only the notes. Title and category are written after
+	// sending by a model call (EnrichmentStatus tracks it); the *Source fields
+	// say who wrote each value, and a `user` value is never overwritten.
+	EnrichmentStatus DiscoveryEvidenceEnrichmentStatus `json:"enrichment_status"`
+	TitleSource      DiscoveryEvidenceFieldSource      `json:"title_source"`
+	CategorySource   DiscoveryEvidenceFieldSource      `json:"category_source"`
+	NotesSource      DiscoveryEvidenceFieldSource      `json:"notes_source"`
+	// TranscriptionId is the conversation-service transcription of the
+	// narration; empty unless a recording with audio was transcribed.
+	TranscriptionId string `json:"transcription_id"`
 	// Recording facts; empty / zero on a screenshot or feedback. Duration is the
 	// client's wall clock and is the authoritative timeline length (a webm
 	// written by MediaRecorder carries none).
@@ -70,16 +80,21 @@ type DiscoveryEvidenceLink struct {
 
 // DiscoveryEvidenceFrame is one annotated still: the image at at_ms (0 for a
 // screenshot), the ink drawn on it as vector strokes, and the comment the
-// user added at review time. annotated_image_file_id is the composite with
+// user added at review time (or that was drafted from their narration —
+// comment_source says which). annotated_image_file_id is the composite with
 // the ink burned in, for thumbnails and for agents that read pixels.
 type DiscoveryEvidenceFrame struct {
-	Id                   string      `json:"id"`
-	Position             int         `json:"position"`
-	AtMs                 int         `json:"at_ms"`
-	ImageFileId          string      `json:"image_file_id"`
-	AnnotatedImageFileId string      `json:"annotated_image_file_id"`
-	Comment              string      `json:"comment"`
-	Strokes              []InkStroke `json:"strokes"`
+	Id                   string                       `json:"id"`
+	Position             int                          `json:"position"`
+	AtMs                 int                          `json:"at_ms"`
+	ImageFileId          string                       `json:"image_file_id"`
+	AnnotatedImageFileId string                       `json:"annotated_image_file_id"`
+	Comment              string                       `json:"comment"`
+	CommentSource        DiscoveryEvidenceFieldSource `json:"comment_source"`
+	// NarrationKey is the key the frame had in the narration job the evidence
+	// was sent with; the job's drafts find their frame by it. '' without a job.
+	NarrationKey string      `json:"narration_key,omitempty"`
+	Strokes      []InkStroke `json:"strokes"`
 }
 
 // InkStroke is one pen-down → pen-up gesture. Points are normalized to the

@@ -12,13 +12,21 @@ import (
 // to storage-service under its own token; the request carries file ids. Shape
 // rules per kind (one frame at 0 for a screenshot, a recording file for a
 // recording, notes for feedback) are enforced by the domain, not by tags.
+//
+// Category and title are optional: current clients send neither and a model
+// call writes both after the create; older clients still send them and keep
+// what they sent. notes_source says the notes were drafted from the narration
+// and left as drafted. narration_id names the narration job of a recording so
+// drafts that are not ready yet are added afterwards.
 type CreateDiscoveryEvidenceRequest struct {
-	Kind     discoverymodel.DiscoveryEvidenceKind     `json:"kind" validate:"required,oneof=screenshot recording feedback"`
-	Category discoverymodel.DiscoveryEvidenceCategory `json:"category" validate:"required,oneof=bug idea question praise other"`
-	Title    string                                   `json:"title" validate:"max=200"`
-	Notes    string                                   `json:"notes" validate:"max=20000"`
-	Source   discoverymodel.DiscoveryEvidenceSource   `json:"source" validate:"required,oneof=web extension"`
-	Context  discoverymodel.DiscoveryEvidenceContext  `json:"context"`
+	Kind        discoverymodel.DiscoveryEvidenceKind        `json:"kind" validate:"required,oneof=screenshot recording feedback"`
+	Category    discoverymodel.DiscoveryEvidenceCategory    `json:"category" validate:"omitempty,oneof=bug idea question praise other"`
+	Title       string                                      `json:"title" validate:"max=200"`
+	Notes       string                                      `json:"notes" validate:"max=20000"`
+	NotesSource discoverymodel.DiscoveryEvidenceFieldSource `json:"notes_source" validate:"omitempty,oneof=narration user"`
+	NarrationId string                                      `json:"narration_id" validate:"max=64"`
+	Source      discoverymodel.DiscoveryEvidenceSource      `json:"source" validate:"required,oneof=web extension"`
+	Context     discoverymodel.DiscoveryEvidenceContext     `json:"context"`
 
 	RecordingFileId     string `json:"recording_file_id" validate:"max=64"`
 	RecordingDurationMs int    `json:"recording_duration_ms" validate:"min=0"`
@@ -38,11 +46,13 @@ type CreateDiscoveryEvidenceLinkRequest struct {
 // CreateDiscoveryEvidenceFrameRequest is one annotated still. Position is
 // assigned by the server from the array order.
 type CreateDiscoveryEvidenceFrameRequest struct {
-	AtMs                 int                                    `json:"at_ms" validate:"min=0"`
-	ImageFileId          string                                 `json:"image_file_id" validate:"required,max=64"`
-	AnnotatedImageFileId string                                 `json:"annotated_image_file_id" validate:"max=64"`
-	Comment              string                                 `json:"comment" validate:"max=5000"`
-	Strokes              []CreateDiscoveryEvidenceStrokeRequest `json:"strokes" validate:"max=500,dive"`
+	AtMs                 int                                         `json:"at_ms" validate:"min=0"`
+	ImageFileId          string                                      `json:"image_file_id" validate:"required,max=64"`
+	AnnotatedImageFileId string                                      `json:"annotated_image_file_id" validate:"max=64"`
+	Comment              string                                      `json:"comment" validate:"max=5000"`
+	CommentSource        discoverymodel.DiscoveryEvidenceFieldSource `json:"comment_source" validate:"omitempty,oneof=narration user"`
+	NarrationKey         string                                      `json:"narration_key" validate:"max=64"`
+	Strokes              []CreateDiscoveryEvidenceStrokeRequest      `json:"strokes" validate:"max=500,dive"`
 }
 
 // CreateDiscoveryEvidenceStrokeRequest carries the client's stroke id when it
@@ -58,7 +68,8 @@ type CreateDiscoveryEvidenceStrokeRequest struct {
 
 // UpdateDiscoveryEvidenceRequest is the submitter's partial edit: the words,
 // never the capture. Frames patch comments by frame id; a frame id the record
-// does not have is a 400.
+// does not have is a 400. A title, when sent, is 1 to 120 characters (the
+// domain checks it); every field touched is marked as written by a person.
 type UpdateDiscoveryEvidenceRequest struct {
 	Title    *string                                   `json:"title,omitempty" validate:"omitempty,max=200"`
 	Notes    *string                                   `json:"notes,omitempty" validate:"omitempty,max=20000"`
@@ -112,4 +123,18 @@ type GetDiscoveryEvidenceOrgSummaryResponse struct {
 type DiscoveryEvidenceDownloadUrlResponse struct {
 	Url       string    `json:"url"`
 	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// CreateDiscoveryEvidenceNarrationRequest starts a narration job
+// (POST /discovery/v1/evidence-narrations) from the audio-only file the
+// client uploaded when the recording stopped, and the frames it will draft a
+// comment for.
+type CreateDiscoveryEvidenceNarrationRequest struct {
+	AudioFileId string                                         `json:"audio_file_id" validate:"required,max=64"`
+	Frames      []CreateDiscoveryEvidenceNarrationFrameRequest `json:"frames" validate:"max=200,dive"`
+}
+
+type CreateDiscoveryEvidenceNarrationFrameRequest struct {
+	Key  string `json:"key" validate:"required,max=64"`
+	AtMs int    `json:"at_ms" validate:"min=0"`
 }
