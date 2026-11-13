@@ -78,8 +78,45 @@ type GetManyConversationsQuery struct {
 	// conversation_tag, repository-applied).
 	TagKey   *string `json:"tag_key" form:"tag_key"`
 	TagValue *string `json:"tag_value" form:"tag_value"`
+	// ConversationScope is the hub's Mine / All axis: `own` lists only the
+	// caller's inbox (see ConversationOwnScope), `all` (the default when
+	// absent, so API / MCP callers are unchanged) everything visibility
+	// allows. A view filter on top of visibility — it never widens access.
+	ConversationScope *string `json:"conversation_scope" form:"conversation_scope"`
+	// OwnScope is SERVER-FILLED (never bound from the wire) when
+	// ConversationScope is `own`.
+	OwnScope *ConversationOwnScope `json:"-" form:"-"`
 	common.Pagination
 	common.Sorting
+}
+
+// The two values of ?conversation_scope=.
+const (
+	ConversationScopeOwn = "own"
+	ConversationScopeAll = "all"
+)
+
+// ConversationOwnScope is what `own` resolves to for one caller: threads on
+// WholeConnectionIds (org-scoped connections and user-scoped ones the caller
+// owns), threads on RosterConnectionIds (shared sending connections — many
+// colleagues send through one domain) whose roster contains the caller's own
+// contact, and connection-less threads the caller created.
+type ConversationOwnScope struct {
+	UserId              string
+	WholeConnectionIds  []string
+	RosterConnectionIds []string
+	// ContactId is the caller's platform-user contact ("" = none yet, so the
+	// roster arm matches nothing); ContactAddressExternalIds are its address
+	// identifiers, matching pre-contacts roster snapshots.
+	ContactId                 string
+	ContactAddressExternalIds []string
+}
+
+// GetUnreadCountsQuery takes the same Mine / All axis as the list, so the
+// badges count what the view lists.
+type GetUnreadCountsQuery struct {
+	ConversationScope *string               `json:"conversation_scope" form:"conversation_scope"`
+	OwnScope          *ConversationOwnScope `json:"-" form:"-"`
 }
 
 // IncludeMessagesSummary is the only recognized ?include= value: opt into the

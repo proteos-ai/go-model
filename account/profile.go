@@ -33,9 +33,14 @@ type Profile struct {
 	DefaultAppSlug string `json:"default_app_slug" sortable:""`
 	// AppSlugs is the app-switcher allowlist. Empty = every app in the org.
 	// Not sortable — JSONB.
-	AppSlugs  []string       `json:"app_slugs"`
-	CreatedAt time.Time      `json:"created_at" sortable:""`
-	CreatedBy common.UserRef `json:"created_by" sortable:""`
-	UpdatedAt time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy common.UserRef `json:"updated_by" sortable:""`
+	AppSlugs []string `json:"app_slugs"`
+	// PlatformFeatures is the platform-feature allowlist (see
+	// platform-feature.go): which areas, and which parts of Configuration,
+	// people holding the profile see. Empty = every feature; [none] = no feature. A UI constraint,
+	// not access. Not sortable — JSONB.
+	PlatformFeatures []string       `json:"platform_features"`
+	CreatedAt        time.Time      `json:"created_at" sortable:""`
+	CreatedBy        common.UserRef `json:"created_by" sortable:""`
+	UpdatedAt        time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy        common.UserRef `json:"updated_by" sortable:""`
 }

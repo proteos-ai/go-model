@@ -13,15 +13,19 @@ type CreateProfileRequest struct {
 	ModuleSlug     string   `json:"module_slug" form:"module_slug"`
 	DefaultAppSlug string   `json:"default_app_slug" form:"default_app_slug"`
 	AppSlugs       []string `json:"app_slugs" form:"app_slugs"`
+	// PlatformFeatures — see accountmodel.PlatformFeatures. Normalized by the
+	// service before it is stored.
+	PlatformFeatures []string `json:"platform_features" form:"platform_features"`
 }
 
 type UpdateProfileRequest struct {
-	OrgId          *string   `json:"org_id,omitempty" form:"org_id,omitempty"`
-	Name           *string   `json:"name,omitempty" form:"name,omitempty"`
-	Description    *string   `json:"description,omitempty" form:"description,omitempty"`
-	ModuleSlug     *string   `json:"module_slug,omitempty" form:"module_slug,omitempty"`
-	DefaultAppSlug *string   `json:"default_app_slug,omitempty" form:"default_app_slug,omitempty"`
-	AppSlugs       *[]string `json:"app_slugs,omitempty" form:"app_slugs,omitempty"`
+	OrgId            *string   `json:"org_id,omitempty" form:"org_id,omitempty"`
+	Name             *string   `json:"name,omitempty" form:"name,omitempty"`
+	Description      *string   `json:"description,omitempty" form:"description,omitempty"`
+	ModuleSlug       *string   `json:"module_slug,omitempty" form:"module_slug,omitempty"`
+	DefaultAppSlug   *string   `json:"default_app_slug,omitempty" form:"default_app_slug,omitempty"`
+	AppSlugs         *[]string `json:"app_slugs,omitempty" form:"app_slugs,omitempty"`
+	PlatformFeatures *[]string `json:"platform_features,omitempty" form:"platform_features,omitempty"`
 }
 
 type GetManyProfilesQuery struct {

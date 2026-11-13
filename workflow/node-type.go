@@ -92,6 +92,12 @@ type NodeDescriptor struct {
 	// nodes declare {MaxAttempts: 1} so a retried activity cannot duplicate
 	// their side effect; nil falls through to the engine defaults.
 	DefaultRetry *NodeRetryPolicy `json:"default_retry,omitempty"`
+	// RequiresPlatformAdmin restricts the node type to platform admins: the
+	// catalog hides it from everyone else, and a workflow that contains it can
+	// only be saved by a platform admin. A run acts as the workflow's creator,
+	// so the save gate is what keeps a non-admin from borrowing an admin's
+	// access through an existing workflow.
+	RequiresPlatformAdmin bool `json:"requires_platform_admin,omitempty"`
 }
 
 // PortSpec declares one named input or output port. Port keys are stable
