@@ -13,7 +13,8 @@ func TestSessionTool_JSONRoundTrip(t *testing.T) {
 	manifest := []SessionTool{
 		{Key: "recompute", Kind: ToolKindAction, Binding: ActionBinding{ActionKey: "recompute-totals"}},
 		{Key: "search", Kind: ToolKindMcp, Binding: McpBinding{ServerKey: "kb", ToolName: "search"}},
-		{Key: "navigate", Kind: ToolKindClient},
+		{Key: "navigate", Kind: ToolKindClient, Description: "Open a page",
+			InputSchema: json.RawMessage(`{"type":"object","properties":{"to":{"type":"string"}}}`)},
 	}
 
 	data, err := json.Marshal(manifest)
@@ -42,6 +43,14 @@ func TestSessionTool_JSONRoundTrip(t *testing.T) {
 	}
 	if decoded[2].Kind != ToolKindClient {
 		t.Errorf("client kind = %q, want client", decoded[2].Kind)
+	}
+	// How a tool is described to the model survives with it; a tool stored
+	// without one (every manifest written before these fields) decodes empty.
+	if decoded[2].Description != "Open a page" || string(decoded[2].InputSchema) != `{"type":"object","properties":{"to":{"type":"string"}}}` {
+		t.Errorf("client definition = %q %s", decoded[2].Description, decoded[2].InputSchema)
+	}
+	if decoded[0].Description != "" || decoded[0].InputSchema != nil {
+		t.Errorf("a tool stored without a definition decoded with one: %q %s", decoded[0].Description, decoded[0].InputSchema)
 	}
 }
 

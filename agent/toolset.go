@@ -75,8 +75,13 @@ type Toolset struct {
 // name the model calls plus display metadata. Used by the toolset tools
 // endpoint for both kinds (platform members proxied from mcp-service, custom
 // members summarized from the org's Tool rows).
+//
+// Toolset is the platform toolset that serves the tool. It is set where the
+// platform's tools are listed together (the platform tools endpoint), and empty
+// in the list of one toolset, which the request already names.
 type ToolsetToolSummary struct {
 	Name        string `json:"name"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
+	Toolset     string `json:"toolset,omitempty"`
 }

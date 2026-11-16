@@ -27,9 +27,19 @@ const (
 	// params; agent-service substitutes escaped literals and executes it via
 	// data-service as the acting user.
 	ToolKindQuery ToolKind = "query"
+	// ToolKindDelegation is one of the tools agent-service itself gives a session
+	// to hand work to a sub-agent in a session of its own and to manage those
+	// delegated sessions. It carries no binding and is not a registry entry: a
+	// session's manifest takes these tools at create, when its agent has sub-agents
+	// and its runtime runs them.
+	ToolKindDelegation ToolKind = "delegation"
+	// ToolKindSystem is a tool agent-service gives every agent to tell the person
+	// what it is doing, such as `new_phase`. It carries no binding, is not a
+	// registry entry, and agent-service answers it itself without doing anything.
+	ToolKindSystem ToolKind = "system"
 )
 
-var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient, ToolKindPlatform, ToolKindQuery}
+var ToolKinds = []ToolKind{ToolKindAction, ToolKindMcp, ToolKindClient, ToolKindPlatform, ToolKindQuery, ToolKindDelegation, ToolKindSystem}
 
 func (ToolKind) Enum() []interface{} {
 	enums := []interface{}{}

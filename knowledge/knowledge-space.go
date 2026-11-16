@@ -27,17 +27,41 @@ import (
 // so there is exactly one mechanism to read and one place a permission can come
 // from.
 type KnowledgeSpace struct {
-	OrgId       string         `json:"org_id"`
-	Slug        string         `json:"slug" sortable:""` // immutable; half the primary key
-	Name        string         `json:"name" sortable:""`
-	Description *string        `json:"description,omitempty"`
-	Color       *string        `json:"color,omitempty"`
-	Icon        *string        `json:"icon,omitempty"`
+	OrgId       string  `json:"org_id"`
+	Slug        string  `json:"slug" sortable:""` // immutable; half the primary key
+	Name        string  `json:"name" sortable:""`
+	Description *string `json:"description,omitempty"`
+	Color       *string `json:"color,omitempty"`
+	Icon        *string `json:"icon,omitempty"`
+	// Scope says who a space is for: SpaceScopeShared (the default — an org
+	// space such as engineering or sales) or SpaceScopePersonal (one person's
+	// own space, where their assistants keep memory notes). Scope is set at
+	// creation and never changes.
+	Scope string `json:"scope" sortable:""`
+	// OwnerUserId is the person a personal space belongs to; nil on a shared
+	// space. It records whose space this is — it is NOT what grants access.
+	// Access still comes only from knowledge_access_grants: a personal space is
+	// created holding grants for its owner and nobody else.
+	OwnerUserId *string        `json:"owner_user_id,omitempty"`
 	CreatedAt   time.Time      `json:"created_at" sortable:""`
 	CreatedBy   common.UserRef `json:"created_by"`
 	UpdatedAt   time.Time      `json:"updated_at" sortable:""`
 	UpdatedBy   common.UserRef `json:"updated_by"`
 }
+
+const (
+	// SpaceScopeShared is an ordinary org space. The default.
+	SpaceScopeShared = "shared"
+	// SpaceScopePersonal is one person's own space, created on first use by
+	// the ensure-personal action rather than by POST /spaces.
+	SpaceScopePersonal = "personal"
+)
+
+// PersonalSpaceSlugPrefix starts every personal space's slug: the slug is this
+// prefix plus the owner's user id, so a person's space is addressable without a
+// lookup and creating it twice converges on one row. POST /spaces refuses slugs
+// with this prefix, so nobody can claim another person's slug ahead of them.
+const PersonalSpaceSlugPrefix = "personal-"
 
 // UnassignedSpaceSlug is the reserved filter value meaning "nodes that belong to
 // no space at all". It is deliberately NOT a legal slug — slugs are kebab-case

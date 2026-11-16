@@ -49,3 +49,10 @@ type GetManyToolsetsResponse struct {
 type ListToolsetToolsResponse struct {
 	Data []agentmodel.ToolsetToolSummary `json:"data"`
 }
+
+// ListPlatformToolsResponse lists every platform tool once, each with the
+// platform toolset that serves it: what an agent may name in its tools without
+// the org having a Tool of that key.
+type ListPlatformToolsResponse struct {
+	Data []agentmodel.ToolsetToolSummary `json:"data"`
+}

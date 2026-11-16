@@ -9,8 +9,9 @@ import (
 
 // EventType is the discriminant of a SessionEvent — it selects which payload
 // shape the event carries (see DecodeEventPayload). The set mirrors the chat-v2
-// model: user.*, agent.*, session.*, span.*. v1 carries WHOLE events only — the
-// delta/chunk variants (agent.message.delta, …) are intentionally absent.
+// model: user.*, agent.*, session.*, span.*. Whole events (EventTypes) make up the
+// stored log; the chunk frames of an event still being written (DeltaEventTypes)
+// exist on the live delta channel only.
 type EventType string
 
 const (
@@ -20,6 +21,14 @@ const (
 	EventTypeUserInterrupt        EventType = "user.interrupt"
 	EventTypeUserToolConfirmation EventType = "user.tool_confirmation"
 	EventTypeUserToolResult       EventType = "user.tool_result"
+	// EventTypeUserSpeech is what the person said in a voice session, one event
+	// per utterance, as the voice provider transcribed it. It starts no turn:
+	// the model reads it with what opens the next one (see EventTypeUserVoiceRequest).
+	EventTypeUserSpeech EventType = "user.speech"
+	// EventTypeUserVoiceRequest is the voice assistant handing what the person
+	// asked for to the session's agent. It starts a turn like a user.message and
+	// has no content of its own: the request is the speech before it.
+	EventTypeUserVoiceRequest EventType = "user.voice_request"
 
 	// Agent-originated events.
 	EventTypeAgentMessage          EventType = "agent.message"
@@ -32,6 +41,10 @@ const (
 	// attachments on the agent turn. Emitted at turn end, distinct from the
 	// text-only agent.message.
 	EventTypeAgentArtifacts EventType = "agent.artifacts"
+	// EventTypeAgentSpeech is what the voice assistant said aloud in a voice
+	// session, one event per utterance. The voice assistant speaks for the
+	// session's agent in its own words, so this is not the agent's message.
+	EventTypeAgentSpeech EventType = "agent.speech"
 
 	// Session lifecycle events.
 	EventTypeSessionStatusRunning    EventType = "session.status_running"
@@ -44,6 +57,16 @@ const (
 	// EventTypeSessionUpdated carries a server-side session metadata change — v1 the
 	// (often auto-generated) title. Projected onto Session.Title; not rendered.
 	EventTypeSessionUpdated EventType = "session.updated"
+	// EventTypeSessionVoiceStarted and EventTypeSessionVoiceEnded bracket a voice
+	// session: the time the person talked to the session's agent through a voice
+	// assistant. Neither changes the session's status.
+	EventTypeSessionVoiceStarted EventType = "session.voice_started"
+	EventTypeSessionVoiceEnded   EventType = "session.voice_ended"
+
+	// EventTypeDelegatedSessionUpdated is written to a session's log when a turn
+	// of one of its delegated sessions ends: how that session stands and what its
+	// agent last said. It is the only event of a session that reports on another.
+	EventTypeDelegatedSessionUpdated EventType = "delegated_session.updated"
 
 	// Span (observability) events.
 	EventTypeSpanModelRequestStart EventType = "span.model_request_start"
@@ -56,25 +79,67 @@ const (
 	EventTypeSpanOutcomeEvaluationEnd     EventType = "span.outcome_evaluation_end"
 )
 
-// EventTypes is the canonical, ordered set of v1 event types.
+// Chunk frames of the three long agent events, sent on the live delta channel while
+// the model writes the event. A frame's type is the whole event's type plus .start,
+// .delta or .end, and every frame of one event carries that event's id, so a client
+// builds a draft from them and replaces it when the whole event arrives. Frames are
+// never stored and never posted by a client.
+const (
+	EventTypeAgentMessageStart   EventType = "agent.message.start"
+	EventTypeAgentMessageDelta   EventType = "agent.message.delta"
+	EventTypeAgentMessageEnd     EventType = "agent.message.end"
+	EventTypeAgentReasoningStart EventType = "agent.reasoning.start"
+	EventTypeAgentReasoningDelta EventType = "agent.reasoning.delta"
+	EventTypeAgentReasoningEnd   EventType = "agent.reasoning.end"
+	EventTypeAgentToolUseStart   EventType = "agent.tool_use.start"
+	EventTypeAgentToolUseDelta   EventType = "agent.tool_use.delta"
+	EventTypeAgentToolUseEnd     EventType = "agent.tool_use.end"
+)
+
+// DeltaEventTypes is the set of chunk frame types of the live delta channel.
+var DeltaEventTypes = []EventType{
+	EventTypeAgentMessageStart,
+	EventTypeAgentMessageDelta,
+	EventTypeAgentMessageEnd,
+	EventTypeAgentReasoningStart,
+	EventTypeAgentReasoningDelta,
+	EventTypeAgentReasoningEnd,
+	EventTypeAgentToolUseStart,
+	EventTypeAgentToolUseDelta,
+	EventTypeAgentToolUseEnd,
+}
+
+// IsDeltaEventType reports whether the type is a chunk frame of the live delta
+// channel rather than a whole event of the stored log.
+func IsDeltaEventType(eventType EventType) bool {
+	return slices.Contains(DeltaEventTypes, eventType)
+}
+
+// EventTypes is the canonical, ordered set of whole event types: the stored log.
 var EventTypes = []EventType{
 	EventTypeUserMessage,
 	EventTypeUserDefineOutcome,
 	EventTypeUserInterrupt,
 	EventTypeUserToolConfirmation,
 	EventTypeUserToolResult,
+	EventTypeUserSpeech,
+	EventTypeUserVoiceRequest,
 	EventTypeAgentMessage,
 	EventTypeAgentReasoning,
 	EventTypeAgentToolUse,
 	EventTypeAgentToolResult,
 	EventTypeAgentContextCompacted,
 	EventTypeAgentArtifacts,
+	EventTypeAgentSpeech,
 	EventTypeSessionStatusRunning,
 	EventTypeSessionStatusIdle,
 	EventTypeSessionStatusTerminated,
 	EventTypeSessionError,
 	EventTypeSessionStatusEnded,
 	EventTypeSessionUpdated,
+	EventTypeSessionVoiceStarted,
+	EventTypeSessionVoiceEnded,
+	EventTypeDelegatedSessionUpdated,
 	EventTypeSpanModelRequestStart,
 	EventTypeSpanModelRequestEnd,
 	EventTypeSpanOutcomeEvaluationStart,
@@ -102,7 +167,7 @@ func (eventType *EventType) UnmarshalJSON(byteArray []byte) error {
 		return err
 	}
 
-	if slices.Contains(EventTypes, *eventType) {
+	if slices.Contains(EventTypes, *eventType) || IsDeltaEventType(*eventType) {
 		return nil
 	}
 

@@ -35,6 +35,12 @@ type AppendEventRequest struct {
 	// names differ from the session's current client tools they replace them before
 	// the turn runs. Omitted, the session's tools are left as they are.
 	ClientTools []agentmodel.ClientToolSpec `json:"client_tools,omitempty"`
+	// RejectIfRunning refuses a user.message posted while a turn runs with 409
+	// session_running, instead of queueing it for the model (the default: the
+	// running turn reads it with its next tool results where the runtime allows,
+	// and it opens the session's next turn otherwise). For a caller that pairs
+	// each message with the turn it starts and would rather retry later.
+	RejectIfRunning bool `json:"reject_if_running,omitempty"`
 }
 
 // CreatedByMe is the created_by value that stands for the calling user.
@@ -50,6 +56,8 @@ type GetManySessionsQuery struct {
 	// CreatedBy keeps the sessions one user started: a user id, or "me" for the
 	// caller. It narrows what the caller may see; it never widens it.
 	CreatedBy *string `json:"created_by" form:"created_by"`
+	// ParentSessionId keeps the sessions one session delegated to.
+	ParentSessionId *string `json:"parent_session_id" form:"parent_session_id" db:"parent_session_id"`
 	common.Pagination
 	common.Sorting
 }

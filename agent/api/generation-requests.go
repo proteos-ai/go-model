@@ -30,3 +30,9 @@ func (request GenerateRequest) ToGenerationRequest() agentmodel.GenerationReques
 		OutputSchema: request.OutputSchema,
 	}
 }
+
+// ListModelsResponse wraps the model catalog in the `data` envelope the other
+// list endpoints use.
+type ListModelsResponse struct {
+	Data []agentmodel.ModelInfo `json:"data"`
+}

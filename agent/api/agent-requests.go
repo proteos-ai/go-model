@@ -19,6 +19,9 @@ type CreateAgentRequest struct {
 	Toolsets     []string               `json:"toolsets"`
 	IsOrgDefault bool                   `json:"is_org_default"`
 	HasWorkspace bool                   `json:"has_workspace"`
+	HasMemory    bool                   `json:"has_memory"`
+	// Runtime defaults to agentmodel.DefaultRuntime when omitted.
+	Runtime agentmodel.Runtime `json:"runtime"`
 }
 
 type UpdateAgentRequest struct {
@@ -34,6 +37,8 @@ type UpdateAgentRequest struct {
 	Toolsets     *[]string               `json:"toolsets,omitempty"`
 	IsOrgDefault *bool                   `json:"is_org_default,omitempty"`
 	HasWorkspace *bool                   `json:"has_workspace,omitempty"`
+	HasMemory    *bool                   `json:"has_memory,omitempty"`
+	Runtime      *agentmodel.Runtime     `json:"runtime,omitempty"`
 }
 
 type GetManyAgentsQuery struct {

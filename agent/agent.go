@@ -36,10 +36,19 @@ type Agent struct {
 	// app. The service appends the workspace-mode section (tab client tools, app
 	// context, how to work) to the system prompt it syncs to the provider, and the
 	// web client advertises the tab tools to it instead of plain navigation.
-	HasWorkspace bool           `json:"has_workspace"`
-	Version      int            `json:"version"`
-	CreatedAt    time.Time      `json:"created_at" sortable:""`
-	CreatedBy    common.UserRef `json:"created_by"`
-	UpdatedAt    time.Time      `json:"updated_at" sortable:""`
-	UpdatedBy    common.UserRef `json:"updated_by"`
+	HasWorkspace bool `json:"has_workspace"`
+	// HasMemory marks an agent that remembers the person it works with across
+	// sessions. The service attaches the memory toolset, appends the memory section
+	// to the system prompt it syncs to the provider, loads the person's memory into
+	// the first message of each session they own, and records where each of their
+	// sessions left off. Notes live in the person's own knowledge space.
+	HasMemory bool `json:"has_memory"`
+	// Runtime is what runs this agent's sessions (see Runtime). A session keeps
+	// the runtime the agent had when the session was created.
+	Runtime   Runtime        `json:"runtime"`
+	Version   int            `json:"version"`
+	CreatedAt time.Time      `json:"created_at" sortable:""`
+	CreatedBy common.UserRef `json:"created_by"`
+	UpdatedAt time.Time      `json:"updated_at" sortable:""`
+	UpdatedBy common.UserRef `json:"updated_by"`
 }

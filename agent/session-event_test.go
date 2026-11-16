@@ -32,13 +32,116 @@ func TestDecodeEventPayload_KnownTypes(t *testing.T) {
 }
 
 func TestDecodeEventPayload_EmptyAndStatus(t *testing.T) {
-	for _, eventType := range []EventType{EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded} {
+	// A turn start written before it named its acting user decodes with none.
+	for raw, want := range map[string]string{`{"acting_user_id":"user-1"}`: "user-1", `{}`: "", "": ""} {
+		running, err := DecodeEventPayload(EventTypeSessionStatusRunning, json.RawMessage(raw))
+		if err != nil {
+			t.Fatalf("session.status_running %q: %v", raw, err)
+		}
+		if got, ok := running.(SessionRunningPayload); !ok || got.ActingUserId != want {
+			t.Errorf("session.status_running %q payload = %#v, want acting user %q", raw, running, want)
+		}
+	}
+	for _, eventType := range []EventType{EventTypeUserInterrupt, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded} {
 		payload, err := DecodeEventPayload(eventType, nil)
 		if err != nil {
 			t.Fatalf("%s: %v", eventType, err)
 		}
 		if _, ok := payload.(EmptyPayload); !ok {
 			t.Errorf("%s payload = %T, want EmptyPayload", eventType, payload)
+		}
+	}
+}
+
+func TestDecodeEventPayload_ChunkFrames(t *testing.T) {
+	cases := []struct {
+		eventType EventType
+		raw       string
+		want      EventPayload
+	}{
+		{EventTypeAgentMessageStart, `{"part_index":1}`, DeltaBoundaryPayload{PartIndex: 1}},
+		{EventTypeAgentMessageDelta, `{"part_index":1,"text":"Hel"}`, MessageDeltaPayload{PartIndex: 1, Text: "Hel"}},
+		{EventTypeAgentMessageEnd, `{"part_index":1}`, DeltaBoundaryPayload{PartIndex: 1}},
+		{EventTypeAgentReasoningStart, `{"part_index":0}`, DeltaBoundaryPayload{}},
+		{EventTypeAgentReasoningDelta, `{"part_index":0,"text":"hm"}`, ReasoningDeltaPayload{Text: "hm"}},
+		{EventTypeAgentReasoningDelta, `{"part_index":0,"signature":"sig"}`, ReasoningDeltaPayload{Signature: "sig"}},
+		{EventTypeAgentReasoningEnd, `{"part_index":0}`, DeltaBoundaryPayload{}},
+		{EventTypeAgentToolUseStart, `{"part_index":2,"id":"toolu_1","name":"get_record","tool_kind":"platform"}`,
+			ToolUseStartPayload{PartIndex: 2, Id: "toolu_1", Name: "get_record", ToolKind: ToolKindPlatform}},
+		{EventTypeAgentToolUseDelta, `{"part_index":2,"partial_json":"{\"id\":"}`, ToolUseDeltaPayload{PartIndex: 2, PartialJson: `{"id":`}},
+		{EventTypeAgentToolUseEnd, `{"part_index":2}`, DeltaBoundaryPayload{PartIndex: 2}},
+	}
+	covered := map[EventType]bool{}
+	for _, testCase := range cases {
+		covered[testCase.eventType] = true
+		payload, err := DecodeEventPayload(testCase.eventType, json.RawMessage(testCase.raw))
+		if err != nil {
+			t.Fatalf("%s: %v", testCase.eventType, err)
+		}
+		if payload != testCase.want {
+			t.Errorf("%s payload = %#v, want %#v", testCase.eventType, payload, testCase.want)
+		}
+		if !IsDeltaEventType(testCase.eventType) {
+			t.Errorf("%s is not listed as a chunk frame type", testCase.eventType)
+		}
+	}
+	for _, eventType := range DeltaEventTypes {
+		if !covered[eventType] {
+			t.Errorf("%s has no decode case", eventType)
+		}
+		if IsDeltaEventType(eventType) == false || containsEventType(EventTypes, eventType) {
+			t.Errorf("%s must be a chunk frame type and not a whole event type", eventType)
+		}
+	}
+}
+
+func containsEventType(eventTypes []EventType, eventType EventType) bool {
+	for _, candidate := range eventTypes {
+		if candidate == eventType {
+			return true
+		}
+	}
+	return false
+}
+
+// A chunk frame round-trips through the envelope the delta channel stores.
+func TestSessionEvent_ChunkFrameRoundTrip(t *testing.T) {
+	frame := SessionEvent{
+		Id: "evt_msg", SessionId: "sess_1", OrgId: "org_1", TurnId: "turn_1",
+		Type: EventTypeAgentMessageDelta, Payload: MessageDeltaPayload{PartIndex: 0, Text: "Hel"},
+	}
+	raw, err := json.Marshal(frame)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var decoded SessionEvent
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if decoded.Type != EventTypeAgentMessageDelta || decoded.Payload != frame.Payload || decoded.Id != "evt_msg" {
+		t.Errorf("round trip = %+v", decoded)
+	}
+}
+
+func TestParseDeltaPosition(t *testing.T) {
+	valid := map[string]DeltaPosition{
+		"42":   {Seq: 42},
+		"42-0": {Seq: 42},
+		"42-3": {Seq: 42, Index: 3},
+		"0":    {},
+	}
+	for raw, want := range valid {
+		got, err := ParseDeltaPosition(raw)
+		if err != nil || got != want {
+			t.Errorf("ParseDeltaPosition(%q) = %+v, %v; want %+v", raw, got, err, want)
+		}
+	}
+	if got := (DeltaPosition{Seq: 42, Index: 3}).String(); got != "42-3" {
+		t.Errorf("String() = %q, want 42-3", got)
+	}
+	for _, raw := range []string{"", "abc", "-1", "42-", "42-x", "42--1", "4.2"} {
+		if _, err := ParseDeltaPosition(raw); err == nil {
+			t.Errorf("ParseDeltaPosition(%q) = nil error, want an error", raw)
 		}
 	}
 }

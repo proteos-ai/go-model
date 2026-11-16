@@ -18,6 +18,10 @@ import (
 // (draft-07) computed on read from the binding's source of truth (the action's
 // params/returns, or the MCP server's tools/list). They are empty on writes and
 // on plain list reads; the read path populates them. Keyed by (org_id, key).
+//
+// IsReadOnly is computed on read as well: true when the tool's source declares
+// that a call changes nothing (a platform tool the platform MCP server marks
+// read-only). It is not persisted and false when the source says nothing.
 type Tool struct {
 	OrgId        string          `json:"org_id"`
 	Key          string          `json:"key" sortable:""`
@@ -28,6 +32,7 @@ type Tool struct {
 	InputSchema  json.RawMessage `json:"input_schema,omitempty"`
 	OutputSchema json.RawMessage `json:"output_schema,omitempty"`
 	Binding      ToolBinding     `json:"binding,omitempty"`
+	IsReadOnly   bool            `json:"is_read_only,omitempty"`
 	Version      int             `json:"version"`
 	CreatedAt    time.Time       `json:"created_at" sortable:""`
 	CreatedBy    common.UserRef  `json:"created_by"`
@@ -77,10 +82,11 @@ type QueryBinding struct {
 func (QueryBinding) isToolBinding() {}
 
 // DecodeToolBinding decodes a raw binding payload according to kind (mirrors the
-// v3 model's DecodePayload). Returns (nil, nil) for client — it has no binding.
+// v3 model's DecodePayload). Returns (nil, nil) for client, delegation and
+// system — they have no binding.
 func DecodeToolBinding(kind ToolKind, raw json.RawMessage) (ToolBinding, error) {
 	empty := len(raw) == 0 || string(raw) == "null"
-	if kind == ToolKindClient {
+	if kind == ToolKindClient || kind == ToolKindDelegation || kind == ToolKindSystem {
 		return nil, nil
 	}
 	if empty {

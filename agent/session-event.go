@@ -12,6 +12,10 @@ import (
 // envelope is built once and written to both; Seq is the per-session monotonic
 // cursor (the Redis entry id, <seq>-0) on both. Id is the dedupe key: our uuid
 // for user-originated events, the provider's event id for agent events.
+//
+// A chunk frame of the live delta channel (see DeltaEventTypes) uses the same
+// envelope with Seq 0: it has no place in the log. Its Id is the id of the whole
+// event it is a piece of.
 // ProcessedAt is meaningful only for user-sent events — null = queued,
 // timestamp = consumed by the agent (stamped from the provider's echo).
 type SessionEvent struct {
@@ -59,12 +63,35 @@ func DecodeEventPayload(eventType EventType, raw json.RawMessage) (EventPayload,
 		return decodePayload(raw, empty, &SessionIdlePayload{})
 	case EventTypeSessionUpdated:
 		return decodePayload(raw, empty, &SessionUpdatedPayload{})
+	case EventTypeDelegatedSessionUpdated:
+		return decodePayload(raw, empty, &DelegatedSessionUpdatedPayload{})
+	case EventTypeUserSpeech, EventTypeAgentSpeech:
+		return decodePayload(raw, empty, &SpeechPayload{})
+	case EventTypeUserVoiceRequest:
+		return decodePayload(raw, empty, &VoiceRequestPayload{})
+	case EventTypeSessionVoiceStarted:
+		return decodePayload(raw, empty, &VoiceStartedPayload{})
+	case EventTypeSessionVoiceEnded:
+		return decodePayload(raw, empty, &VoiceEndedPayload{})
 	case EventTypeSpanModelRequestStart:
 		return decodePayload(raw, empty, &ModelRequestStartPayload{})
 	case EventTypeSpanModelRequestEnd:
 		return decodePayload(raw, empty, &ModelRequestEndPayload{})
-	case EventTypeUserInterrupt, EventTypeSessionStatusRunning, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded:
+	case EventTypeSessionStatusRunning:
+		return decodePayload(raw, empty, &SessionRunningPayload{})
+	case EventTypeUserInterrupt, EventTypeSessionStatusTerminated, EventTypeSessionStatusEnded:
 		return EmptyPayload{}, nil
+	case EventTypeAgentMessageStart, EventTypeAgentMessageEnd,
+		EventTypeAgentReasoningStart, EventTypeAgentReasoningEnd, EventTypeAgentToolUseEnd:
+		return decodePayload(raw, empty, &DeltaBoundaryPayload{})
+	case EventTypeAgentMessageDelta:
+		return decodePayload(raw, empty, &MessageDeltaPayload{})
+	case EventTypeAgentReasoningDelta:
+		return decodePayload(raw, empty, &ReasoningDeltaPayload{})
+	case EventTypeAgentToolUseStart:
+		return decodePayload(raw, empty, &ToolUseStartPayload{})
+	case EventTypeAgentToolUseDelta:
+		return decodePayload(raw, empty, &ToolUseDeltaPayload{})
 	default:
 		return RawPayload{Raw: raw}, nil
 	}

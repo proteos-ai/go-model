@@ -14,11 +14,19 @@ import (
 // (a session is a graph node referenced by every event, so it is surrogate-keyed,
 // not (org_id, slug)).
 type Session struct {
-	OrgId    string        `json:"org_id"`
-	Id       string        `json:"id"`
-	AgentKey string        `json:"agent_key"`
-	Title    string        `json:"title" sortable:""`
-	Status   SessionStatus `json:"status"`
+	OrgId    string `json:"org_id"`
+	Id       string `json:"id"`
+	AgentKey string `json:"agent_key"`
+	// Runtime is what runs this session: the agent's runtime at the moment the
+	// session was created. It does not follow later changes to the agent.
+	Runtime Runtime `json:"runtime"`
+	// ParentSessionId is set on a delegated session: the session whose agent handed
+	// this one its work (see the delegation tools) and is told when a turn of it
+	// ends. Nil for a session a person or a surface opened. A delegated session
+	// never delegates further.
+	ParentSessionId *string       `json:"parent_session_id"`
+	Title           string        `json:"title" sortable:""`
+	Status          SessionStatus `json:"status"`
 	// EndedAt / EndedBy record who ended the session and when. Both are set only
 	// while Status is ended: reopening the session (its next turn) clears them.
 	EndedAt *time.Time      `json:"ended_at"`
