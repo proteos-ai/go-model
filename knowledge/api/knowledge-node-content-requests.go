@@ -3,8 +3,15 @@ package knowledgeapi
 // WriteContentRequest overwrites a node's whole content body
 // (`PUT /nodes/:id/content`). An empty content string is a legitimate value
 // (it clears the body), so `content` is required-as-a-field but may be "".
+//
+// ExpectedContentHash makes the write conditional: when set, it must equal the
+// `content_hash` of the body the writer started from (as returned by
+// `GET /nodes/:id/content`). If the body changed since — an agent or another
+// person wrote it — the write is refused with 409 `content_conflict` instead
+// of silently replacing their change. Omit it for an unconditional overwrite.
 type WriteContentRequest struct {
-	Content string `json:"content"`
+	Content             string  `json:"content"`
+	ExpectedContentHash *string `json:"expected_content_hash,omitempty"`
 }
 
 // EditContentRequest is a surgical, anchored edit of a node's content
@@ -20,16 +27,22 @@ type EditContentRequest struct {
 // ContentResponse is the raw body of a node plus its line count
 // (`GET /nodes/:id/content`). `cat -n` style framing is an MCP-layer concern
 // (LUM-99); this returns the body verbatim.
+//
+// ContentHash is the hex SHA-256 of the body's UTF-8 bytes: the version token a
+// writer echoes back as WriteContentRequest.ExpectedContentHash.
 type ContentResponse struct {
-	Id         string `json:"id"`
-	Content    string `json:"content"`
-	LinesTotal int    `json:"lines_total"`
+	Id          string `json:"id"`
+	Content     string `json:"content"`
+	LinesTotal  int    `json:"lines_total"`
+	ContentHash string `json:"content_hash"`
 }
 
-// WriteContentResponse summarizes a content overwrite.
+// WriteContentResponse summarizes a content overwrite. ContentHash is the hash
+// of the body just written, so a writer can save again without re-reading.
 type WriteContentResponse struct {
-	Id         string `json:"id"`
-	LinesTotal int    `json:"lines_total"`
+	Id          string `json:"id"`
+	LinesTotal  int    `json:"lines_total"`
+	ContentHash string `json:"content_hash"`
 }
 
 // EditContentResponse summarizes a surgical edit: how many occurrences were
