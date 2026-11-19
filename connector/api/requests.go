@@ -46,10 +46,16 @@ type InstallConnectionResponse struct {
 	AuthorizationUrl string `json:"authorization_url"`
 }
 
+// OwnerMe is the GetManyConnectionsQuery.Owner value that names the caller.
+const OwnerMe = "me"
+
 type GetManyConnectionsQuery struct {
 	ConnectorKey *string `json:"connector_key" form:"connector_key" db:"connector_key"`
 	Scope        *string `json:"scope" form:"scope" db:"scope"`
 	Status       *string `json:"status" form:"status" db:"status"`
+	// Owner keeps the connections owned by one user: a user id, or "me" for
+	// the caller. Only user-scope connections have an owner.
+	Owner *string `json:"owner" form:"owner"`
 	common.Pagination
 	common.Sorting
 }

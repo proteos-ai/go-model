@@ -30,6 +30,7 @@ var BuiltInControls = []string{
 	"textarea",
 	"time-picker",
 	"url",
+	"user-multi-picker",
 	"user-picker",
 }
 
@@ -94,6 +95,7 @@ var ControlsByDatetimeFormat = map[string]ControlBucket{
 var ControlsByArrayItemsType = map[string]ControlBucket{
 	"enum":   {Primary: stringPtr("multi-select"), Compatible: []string{"multi-select"}},
 	"string": {Primary: stringPtr("tag-input"), Compatible: []string{"tag-input"}},
+	"user":   {Primary: stringPtr("user-multi-picker"), Compatible: []string{"user-multi-picker"}},
 }
 
 func stringPtr(s string) *string { return &s }

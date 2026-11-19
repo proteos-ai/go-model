@@ -47,6 +47,18 @@ type Message struct {
 	// IsQuoteRemoved: the reviewer took the quoted previous message off this
 	// reply. False sends the quote, which is what a mail client does.
 	IsQuoteRemoved bool `json:"is_quote_removed,omitempty"`
+	// SignatureId is the signature chosen for this email. Empty means the
+	// default that applies when it is sent. Stored as given: a deleted signature
+	// simply no longer resolves and the default applies again.
+	SignatureId string `json:"signature_id,omitempty"`
+	// IsSignatureRemoved: this email goes out without a signature.
+	IsSignatureRemoved bool `json:"is_signature_removed,omitempty"`
+	// Signature is what the email carries below the body and above the quote.
+	// On a sent message it is the stored snapshot of what went out. On a single
+	// draft read it is a READ-TIME projection of what a send would add now. The
+	// content never holds it, so timeline, search and the tone corpus see only
+	// what the person wrote.
+	Signature *MessageSignature `json:"signature,omitempty"`
 	// IsSentFromPlatform: the platform wrote this message (a send, or a draft
 	// that can only go out through it). Its content is what the person wrote,
 	// without the quote the email carried — what ingest imports keeps its full

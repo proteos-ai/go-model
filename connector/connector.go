@@ -89,6 +89,11 @@ type ConnectorOrigin string
 // platform calendar mirror (google-calendar, microsoft-calendar).
 const CapabilityCalendar = "calendar"
 
+// CapabilityAgentSandbox tags a connector whose user-scope connection is a
+// person's own account that an agent sandbox session acts with on their
+// behalf (github, claude-code).
+const CapabilityAgentSandbox = "agent_sandbox"
+
 const (
 	ConnectorOriginPreBuilt ConnectorOrigin = "pre_built"
 	ConnectorOriginCustom   ConnectorOrigin = "custom"

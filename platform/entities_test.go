@@ -4,8 +4,8 @@ import "testing"
 
 func TestEntities_CanonicalSet(t *testing.T) {
 	entities := Entities()
-	if len(entities) != 72 {
-		t.Fatalf("expected 72 platform entities, got %d", len(entities))
+	if len(entities) != 74 {
+		t.Fatalf("expected 74 platform entities, got %d", len(entities))
 	}
 	seen := make(map[string]bool, len(entities))
 	for _, entity := range entities {
@@ -28,7 +28,7 @@ func TestSlugs_MatchEntities(t *testing.T) {
 		"teams", "team-members",
 		"profiles", "user-profile-assignments",
 		"entities", "pages", "menu-configurations", "apps", "app-configurations", "components", "lists",
-		"list-views", "design-references", "modules", "variables", "deployments", "record-drafts", "files",
+		"list-views", "design-references", "modules", "variables", "deployments", "record-drafts", "queries", "files",
 		"hooks", "actions",
 		"workflows", "workflow-executions",
 		"knowledge-nodes", "knowledge-links", "knowledge-labels", "knowledge-spaces",
@@ -36,7 +36,7 @@ func TestSlugs_MatchEntities(t *testing.T) {
 		"topics", "events",
 		"connections", "conversations", "messages", "agent-listeners", "transcriptions",
 		"glossary-terms", "mistranscribed-terms", "voice", "contacts", "conversation-filters",
-		"conversation-types", "contact-groups", "tone-profiles", "sending-rules", "channel-actions",
+		"conversation-types", "contact-groups", "tone-profiles", "sending-rules", "email-signatures", "channel-actions",
 		"channel-events", "conversation-briefs", "conversation-notes", "conversation-tag-definitions", "conversation-tag-sets",
 		"conversation-tags", "conversation-objective-definitions", "conversation-objectives", "connectors",
 		"calendar-connections", "calendars", "calendar-events", "calendar-event-types",

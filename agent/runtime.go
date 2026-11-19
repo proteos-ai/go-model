@@ -27,13 +27,20 @@ const (
 	// "Embedded" is about the loop living in agent-service, with nothing keeping the
 	// turn outside it; it says nothing about where the chat is shown.
 	RuntimeEmbedded Runtime = "embedded"
+	// RuntimeSandbox runs a coding agent inside a sandbox that belongs to the
+	// session: the loop, its shell and its files all live there, so a turn goes
+	// on through restarts of agent-service, and the sandbox keeps the session's
+	// files between turns. The agent works as the person who owns the session,
+	// with that person's own model credential. Claude Code on Daytona is the
+	// provider today.
+	RuntimeSandbox Runtime = "sandbox"
 )
 
 // DefaultRuntime is the runtime of an agent that names none, and of every agent
 // and session created before runtimes existed.
 const DefaultRuntime = RuntimeDurable
 
-var Runtimes = []Runtime{RuntimeDurable, RuntimeEmbedded}
+var Runtimes = []Runtime{RuntimeDurable, RuntimeEmbedded, RuntimeSandbox}
 
 func (Runtime) Enum() []interface{} {
 	enums := []interface{}{}

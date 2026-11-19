@@ -154,6 +154,13 @@ var RecordContactAddressKinds = []ContactAddressKind{
 	ContactAddressKindLinkedinPublicIdentifier,
 }
 
+// CanonicalizeTeamsId is the stored form of a Teams address (an Entra
+// object id, a GUID): trimmed and lowercased, so ingest, manual attach and
+// filters agree whatever case the id was typed or delivered in.
+func CanonicalizeTeamsId(raw string) string {
+	return strings.ToLower(strings.TrimSpace(raw))
+}
+
 // IsRecordContactAddressKind reports whether kind may back a record attribute.
 func IsRecordContactAddressKind(kind ContactAddressKind) bool {
 	return slices.Contains(RecordContactAddressKinds, kind)

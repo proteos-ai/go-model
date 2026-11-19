@@ -52,6 +52,12 @@ type SendMessageRequest struct {
 	// ToneProfileId records the tone a draft was written in. Stored by Draft;
 	// Send ignores it.
 	ToneProfileId string `json:"tone_profile_id,omitempty"`
+	// Signature picks the email signature: "default" or empty for the default
+	// that applies (the mailbox's, then the sender's own, then the
+	// organisation's), "none" for no signature, or a signature id. The
+	// signature is added below the body at send; it is never part of Content.
+	// Ignored on every channel but email.
+	Signature string `json:"signature,omitempty"`
 }
 
 // UpdateDraftRequest edits a status=draft message — full replacement of the
@@ -83,6 +89,9 @@ type UpdateDraftRequest struct {
 	IsQuoteRemoved *bool `json:"is_quote_removed,omitempty"`
 	// ToneProfileId replaces the tone recorded on the draft. Absent keeps it.
 	ToneProfileId *string `json:"tone_profile_id,omitempty"`
+	// Signature replaces the draft's signature choice: "default", "none" or a
+	// signature id (see SendMessageRequest.Signature). Absent keeps it.
+	Signature *string `json:"signature,omitempty"`
 	// VersionKind says what this edit is in the draft's history: edited (the
 	// default), redrafted or restored.
 	VersionKind conversationmodel.MessageDraftVersionKind `json:"version_kind,omitempty"`

@@ -45,6 +45,10 @@ type Connection struct {
 	// UI adapts per connection. Reactions is nil when unsupported.
 	SupportsReactions bool                `json:"supports_reactions"`
 	Reactions         *ReactionCapability `json:"reactions,omitempty"`
+	// SupportsHtml is COMPUTED on read like SupportsReactions: the connector
+	// sends a message's html block as the body's html part, so a composer can
+	// offer rich formatting. False sends the text only.
+	SupportsHtml bool `json:"supports_html"`
 	// Actions is COMPUTED on read like Reactions: the channel actions the
 	// connector can perform through this connection (invitation, profile_visit,
 	// inmail, …), one capability per type. Empty when the connector performs

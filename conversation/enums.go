@@ -139,6 +139,17 @@ const (
 	// ledger). Third native connector on the email channel, beside the two
 	// mailbox connectors (gmail, outlook).
 	ConnectorKeySendgrid ConnectorKey = "sendgrid"
+	// ConnectorKeyMicrosoftTeams is the native Microsoft Teams bot connector
+	// (Bot Framework) on the teams-chat channel. Vendor-prefixed so the key
+	// never reads as the account "Teams" entity.
+	ConnectorKeyMicrosoftTeams ConnectorKey = "microsoft-teams"
+	// ConnectorKeyPlatformEmail is the platform mailbox (Ava's address): ONE
+	// sending identity the deployment holds in its environment, and one
+	// system-managed connection per org that carries no credentials. Platform
+	// notifications originate through it and a user's mail to the address is
+	// ingested into their org's connection. Brand-neutral like the meeting-bot
+	// keys ("ava" is also that family's ingest namespace).
+	ConnectorKeyPlatformEmail ConnectorKey = "platform-email"
 )
 
 // CallStatus is the telephony lifecycle of one phone call, carried in the
@@ -431,6 +442,10 @@ const (
 	ContactAddressKindEmail ContactAddressKind = "email"
 	ContactAddressKindPhone ContactAddressKind = "phone"
 	ContactAddressKindSlack ContactAddressKind = "slack"
+	// ContactAddressKindTeams is a Microsoft Teams user's Entra object id
+	// (aadObjectId), scoped to the Microsoft tenant like slack is to its
+	// workspace.
+	ContactAddressKindTeams ContactAddressKind = "teams"
 	// ContactAddressKindLinkedinId is LinkedIn's stable profile id (ACoAA… on a
 	// classic account, ACwAA… on Sales Navigator, AE… on Recruiter — Unipile
 	// relays it as provider_id): the key connectors mint and the ONLY form
@@ -1226,4 +1241,15 @@ const (
 	MeetingBotStatusEnded     MeetingBotStatus = "ended"
 	MeetingBotStatusFailed    MeetingBotStatus = "failed"
 	MeetingBotStatusRemoved   MeetingBotStatus = "removed"
+)
+
+// EmailSignatureAppliesTo says which emails a default signature is picked for:
+// every email, only one that starts a conversation, or only a reply. A
+// signature chosen by hand goes on any email.
+type EmailSignatureAppliesTo string
+
+const (
+	EmailSignatureAppliesToAll   EmailSignatureAppliesTo = "all"
+	EmailSignatureAppliesToNew   EmailSignatureAppliesTo = "new"
+	EmailSignatureAppliesToReply EmailSignatureAppliesTo = "reply"
 )

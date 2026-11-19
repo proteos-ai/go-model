@@ -14,6 +14,7 @@ func TestRuntimeUnmarshalJSON(t *testing.T) {
 	}{
 		{name: "durable", input: `"durable"`, want: RuntimeDurable},
 		{name: "embedded", input: `"embedded"`, want: RuntimeEmbedded},
+		{name: "sandbox", input: `"sandbox"`, want: RuntimeSandbox},
 		{name: "empty means not given", input: `""`, want: ""},
 		{name: "null means not given", input: `null`, want: ""},
 		{name: "a provider name is not a runtime", input: `"anthropic_managed"`, wantErr: true},

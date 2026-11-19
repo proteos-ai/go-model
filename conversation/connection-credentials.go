@@ -46,6 +46,11 @@ const (
 	// stored), both halves are org-supplied secrets verified server-side by a
 	// DirectInstallConnector.
 	CredentialKindApiKey CredentialKind = "api_key"
+	// CredentialKindAppConsent: a PLATFORM-owned app (its secret lives in env
+	// config) granted into the customer's tenant by a sign-in there (Microsoft
+	// Teams). The connection stores only the bot identity — nothing secret;
+	// the tenant id is the connection's external_account_id.
+	CredentialKindAppConsent CredentialKind = "app_consent"
 )
 
 // redactedPlaceholder is what a set secret field reads as on the API — presence
@@ -141,6 +146,35 @@ func (creds ApiKeyCredentials) Redact() ConnectionCredentials {
 	return creds
 }
 
+// AppConsentCredentials backs platform-app installs (microsoft-teams).
+// BotUserId is the bot's channel identity ("28:<app id>") — the mention
+// trigger and the echo guard key on it, the same field slack's bot token
+// install carries. Nothing is secret, so Redact is the identity.
+type AppConsentCredentials struct {
+	BotUserId     string `json:"bot_user_id,omitempty"`
+	GrantedScopes string `json:"granted_scopes,omitempty"`
+}
+
+func (AppConsentCredentials) isConnectionCredentials() {}
+func (AppConsentCredentials) Kind() CredentialKind     { return CredentialKindAppConsent }
+
+func (creds AppConsentCredentials) Redact() ConnectionCredentials {
+	return creds
+}
+
+// BotUserId returns the connection's bot identity on its channel for the
+// credential shapes that carry one (slack's bot token, the Teams app
+// consent); "" for every other shape or a pending connection.
+func BotUserId(credentials ConnectionCredentials) string {
+	switch typed := credentials.(type) {
+	case BotTokenCredentials:
+		return typed.BotUserId
+	case AppConsentCredentials:
+		return typed.BotUserId
+	}
+	return ""
+}
+
 // credentialEnvelope is the stored (JSONB) form: a self-describing {kind, data}
 // wrapper so the decode switch keys on the auth mechanism, decoupled from
 // connector_key. Only the persistence + API-output paths use this; the wire-in
@@ -204,6 +238,12 @@ func DecodeConnectionCredentials(raw []byte) (ConnectionCredentials, error) {
 		return credentials, nil
 	case CredentialKindApiKey:
 		var credentials ApiKeyCredentials
+		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
+			return nil, err
+		}
+		return credentials, nil
+	case CredentialKindAppConsent:
+		var credentials AppConsentCredentials
 		if err := json.Unmarshal(envelope.Data, &credentials); err != nil {
 			return nil, err
 		}

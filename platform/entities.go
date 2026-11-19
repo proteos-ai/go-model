@@ -60,6 +60,10 @@ var platformEntities = []PlatformEntity{
 	// awaiting review. read = list/get drafts; write = propose, reject and
 	// (together with the entity's own write/delete) approve.
 	{Slug: EntitySlugRecordDrafts, Name: "Record Drafts"},
+	// Stored SQL queries — what the Reports tab saves and shares. Scoped by
+	// default: a member with no grant reaches their own queries and those
+	// shared with them; the unscoped grant reaches every query in the org.
+	{Slug: EntitySlugQueries, Name: "Queries"},
 	// Storage (storage-service)
 	{Slug: "files", Name: "Files"},
 	// Automation (function-service)
@@ -120,6 +124,9 @@ var platformEntities = []PlatformEntity{
 	// Outbound send constraints (windows, connection limits, frequency caps)
 	// + their preset catalog.
 	{Slug: "sending-rules", Name: "Sending Rules"},
+	// Email signatures: the organisation's and each person's own, added below
+	// an email's body at send.
+	{Slug: "email-signatures", Name: "Email Signatures"},
 	// The channel_action ledger: acts performed through a connection that are
 	// neither a message nor a reaction (LinkedIn invitations, profile visits,
 	// InMail) — perform, withdraw, answer.
@@ -282,3 +289,7 @@ const EntitySlugDiscoveryEvidence = "discovery-evidence"
 
 // data-service's record-drafts slug, named because its route gate keys off it.
 const EntitySlugRecordDrafts = "record-drafts"
+
+// data-service's stored-queries slug, named because its route gate, its
+// repository's visibility predicate and its share target key off it.
+const EntitySlugQueries = "queries"
