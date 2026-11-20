@@ -19,11 +19,15 @@ import (
 // a CONNECTION is one configured instance, a METHOD is one callable operation.
 // Same words in DB/Go/wire/SDK/UI.
 type ConnectorManifest struct {
-	Key            string         `json:"key" sortable:""`
-	OrgId          string         `json:"org_id" sortable:""`
-	Title          string         `json:"title" sortable:""`
-	Description    string         `json:"description,omitempty"`
-	Icon           string         `json:"icon,omitempty"`
+	Key         string `json:"key" sortable:""`
+	OrgId       string `json:"org_id" sortable:""`
+	Title       string `json:"title" sortable:""`
+	Description string `json:"description,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	// LogoUrl points at the connector's brand logo: an https URL or an
+	// app-relative path (pre-built logos ship as web static assets under
+	// /connector-logos/). Optional; the UI falls back to Icon.
+	LogoUrl        string         `json:"logo_url,omitempty"`
 	CredentialKind CredentialKind `json:"credential_kind"`
 	// SupportedCredentialKinds lists every kind a connection of this connector
 	// may use; empty means exactly [CredentialKind] (single-kind connectors

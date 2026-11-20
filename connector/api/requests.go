@@ -75,6 +75,7 @@ type UpsertConnectorRequest struct {
 	Title                    string                               `json:"title" validate:"required"`
 	Description              string                               `json:"description,omitempty"`
 	Icon                     string                               `json:"icon,omitempty"`
+	LogoUrl                  string                               `json:"logo_url,omitempty"`
 	CredentialKind           connectormodel.CredentialKind        `json:"credential_kind" validate:"required"`
 	SupportedCredentialKinds []connectormodel.CredentialKind      `json:"supported_credential_kinds,omitempty"`
 	OAuth                    *connectormodel.OAuthConfig          `json:"oauth,omitempty"`
